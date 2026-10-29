@@ -1,0 +1,14 @@
+{
+  "data_revision": "rev_demo_001",
+  "range": { "start": "2026-01-01", "end": "2026-03-31" },
+  "baseline_kobo": 18500000,
+  "categories": [
+    { "category": "Food", "total_kobo": 6000000, "percent": 20, "reduction_kobo": 1200000 },
+    { "category": "Entertainment", "total_kobo": 2500000, "percent": 40, "reduction_kobo": 1000000 },
+    { "category": "Shopping", "total_kobo": 10000000, "percent": 0, "reduction_kobo": 0 }
+  ],
+  "total_reduction_kobo": 2200000,
+  "protected_categories": ["Education", "Health"],
+  "coverage_warnings": ["No transactions for 12 days in this range"],
+  "evidence_txn_ids": ["t_001", "t_014", "t_027"]
+}
