@@ -1,0 +1,14 @@
+{
+  "data_revision": "rev_demo_003",
+  "range": { "start": "2026-03-01", "end": "2026-03-31" },
+  "baseline_kobo": 4600000,
+  "categories": [
+    { "category": "Entertainment", "total_kobo": 800000, "percent": 50, "reduction_kobo": 400000 },
+    { "category": "Shopping", "total_kobo": 3200000, "percent": 15, "reduction_kobo": 480000 },
+    { "category": "Airtime and Data", "total_kobo": 600000, "percent": 0, "reduction_kobo": 0 }
+  ],
+  "total_reduction_kobo": 880000,
+  "protected_categories": ["Food", "Health"],
+  "coverage_warnings": [],
+  "evidence_txn_ids": ["t_201", "t_215"]
+}

@@ -1,0 +1,12 @@
+{
+  "data_revision": "rev_demo_004",
+  "range": { "start": "2026-04-01", "end": "2026-04-30" },
+  "baseline_kobo": 5000000,
+  "categories": [
+    { "category": "Food", "total_kobo": 5000000, "percent": 0, "reduction_kobo": 0 }
+  ],
+  "total_reduction_kobo": 0,
+  "protected_categories": [],
+  "coverage_warnings": [],
+  "evidence_txn_ids": []
+}

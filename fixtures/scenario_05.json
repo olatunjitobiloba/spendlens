@@ -1,0 +1,16 @@
+{
+  "data_revision": "rev_demo_005",
+  "range": { "start": "2026-05-01", "end": "2026-05-31" },
+  "baseline_kobo": 1333666,
+  "categories": [
+    { "category": "Shopping", "total_kobo": 1000333, "percent": 15, "reduction_kobo": 150049 },
+    { "category": "Entertainment", "total_kobo": 333333, "percent": 33, "reduction_kobo": 109999 }
+  ],
+  "total_reduction_kobo": 260048,
+  "protected_categories": ["Education"],
+  "coverage_warnings": [
+    "No transactions for 9 days in this range",
+    "3 transactions need category review"
+  ],
+  "evidence_txn_ids": ["t_301"]
+}
