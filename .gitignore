@@ -5,3 +5,8 @@ __pycache__/
 *.csv
 .pytest_cache/
 node_modules/
+
+# Antigravity agent rules and workspace customizations
+.agents/
+AGENTS.md
+
