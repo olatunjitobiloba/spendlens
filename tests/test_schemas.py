@@ -19,6 +19,7 @@ def test_fixture_validates_and_math_holds(path):
     for c in s.categories:
         assert c.reduction_kobo == c.total_kobo * c.percent // 100
     assert s.total_reduction_kobo == sum(c.reduction_kobo for c in s.categories)
+    assert s.remaining_kobo == s.baseline_kobo - s.total_reduction_kobo
     assert s.baseline_kobo == sum(c.total_kobo for c in s.categories)
     assert not set(s.protected_categories) & {c.category for c in s.categories}
 

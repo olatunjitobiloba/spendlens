@@ -7,6 +7,7 @@
     { "category": "Entertainment", "total_kobo": 333333, "percent": 33, "reduction_kobo": 109999 }
   ],
   "total_reduction_kobo": 260048,
+  "remaining_kobo": 1073618,
   "protected_categories": ["Education"],
   "coverage_warnings": [
     "No transactions for 9 days in this range",

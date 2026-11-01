@@ -8,6 +8,7 @@
     { "category": "Shopping", "total_kobo": 10000000, "percent": 0, "reduction_kobo": 0 }
   ],
   "total_reduction_kobo": 2200000,
+  "remaining_kobo": 16300000,
   "protected_categories": ["Education", "Health"],
   "coverage_warnings": ["No transactions for 12 days in this range"],
   "evidence_txn_ids": ["t_001", "t_014", "t_027"]

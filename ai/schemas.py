@@ -23,6 +23,7 @@ class ScenarioResult(BaseModel):
     baseline_kobo: int = Field(ge=0)
     categories: list[CategoryRow]
     total_reduction_kobo: int = Field(ge=0)
+    remaining_kobo: int = Field(ge=0)
     protected_categories: list[str]
     coverage_warnings: list[str] = []
     evidence_txn_ids: list[str] = []

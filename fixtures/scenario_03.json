@@ -8,6 +8,7 @@
     { "category": "Airtime and Data", "total_kobo": 600000, "percent": 0, "reduction_kobo": 0 }
   ],
   "total_reduction_kobo": 880000,
+  "remaining_kobo": 3720000,
   "protected_categories": ["Food", "Health"],
   "coverage_warnings": [],
   "evidence_txn_ids": ["t_201", "t_215"]

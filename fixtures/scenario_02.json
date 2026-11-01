@@ -7,6 +7,7 @@
     { "category": "Transport", "total_kobo": 1500000, "percent": 10, "reduction_kobo": 150000 }
   ],
   "total_reduction_kobo": 1150000,
+  "remaining_kobo": 4350000,
   "protected_categories": ["Education"],
   "coverage_warnings": [],
   "evidence_txn_ids": ["t_101", "t_118"]

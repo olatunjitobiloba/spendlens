@@ -60,6 +60,10 @@ def test_fractional_kobo_fails():
     assert validate("Save ₦12,000.555.", S1)
 
 
+def test_remaining_amount_allowed():
+    assert validate("You would have ₦163,000 left.", S1) == []
+
+
 @pytest.mark.parametrize("name", sorted(p.name for p in FIXTURES.glob("scenario_*.json")))
 def test_template_text_passes_for_every_fixture(name):
     s = load(name)

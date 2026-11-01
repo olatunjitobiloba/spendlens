@@ -22,7 +22,7 @@ def _to_kobo(token: str):
 
 
 def _allowed(s: ScenarioResult):
-    money = {0, s.baseline_kobo, s.total_reduction_kobo}
+    money = {0, s.baseline_kobo, s.total_reduction_kobo, s.remaining_kobo}
     for c in s.categories:
         money |= {c.total_kobo, c.reduction_kobo}
     percents = {c.percent for c in s.categories}

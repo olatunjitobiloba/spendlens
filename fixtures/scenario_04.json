@@ -6,6 +6,7 @@
     { "category": "Food", "total_kobo": 5000000, "percent": 0, "reduction_kobo": 0 }
   ],
   "total_reduction_kobo": 0,
+  "remaining_kobo": 5000000,
   "protected_categories": [],
   "coverage_warnings": [],
   "evidence_txn_ids": []
