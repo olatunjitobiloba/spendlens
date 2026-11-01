@@ -65,3 +65,27 @@ def test_template_always_validates(path):
     s = load(path.name)
     e = template_explanation(s)
     assert validate(e.text, s, e.numbers_used) == []
+
+
+def test_complete_groq_failover_to_gemini(monkeypatch):
+    from ai.llm import complete
+
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini_test")
+
+    calls = []
+
+    def fake_call(base_url, api_key, model, system, user, timeout=10.0):
+        calls.append((base_url, api_key))
+        if "groq.com" in base_url:
+            raise RuntimeError("429 rate limit")
+        return '{"text": "ok", "numbers_used": []}'
+
+    monkeypatch.setattr("ai.llm._call_provider", fake_call)
+    res = complete("sys", "usr")
+    assert res == '{"text": "ok", "numbers_used": []}'
+    assert len(calls) == 2
+    assert "groq.com" in calls[0][0]
+    assert "googleapis.com" in calls[1][0]
+
+
