@@ -289,9 +289,7 @@ def run(llm=complete, mode: str = "live") -> dict:
         for outcome in ("pass", "check_fail", "fallback", "error")
     }
     latencies = [row["ms"] for row in rows]
-    retry_rows = sum(
-        row["calls"] > 1 and row["outcome"] != "fallback" for row in rows
-    )
+    retry_rows = sum(row["calls"] > 1 for row in rows)
     return {
         "run_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "mode": mode,

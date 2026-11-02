@@ -129,7 +129,7 @@ def test_check_rejects_subscription_spellings_and_number_words():
     assert "spelled_number" in failures
 
 
-def test_run_classifies_fallbacks_without_retries():
+def test_run_counts_retries_for_fallback_rows():
     def wrong_json(system, user):
         return '{"text": "not valid json for this scenario"}'
 
@@ -138,7 +138,7 @@ def test_run_classifies_fallbacks_without_retries():
     assert report["fallback_rate"] == 1
     assert report["pass_rate"] == 0
     assert report["check_fail_rate"] == 0
-    assert report["retry_rate"] == 0
+    assert report["retry_rate"] == 1
     assert all(row["outcome"] == "fallback" for row in report["rows"])
 
 
