@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import logging
 import os
 import re
 import statistics
@@ -69,6 +70,20 @@ _NUMBER_WORD_RE = re.compile(
 _DIGIT_RE = re.compile(r"\d")
 _NUMBER_RE = re.compile(r"\b\d+\b")
 _URL_RE = re.compile(r"https?://[^\s\"']+")
+
+
+class _EvalLogRedactor(logging.Filter):
+    """Keep provider details out of output produced by the evaluation CLI."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        message = _URL_RE.sub("[redacted-url]", message)
+        api_key = os.environ.get("LLM_API_KEY")
+        if api_key:
+            message = message.replace(api_key, "[redacted-secret]")
+        record.msg = message
+        record.args = ()
+        return True
 
 
 def _fake_model(system: str, user: str) -> str:
@@ -404,8 +419,14 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
 
-    report = run(llm=_fake_model if args.fake else complete,
-                 mode="fake" if args.fake else "live")
+    logger = logging.getLogger("ai")
+    redactor = _EvalLogRedactor()
+    logger.addFilter(redactor)
+    try:
+        report = run(llm=_fake_model if args.fake else complete,
+                     mode="fake" if args.fake else "live")
+    finally:
+        logger.removeFilter(redactor)
     report = _redact(report)
     output = args.out or Path(
         "docs/eval_fake.json" if args.fake else "docs/eval_latest.json"

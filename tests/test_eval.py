@@ -1,5 +1,6 @@
 import re
 import json
+import logging
 
 from ai.eval import cases, check, main, make_case, run
 from ai.explain import template_explanation
@@ -201,3 +202,97 @@ def test_fake_cli_defaults_to_fake_report_path(monkeypatch, tmp_path):
     assert main(["--fake"]) == 0
     assert (tmp_path / "docs" / "eval_fake.json").exists()
     assert not (tmp_path / "docs" / "eval_latest.json").exists()
+
+
+def test_min_pass_failure_returns_one(monkeypatch, tmp_path):
+    monkeypatch.setattr("ai.eval._fake_model", lambda system, user: '{"text": "bad"}')
+
+    assert main(["--fake", "--min-pass", "1.1", "--out", str(tmp_path / "report.json")]) == 1
+
+
+def test_error_outcome_returns_two(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "ai.eval.run",
+        lambda llm, mode: {
+            "mode": mode,
+            "pass_rate": 0,
+            "fallback_rate": 0,
+            "check_fail_rate": 0,
+            "error_rate": 1,
+            "retry_rate": 0,
+            "p50_ms": 0,
+            "p95_ms": 0,
+            "rows": [{
+                "name": "case",
+                "outcome": "error",
+                "source": None,
+                "ms": 0,
+                "calls": 1,
+                "fails": ["provider"],
+                "llm_errors": {},
+            }],
+            "llm_errors": {},
+        },
+    )
+
+    assert main(["--fake", "--out", str(tmp_path / "report.json")]) == 2
+
+
+def test_report_has_complete_fields_and_redacts_secrets(monkeypatch, tmp_path):
+    monkeypatch.setenv("LLM_API_KEY", "secret-key")
+    report_path = tmp_path / "report.json"
+    monkeypatch.setattr(
+        "ai.eval.run",
+        lambda llm, mode: {
+            "mode": mode,
+            "model": "model",
+            "run_at": "now",
+            "git_sha": "sha",
+            "cases": 1,
+            "pass_rate": 1,
+            "fallback_rate": 0,
+            "check_fail_rate": 0,
+            "error_rate": 0,
+            "retry_rate": 0,
+            "p50_ms": 1,
+            "p95_ms": 1,
+            "llm_errors": {},
+            "rows": [{
+                "name": "case",
+                "outcome": "pass",
+                "source": "model",
+                "ms": 1,
+                "calls": 1,
+                "fails": [],
+                "llm_errors": {},
+                "text": "secret-key https://provider.example/v1",
+            }],
+        },
+    )
+
+    assert main(["--fake", "--out", str(report_path)]) == 0
+    content = report_path.read_text(encoding="utf-8")
+    assert "secret-key" not in content
+    assert "https://provider.example" not in content
+    report = json.loads(content)
+    assert {"mode", "cases", "pass_rate", "rows"} <= report.keys()
+    assert {"name", "outcome", "source", "ms", "calls", "fails"} <= report["rows"][0].keys()
+
+
+def test_all_live_llm_errors_print_configuration_warning(
+    monkeypatch, tmp_path, capsys
+):
+    monkeypatch.setenv("LLM_API_KEY", "secret-key")
+    monkeypatch.setenv("LLM_MODEL", "model")
+
+    def failing(system, user):
+        logging.getLogger("ai").warning(
+            "provider request failed at https://provider.example/v1"
+        )
+        raise RuntimeError("request failed at https://provider.example/v1")
+
+    monkeypatch.setattr("ai.eval.complete", failing)
+    assert main(["--out", str(tmp_path / "report.json")]) == 1
+    captured = capsys.readouterr()
+    assert "configuration" in captured.err.lower()
+    assert "provider.example" not in captured.err
