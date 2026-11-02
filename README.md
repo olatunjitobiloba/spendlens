@@ -43,7 +43,8 @@ status 0 (the default is `0.9`).
 
 The report rates are calculated per evaluation case:
 
-- **Pass rate:** cases whose explanation passes every known-answer check.
+- **Pass rate:** cases with a model-sourced explanation that passes every
+  known-answer check (zero check failures).
 - **Fallback rate:** cases served by the deterministic fallback explanation.
 - **Check-fail rate:** cases with a model response that fails a known-answer check.
 - **Error rate:** cases that could not produce a usable explanation.
