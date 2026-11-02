@@ -1,0 +1,128 @@
+import re
+
+from ai.eval import cases, check, make_case
+from ai.explain import template_explanation
+from ai.validate import validate
+
+
+NUMBER_WORDS = {
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+    "twenty",
+    "hundred",
+    "thousand",
+}
+
+
+def test_at_least_20_cases():
+    assert len(cases()) >= 20
+
+
+def test_generated_cases_are_deterministic():
+    assert [scenario for _, scenario in cases()] == [
+        scenario for _, scenario in cases()
+    ]
+
+
+def test_generated_cases_cover_required_shapes():
+    tags = {
+        name.removeprefix("gen_").rsplit("_", 1)[0]
+        for name, _ in cases()
+        if name.startswith("gen_")
+    }
+    assert {
+        "no_cuts",
+        "one_category",
+        "five_categories",
+        "full_cut",
+        "odd_kobo",
+        "two_warnings",
+        "empty_evidence",
+        "long_names",
+    } <= tags
+
+
+def test_generated_case_invariants():
+    for i in range(15):
+        scenario = make_case(i)
+        assert all(
+            category.reduction_kobo
+            == category.total_kobo * category.percent // 100
+            for category in scenario.categories
+        )
+        assert scenario.baseline_kobo == sum(
+            category.total_kobo for category in scenario.categories
+        )
+        assert scenario.total_reduction_kobo == sum(
+            category.reduction_kobo for category in scenario.categories
+        )
+        assert scenario.remaining_kobo == (
+            scenario.baseline_kobo - scenario.total_reduction_kobo
+        )
+        assert not (
+            set(scenario.protected_categories)
+            & {category.category for category in scenario.categories}
+        )
+
+
+def test_generated_names_and_templates_are_safe():
+    for name, scenario in cases():
+        if not name.startswith("gen_"):
+            continue
+        category_names = [category.category for category in scenario.categories]
+        assert all(not re.search(r"\d", category) for category in category_names)
+        assert all(
+            not re.search(
+                rf"\b(?:{'|'.join(NUMBER_WORDS)})\b",
+                category,
+                re.IGNORECASE,
+            )
+            for category in category_names
+        )
+        text = template_explanation(scenario)
+        assert validate(text.text, scenario, text.numbers_used) == []
+        assert len(text.text.split()) <= 90
+
+
+def test_check_accepts_template_explanations():
+    for _, scenario in cases():
+        explanation = template_explanation(scenario)
+        assert check(
+            explanation.text, scenario, explanation.numbers_used
+        ) == []
+
+
+def test_check_reports_known_answer_failures():
+    scenario = make_case(0)
+    failures = check("This answer is unrelated.", scenario, [])
+    assert "total_saving" in failures
+    assert "remaining" in failures
+    assert "protected_categories" in failures
+
+
+def test_check_rejects_subscription_spellings_and_number_words():
+    scenario = make_case(0)
+    failures = check(
+        "No cuts. Subscription and subscriptions are mentioned. one.",
+        scenario,
+        [],
+    )
+    assert "forbidden_subscription" in failures
+    assert "spelled_number" in failures
