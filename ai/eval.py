@@ -1,11 +1,16 @@
 """Deterministic scenarios and known-answer checks for the evaluation harness."""
 
 import json
+import os
 import re
+import statistics
+import subprocess
+import time
 from pathlib import Path
 from random import Random
 
-from ai.explain import template_explanation
+from ai.explain import explain
+from ai.llm import complete
 from ai.schemas import CategoryRow, DateRange, ScenarioResult
 from ai.validate import fmt_naira, validate
 
@@ -193,3 +198,115 @@ def check(
     if cuts and scenario.total_reduction_kobo not in (numbers_used or []):
         failures.append("numbers_used_reduction")
     return failures
+
+
+def _git_sha() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
+def _p95(latencies: list[float]) -> float:
+    if not latencies:
+        return 0
+    ordered = sorted(latencies)
+    if len(ordered) >= 20:
+        return ordered[-2]
+    return ordered[min(len(ordered) - 1, int(len(ordered) * 0.95))]
+
+
+def run(llm=complete, mode: str = "live") -> dict:
+    """Run every scenario sequentially and aggregate its outcome rows."""
+    rows = []
+    report_errors: dict[str, int] = {}
+    for name, scenario in cases():
+        shape = (
+            name.removeprefix("gen_").rsplit("_", 1)[0]
+            if name.startswith("gen_")
+            else "fixture"
+        )
+        calls = 0
+        llm_errors: dict[str, int] = {}
+        started = time.perf_counter()
+
+        def counted(system, user):
+            nonlocal calls
+            calls += 1
+            try:
+                return llm(system, user)
+            except Exception as error:
+                error_type = type(error).__name__
+                llm_errors[error_type] = llm_errors.get(error_type, 0) + 1
+                report_errors[error_type] = report_errors.get(error_type, 0) + 1
+                raise
+
+        try:
+            explanation = explain(scenario, llm=counted)
+            fails = check(
+                explanation.text, scenario, explanation.numbers_used
+            )
+            if explanation.source == "template":
+                outcome = "fallback"
+            elif fails:
+                outcome = "check_fail"
+            else:
+                outcome = "pass"
+            error_message = None
+        except Exception as error:
+            outcome = "error"
+            error_message = f"{type(error).__name__}: {error}"
+            fails = [error_message]
+
+        elapsed = (time.perf_counter() - started) * 1000
+        row = {
+            "name": name,
+            "shape": shape,
+            "outcome": outcome,
+            "source": explanation.source if outcome != "error" else None,
+            "ms": round(elapsed, 3),
+            "calls": calls,
+            "fails": fails,
+            "llm_errors": llm_errors,
+            "passed": outcome == "pass",
+            "text": (
+                explanation.text
+                if outcome != "error"
+                else error_message
+            ),
+        }
+        rows.append(row)
+
+    denominator = len(rows)
+    counts = {
+        outcome: sum(row["outcome"] == outcome for row in rows)
+        for outcome in ("pass", "check_fail", "fallback", "error")
+    }
+    latencies = [row["ms"] for row in rows]
+    retry_rows = sum(
+        row["calls"] > 1 and row["outcome"] != "fallback" for row in rows
+    )
+    return {
+        "run_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "mode": mode,
+        "model": os.environ.get("LLM_MODEL", "unknown"),
+        "git_sha": _git_sha(),
+        "cases": denominator,
+        "pass_rate": counts["pass"] / denominator if denominator else 0,
+        "check_fail_rate": (
+            counts["check_fail"] / denominator if denominator else 0
+        ),
+        "fallback_rate": counts["fallback"] / denominator if denominator else 0,
+        "error_rate": counts["error"] / denominator if denominator else 0,
+        "retry_rate": retry_rows / denominator if denominator else 0,
+        "p50_ms": statistics.median(latencies) if latencies else 0,
+        "p95_ms": _p95(latencies),
+        "llm_errors": report_errors,
+        "rows": rows,
+    }

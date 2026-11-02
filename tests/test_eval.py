@@ -1,6 +1,7 @@
 import re
+import json
 
-from ai.eval import cases, check, make_case
+from ai.eval import cases, check, make_case, run
 from ai.explain import template_explanation
 from ai.validate import validate
 
@@ -126,3 +127,48 @@ def test_check_rejects_subscription_spellings_and_number_words():
     )
     assert "forbidden_subscription" in failures
     assert "spelled_number" in failures
+
+
+def test_run_classifies_fallbacks_without_retries():
+    def wrong_json(system, user):
+        return '{"text": "not valid json for this scenario"}'
+
+    report = run(llm=wrong_json, mode="fake")
+
+    assert report["fallback_rate"] == 1
+    assert report["pass_rate"] == 0
+    assert report["check_fail_rate"] == 0
+    assert report["retry_rate"] == 0
+    assert all(row["outcome"] == "fallback" for row in report["rows"])
+
+
+def test_run_classifies_valid_but_incomplete_explanations_as_check_fail():
+    def incomplete(system, user):
+        return '{"text": "An explanation without the required facts.", "numbers_used": []}'
+
+    report = run(llm=incomplete, mode="fake")
+
+    assert report["check_fail_rate"] == 1
+    assert report["fallback_rate"] == 0
+    assert all(row["outcome"] == "check_fail" for row in report["rows"])
+
+
+def test_run_records_retries():
+    attempts = {}
+
+    def retry_once(system, user):
+        case_key = user.split("\n", 1)[0]
+        attempts[case_key] = attempts.get(case_key, 0) + 1
+        if attempts[case_key] == 1:
+            return '{"text": '
+        facts = json.loads(user.split("\n", 1)[0])
+        return (
+            '{"text": "'
+            + facts["baseline"]["display"]
+            + '", "numbers_used": []}'
+        )
+
+    report = run(llm=retry_once, mode="fake")
+
+    assert report["retry_rate"] > 0
+    assert any(row["calls"] == 2 for row in report["rows"])
