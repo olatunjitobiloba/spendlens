@@ -104,16 +104,9 @@ def _configured_api_keys() -> list[str]:
 
 
 def _live_configuration_errors() -> list[str]:
-    configured = False
-    missing: list[str] = []
-    for key_name, model_name in _PROVIDER_CONFIGS:
-        if os.environ.get(key_name):
-            configured = True
-            if not os.environ.get(model_name):
-                missing.append(model_name)
-    if not configured:
+    if not any(os.environ.get(key_name) for key_name, _ in _PROVIDER_CONFIGS):
         return ["LLM_API_KEY", "LLM_MODEL"]
-    return missing
+    return []
 
 
 def _fake_model(system: str, user: str) -> str:

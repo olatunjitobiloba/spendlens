@@ -30,8 +30,10 @@ python -m ai.eval --fake
 ```
 
 Fake mode writes `docs/eval_fake.json`. Its latency measures local harness
-execution, not model latency. For a provider-backed run, configure both
-`LLM_API_KEY` and `LLM_MODEL`, then run:
+execution, not model latency. For a provider-backed run, configure one
+supported provider API key
+(`GROQ_API_KEY`, `GEMINI_API_KEY`, or `LLM_API_KEY`), then run. Provider
+model variables are optional because `ai.llm` supplies defaults:
 
 ```text
 python -m ai.eval --min-pass 0.9

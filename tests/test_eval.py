@@ -208,7 +208,7 @@ def test_live_cli_accepts_groq_configuration(monkeypatch, tmp_path):
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.setenv("GROQ_API_KEY", "groq-secret")
-    monkeypatch.setenv("GROQ_MODEL", "llama-test")
+    monkeypatch.delenv("GROQ_MODEL", raising=False)
     monkeypatch.setattr("ai.eval.run", lambda llm, mode: {
         "mode": mode,
         "pass_rate": 1,
@@ -228,7 +228,7 @@ def test_live_cli_accepts_gemini_configuration(monkeypatch, tmp_path):
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.setenv("GEMINI_API_KEY", "gemini-secret")
-    monkeypatch.setenv("GEMINI_MODEL", "gemini-test")
+    monkeypatch.delenv("GEMINI_MODEL", raising=False)
     monkeypatch.setattr("ai.eval.run", lambda llm, mode: {
         "mode": mode,
         "pass_rate": 1,
@@ -244,16 +244,26 @@ def test_live_cli_accepts_gemini_configuration(monkeypatch, tmp_path):
     assert main(["--out", str(tmp_path / "live.json")]) == 0
 
 
-def test_live_cli_requires_model_for_configured_provider(
-    monkeypatch, tmp_path, capsys
-):
+def test_live_cli_accepts_generic_key_without_model(monkeypatch, tmp_path):
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     monkeypatch.delenv("LLM_MODEL", raising=False)
-    monkeypatch.setenv("GROQ_API_KEY", "groq-secret")
-    monkeypatch.delenv("GROQ_MODEL", raising=False)
+    monkeypatch.setenv("LLM_API_KEY", "generic-secret")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
 
-    assert main(["--out", str(tmp_path / "live.json")]) == 2
-    assert "GROQ_MODEL" in capsys.readouterr().err
+    monkeypatch.setattr("ai.eval.run", lambda llm, mode: {
+        "mode": mode,
+        "pass_rate": 1,
+        "fallback_rate": 0,
+        "check_fail_rate": 0,
+        "error_rate": 0,
+        "retry_rate": 0,
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "rows": [],
+    })
+
+    assert main(["--out", str(tmp_path / "live.json")]) == 0
 
 
 def test_fake_cli_defaults_to_fake_report_path(monkeypatch, tmp_path):
