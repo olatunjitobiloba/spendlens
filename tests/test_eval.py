@@ -1,6 +1,7 @@
 import re
 import json
 import logging
+from pathlib import Path
 
 from ai.eval import cases, check, main, make_case, run
 from ai.explain import template_explanation
@@ -189,11 +190,70 @@ def test_fake_cli_writes_passing_report(tmp_path):
 
 
 def test_live_cli_requires_configuration(monkeypatch, tmp_path, capsys):
-    monkeypatch.delenv("LLM_API_KEY", raising=False)
-    monkeypatch.delenv("LLM_MODEL", raising=False)
+    for name in (
+        "LLM_API_KEY",
+        "LLM_MODEL",
+        "GROQ_API_KEY",
+        "GROQ_MODEL",
+        "GEMINI_API_KEY",
+        "GEMINI_MODEL",
+    ):
+        monkeypatch.delenv(name, raising=False)
 
     assert main(["--out", str(tmp_path / "live.json")]) == 2
     assert "LLM_API_KEY" in capsys.readouterr().err
+
+
+def test_live_cli_accepts_groq_configuration(monkeypatch, tmp_path):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.setenv("GROQ_API_KEY", "groq-secret")
+    monkeypatch.setenv("GROQ_MODEL", "llama-test")
+    monkeypatch.setattr("ai.eval.run", lambda llm, mode: {
+        "mode": mode,
+        "pass_rate": 1,
+        "fallback_rate": 0,
+        "check_fail_rate": 0,
+        "error_rate": 0,
+        "retry_rate": 0,
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "rows": [],
+    })
+
+    assert main(["--out", str(tmp_path / "live.json")]) == 0
+
+
+def test_live_cli_accepts_gemini_configuration(monkeypatch, tmp_path):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-secret")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-test")
+    monkeypatch.setattr("ai.eval.run", lambda llm, mode: {
+        "mode": mode,
+        "pass_rate": 1,
+        "fallback_rate": 0,
+        "check_fail_rate": 0,
+        "error_rate": 0,
+        "retry_rate": 0,
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "rows": [],
+    })
+
+    assert main(["--out", str(tmp_path / "live.json")]) == 0
+
+
+def test_live_cli_requires_model_for_configured_provider(
+    monkeypatch, tmp_path, capsys
+):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.setenv("GROQ_API_KEY", "groq-secret")
+    monkeypatch.delenv("GROQ_MODEL", raising=False)
+
+    assert main(["--out", str(tmp_path / "live.json")]) == 2
+    assert "GROQ_MODEL" in capsys.readouterr().err
 
 
 def test_fake_cli_defaults_to_fake_report_path(monkeypatch, tmp_path):
@@ -240,6 +300,8 @@ def test_error_outcome_returns_two(monkeypatch, tmp_path):
 
 def test_report_has_complete_fields_and_redacts_secrets(monkeypatch, tmp_path):
     monkeypatch.setenv("LLM_API_KEY", "secret-key")
+    monkeypatch.setenv("GROQ_API_KEY", "groq-secret")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-secret")
     report_path = tmp_path / "report.json"
     monkeypatch.setattr(
         "ai.eval.run",
@@ -265,7 +327,10 @@ def test_report_has_complete_fields_and_redacts_secrets(monkeypatch, tmp_path):
                 "calls": 1,
                 "fails": [],
                 "llm_errors": {},
-                "text": "secret-key https://provider.example/v1",
+                "text": (
+                    "secret-key groq-secret gemini-secret "
+                    "https://provider.example/v1"
+                ),
             }],
         },
     )
@@ -273,10 +338,35 @@ def test_report_has_complete_fields_and_redacts_secrets(monkeypatch, tmp_path):
     assert main(["--fake", "--out", str(report_path)]) == 0
     content = report_path.read_text(encoding="utf-8")
     assert "secret-key" not in content
+    assert "groq-secret" not in content
+    assert "gemini-secret" not in content
     assert "https://provider.example" not in content
     report = json.loads(content)
     assert {"mode", "cases", "pass_rate", "rows"} <= report.keys()
     assert {"name", "outcome", "source", "ms", "calls", "fails"} <= report["rows"][0].keys()
+
+
+def test_report_write_error_returns_status_two(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr("ai.eval.run", lambda llm, mode: {
+        "mode": mode,
+        "pass_rate": 1,
+        "fallback_rate": 0,
+        "check_fail_rate": 0,
+        "error_rate": 0,
+        "retry_rate": 0,
+        "p50_ms": 0,
+        "p95_ms": 0,
+        "rows": [],
+    })
+
+    def fail_write(self, data, encoding=None):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(Path, "write_text", fail_write)
+    assert main(["--fake", "--out", str(tmp_path / "report.json")]) == 2
+    diagnostic = capsys.readouterr().err
+    assert "could not write report" in diagnostic.lower()
+    assert "disk full" in diagnostic
 
 
 def test_all_live_llm_errors_print_configuration_warning(
@@ -284,15 +374,26 @@ def test_all_live_llm_errors_print_configuration_warning(
 ):
     monkeypatch.setenv("LLM_API_KEY", "secret-key")
     monkeypatch.setenv("LLM_MODEL", "model")
+    monkeypatch.setenv("GROQ_API_KEY", "groq-secret")
+    monkeypatch.setenv("GROQ_MODEL", "groq-model")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-secret")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-model")
 
     def failing(system, user):
         logging.getLogger("ai").warning(
-            "provider request failed at https://provider.example/v1"
+            "provider keys secret-key groq-secret gemini-secret failed at "
+            "https://provider.example/v1"
         )
-        raise RuntimeError("request failed at https://provider.example/v1")
+        raise RuntimeError(
+            "request failed with secret-key groq-secret gemini-secret at "
+            "https://provider.example/v1"
+        )
 
     monkeypatch.setattr("ai.eval.complete", failing)
     assert main(["--out", str(tmp_path / "report.json")]) == 1
     captured = capsys.readouterr()
     assert "configuration" in captured.err.lower()
     assert "provider.example" not in captured.err
+    assert "secret-key" not in captured.err
+    assert "groq-secret" not in captured.err
+    assert "gemini-secret" not in captured.err

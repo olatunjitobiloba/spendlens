@@ -39,7 +39,8 @@ python -m ai.eval --min-pass 0.9
 
 Live mode writes `docs/eval_latest.json` only after a run is available. Use
 `--min-pass FLOAT` to set the minimum passing-case rate required for exit
-status 0 (the default is `0.9`).
+status 0 (the default is `0.9`). Status 2 indicates a configuration,
+evaluation, or report-output error.
 
 The report rates are calculated per evaluation case:
 

@@ -70,6 +70,11 @@ _NUMBER_WORD_RE = re.compile(
 _DIGIT_RE = re.compile(r"\d")
 _NUMBER_RE = re.compile(r"\b\d+\b")
 _URL_RE = re.compile(r"https?://[^\s\"']+")
+_PROVIDER_CONFIGS = (
+    ("GROQ_API_KEY", "GROQ_MODEL"),
+    ("GEMINI_API_KEY", "GEMINI_MODEL"),
+    ("LLM_API_KEY", "LLM_MODEL"),
+)
 
 
 class _EvalLogRedactor(logging.Filter):
@@ -78,12 +83,37 @@ class _EvalLogRedactor(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         message = record.getMessage()
         message = _URL_RE.sub("[redacted-url]", message)
-        api_key = os.environ.get("LLM_API_KEY")
-        if api_key:
+        for api_key in _configured_api_keys():
             message = message.replace(api_key, "[redacted-secret]")
         record.msg = message
         record.args = ()
         return True
+
+
+def _configured_api_keys() -> list[str]:
+    """Return configured provider keys, longest first for safe replacement."""
+    return sorted(
+        {
+            value
+            for key_name, _ in _PROVIDER_CONFIGS
+            if (value := os.environ.get(key_name))
+        },
+        key=len,
+        reverse=True,
+    )
+
+
+def _live_configuration_errors() -> list[str]:
+    configured = False
+    missing: list[str] = []
+    for key_name, model_name in _PROVIDER_CONFIGS:
+        if os.environ.get(key_name):
+            configured = True
+            if not os.environ.get(model_name):
+                missing.append(model_name)
+    if not configured:
+        return ["LLM_API_KEY", "LLM_MODEL"]
+    return missing
 
 
 def _fake_model(system: str, user: str) -> str:
@@ -364,8 +394,7 @@ def _redact(value):
         return [_redact(item) for item in value]
     if isinstance(value, str):
         redacted = _URL_RE.sub("[redacted-url]", value)
-        api_key = os.environ.get("LLM_API_KEY")
-        if api_key:
+        for api_key in _configured_api_keys():
             redacted = redacted.replace(api_key, "[redacted-secret]")
         return redacted
     return value
@@ -408,10 +437,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if not args.fake:
-        missing = [
-            name for name in ("LLM_API_KEY", "LLM_MODEL")
-            if not os.environ.get(name)
-        ]
+        missing = _live_configuration_errors()
         if missing:
             print(
                 f"Live evaluation requires: {', '.join(missing)}.",
@@ -431,9 +457,15 @@ def main(argv: list[str] | None = None) -> int:
     output = args.out or Path(
         "docs/eval_fake.json" if args.fake else "docs/eval_latest.json"
     )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n",
-                      encoding="utf-8")
+    try:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    except OSError as error:
+        print(f"Could not write report to {output}: {error}", file=sys.stderr)
+        return 2
     _print_report(report)
 
     if report["error_rate"] > 0:
