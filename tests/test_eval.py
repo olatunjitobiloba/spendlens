@@ -1,7 +1,7 @@
 import re
 import json
 
-from ai.eval import cases, check, make_case, run
+from ai.eval import cases, check, main, make_case, run
 from ai.explain import template_explanation
 from ai.validate import validate
 
@@ -172,3 +172,32 @@ def test_run_records_retries():
 
     assert report["retry_rate"] > 0
     assert any(row["calls"] == 2 for row in report["rows"])
+
+
+def test_fake_cli_writes_passing_report(tmp_path):
+    output = tmp_path / "fake.json"
+
+    assert main(["--fake", "--out", str(output)]) == 0
+
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["mode"] == "fake"
+    assert report["pass_rate"] == 1
+    assert report["fallback_rate"] == 0
+    assert report["retry_rate"] == 0
+    assert all(row["outcome"] == "pass" for row in report["rows"])
+
+
+def test_live_cli_requires_configuration(monkeypatch, tmp_path, capsys):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+
+    assert main(["--out", str(tmp_path / "live.json")]) == 2
+    assert "LLM_API_KEY" in capsys.readouterr().err
+
+
+def test_fake_cli_defaults_to_fake_report_path(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    assert main(["--fake"]) == 0
+    assert (tmp_path / "docs" / "eval_fake.json").exists()
+    assert not (tmp_path / "docs" / "eval_latest.json").exists()

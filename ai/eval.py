@@ -1,15 +1,17 @@
 """Deterministic scenarios and known-answer checks for the evaluation harness."""
 
+import argparse
 import json
 import os
 import re
 import statistics
 import subprocess
+import sys
 import time
 from pathlib import Path
 from random import Random
 
-from ai.explain import explain
+from ai.explain import explain, template_explanation
 from ai.llm import complete
 from ai.schemas import CategoryRow, DateRange, ScenarioResult
 from ai.validate import fmt_naira, validate
@@ -66,6 +68,36 @@ _NUMBER_WORD_RE = re.compile(
 )
 _DIGIT_RE = re.compile(r"\d")
 _NUMBER_RE = re.compile(r"\b\d+\b")
+_URL_RE = re.compile(r"https?://[^\s\"']+")
+
+
+def _fake_model(system: str, user: str) -> str:
+    """Return a valid model-shaped response using the existing safe template."""
+    facts = json.loads(user.split("\n", 1)[0])
+    categories = [
+        CategoryRow(
+            category=item["category"],
+            total_kobo=item["saves"]["kobo"],
+            percent=item["percent"],
+            reduction_kobo=item["saves"]["kobo"],
+        )
+        for item in facts["cuts"]
+    ]
+    scenario = ScenarioResult(
+        data_revision="fake",
+        range=DateRange(start="0000-00-00", end="0000-00-00"),
+        baseline_kobo=facts["baseline"]["kobo"],
+        categories=categories,
+        total_reduction_kobo=facts["total_reduction"]["kobo"],
+        remaining_kobo=facts["remaining"]["kobo"],
+        protected_categories=facts["protected_categories"],
+        coverage_warnings=facts["warnings"],
+    )
+    explanation = template_explanation(scenario)
+    return json.dumps(
+        {"text": explanation.text, "numbers_used": explanation.numbers_used},
+        ensure_ascii=False,
+    )
 
 
 def _category_names(shape: str) -> list[str]:
@@ -308,3 +340,87 @@ def run(llm=complete, mode: str = "live") -> dict:
         "llm_errors": report_errors,
         "rows": rows,
     }
+
+
+def _redact(value):
+    if isinstance(value, dict):
+        return {key: _redact(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_redact(item) for item in value]
+    if isinstance(value, str):
+        redacted = _URL_RE.sub("[redacted-url]", value)
+        api_key = os.environ.get("LLM_API_KEY")
+        if api_key:
+            redacted = redacted.replace(api_key, "[redacted-secret]")
+        return redacted
+    return value
+
+
+def _print_report(report: dict) -> None:
+    for row in report["rows"]:
+        latency = f"{row['ms']} ms"
+        if report["mode"] == "fake":
+            latency += " (not model latency)"
+        print(
+            f"{row['name']}: {row['outcome']} source={row['source']} "
+            f"latency={latency} calls={row['calls']} fails={row['fails']}"
+        )
+    print(
+        f"pass_rate={report['pass_rate']:.3f} "
+        f"fallback_rate={report['fallback_rate']:.3f} "
+        f"check_fail_rate={report['check_fail_rate']:.3f} "
+        f"error_rate={report['error_rate']:.3f} "
+        f"retry_rate={report['retry_rate']:.3f} "
+        f"p50={report['p50_ms']:.3f} ms p95={report['p95_ms']:.3f} ms"
+    )
+    if (
+        report["mode"] == "live"
+        and report["rows"]
+        and all(row["llm_errors"] for row in report["rows"])
+    ):
+        print(
+            "Warning: every case encountered an LLM error; "
+            "check LLM_API_KEY, LLM_MODEL, and provider configuration.",
+            file=sys.stderr,
+        )
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run the explanation evaluation.")
+    parser.add_argument("--fake", action="store_true", help="use the deterministic fake model")
+    parser.add_argument("--min-pass", type=float, default=0.9)
+    parser.add_argument("--out", type=Path)
+    args = parser.parse_args(argv)
+
+    if not args.fake:
+        missing = [
+            name for name in ("LLM_API_KEY", "LLM_MODEL")
+            if not os.environ.get(name)
+        ]
+        if missing:
+            print(
+                f"Live evaluation requires: {', '.join(missing)}.",
+                file=sys.stderr,
+            )
+            return 2
+
+    report = run(llm=_fake_model if args.fake else complete,
+                 mode="fake" if args.fake else "live")
+    report = _redact(report)
+    output = args.out or Path(
+        "docs/eval_fake.json" if args.fake else "docs/eval_latest.json"
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n",
+                      encoding="utf-8")
+    _print_report(report)
+
+    if report["error_rate"] > 0:
+        return 2
+    if report["pass_rate"] < args.min_pass:
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
