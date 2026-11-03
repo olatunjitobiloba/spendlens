@@ -61,3 +61,4 @@ A pydantic error means the shapes differ.
 ## Tests and eval
 
 `pytest` (offline), `python -m ai.eval --fake`, `python -m ai.eval`
+

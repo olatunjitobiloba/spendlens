@@ -28,3 +28,4 @@ def test_missing_field_raises():
     del p["remaining_kobo"]
     with pytest.raises(ValidationError):
         explain_scenario(p, llm=boom)
+

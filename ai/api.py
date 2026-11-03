@@ -11,3 +11,4 @@ def explain_scenario(payload: dict, llm=complete) -> dict:
     """
     scenario = ScenarioResult.model_validate(payload)
     return explain(scenario, llm=llm).model_dump()
+
