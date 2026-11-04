@@ -97,9 +97,9 @@ function CodeMaths() {
         <SourceLabel icon={AiMagicIcon} tone="ai">
           Explained by AI
         </SourceLabel>
-        <p className="text-[14px] leading-relaxed text-t2">
-          Your spend would come down to {fmtWhole(sampleScenario.result)} this month. More than half of
-          the saving comes from eating out. Rent and groceries are protected, so they stay as they are.
+        <p className="text-[14px] leading-relaxed text-t2 italic">
+          &ldquo;Your spend would come down to <b>{fmtWhole(sampleScenario.result)}</b> this month. More than half of
+          the saving comes from eating out. Rent and groceries are protected, so they stay as they are&ldquo;
         </p>
         <p className="mt-auto pt-4 text-xs text-t3">Every figure above is quoted from the calculation.</p>
       </Inset>
