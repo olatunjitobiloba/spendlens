@@ -1,7 +1,7 @@
 export const hero = {
   title: "Know what you can cut, before you cut it.",
   description:
-    "SpendLens is a spending review API that banks and fintech apps plug into their product. People import transactions, protect the costs they can't drop, and test a savings plan. Code does the maths. AI only explains it.",
+    "SpendLens helps banks and fintech apps show customers where their money goes. Import transactions, protect fixed bills, test a savings plan. Code does the maths; AI explains it.",
 };
 
 export const why = {
