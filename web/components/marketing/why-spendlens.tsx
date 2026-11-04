@@ -228,9 +228,9 @@ function KoraPayment() {
       <KoraLogo className="h-6 text-foreground" />
       <div className="mt-4 flex items-center justify-between gap-3 rounded-full border border-line bg-panel py-1.5 pr-1.5 pl-4">
         <span className="text-[13px] text-t2">Pro, 30 days</span>
-        <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-positive/12 px-2.5 text-[11.5px] font-medium text-positive">
+        <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-primary/12 px-2.5 text-[11.5px] font-medium text-primary">
           <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" strokeWidth={2} />
-          Paid, confirmed by server
+          Paid successfully
         </span>
       </div>
     </Inset>
