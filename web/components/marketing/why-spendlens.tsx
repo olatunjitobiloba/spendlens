@@ -28,8 +28,8 @@ function Cell({
   return (
     <article className={cn("panel flex flex-col overflow-hidden", className)}>
       <div className="p-6 pb-0 sm:p-7 sm:pb-0">
-        <h3 className="text-[17px] font-[600] tracking-[-0.02em]">{title}</h3>
-        <p className="mt-1.5 max-w-md text-[14px] leading-relaxed text-t3">{body}</p>
+        <h3 className="text-[17px] font-semibold tracking-[-0.02em]">{title}</h3>
+        <p className="mt-1.5 max-w-auto text-[14px] leading-relaxed text-t3">{body}</p>
       </div>
       <div className="mt-6 flex flex-1 items-end p-3 pt-0 sm:p-4 sm:pt-0">{children}</div>
     </article>
