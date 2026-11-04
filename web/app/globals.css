@@ -1,26 +1,178 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-aspekta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-aspekta), ui-sans-serif, system-ui, sans-serif;
+  --color-brand: var(--brand);
+  --color-panel: var(--panel);
+  --color-panel-raised: var(--panel-raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-t2: var(--t2);
+  --color-t3: var(--t3);
+  --color-t4: var(--t4);
+  --color-positive: var(--positive);
+  --color-warn: var(--warn);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-card: 1.75rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Light: paper white #F6F6F4 */
+:root {
+  --brand: #007bf5;
+  --background: #f6f6f4;
+  --foreground: #09090b;
+  --panel: #ffffff;
+  --panel-raised: #efefec;
+  --line: rgb(9 9 11 / 0.08);
+  --line-strong: rgb(9 9 11 / 0.14);
+  --t2: #27272a;
+  --t3: #5c5c63;
+  --t4: #85858c;
+  --positive: #0f7b4b;
+  --warn: #9a5b00;
+
+  --card: var(--panel);
+  --card-foreground: var(--foreground);
+  --popover: var(--panel);
+  --popover-foreground: var(--foreground);
+  --primary: var(--brand);
+  --primary-foreground: #ffffff;
+  --secondary: var(--panel-raised);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--panel-raised);
+  --muted-foreground: var(--t3);
+  --accent: var(--panel-raised);
+  --accent-foreground: var(--foreground);
+  --destructive: #c62f2f;
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--brand);
+  --radius: 0.75rem;
+}
+
+/* Dark: ink #09090B */
+.dark {
+  --background: #09090b;
+  --foreground: #f6f6f4;
+  --panel: #111114;
+  --panel-raised: #18181c;
+  --line: rgb(255 255 255 / 0.07);
+  --line-strong: rgb(255 255 255 / 0.13);
+  --t2: #d6d6da;
+  --t3: #a1a1aa;
+  --t4: #71717a;
+  --positive: #3ccf8e;
+  --warn: #f3b24d;
+  --destructive: #f27474;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: var(--brand);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@utility page {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
+}
+
+@utility panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+/* Dot texture behind the hero. Flat dots, faded at the edges with a mask. */
+@utility dot-field {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--foreground) 16%, transparent) 1.1px,
+    transparent 1.4px
+  );
+  background-size: 22px 22px;
+  mask-image: radial-gradient(70% 60% at 50% 35%, #000 25%, transparent 75%);
+}
+
+/* Stacked step cards: earlier cards shrink a touch as later ones cover them. */
+.step-card {
+  transform-origin: 50% 0;
+  transform: scale(calc(1 - var(--depth, 0) * 0.04));
+  transition: transform 80ms linear;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .step-card {
+    transform: none;
+  }
 }
