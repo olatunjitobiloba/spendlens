@@ -1,6 +1,11 @@
+import logging
+import time
+
 from ai.explain import explain
 from ai.llm import complete
 from ai.schemas import ScenarioResult
+
+log = logging.getLogger("spendlens.ai")
 
 
 def explain_scenario(payload: dict, llm=complete) -> dict:
@@ -10,5 +15,9 @@ def explain_scenario(payload: dict, llm=complete) -> dict:
     Model problems never raise. They return source="template".
     """
     scenario = ScenarioResult.model_validate(payload)
-    return explain(scenario, llm=llm).model_dump()
+    start = time.perf_counter()
+    result = explain(scenario, llm=llm).model_dump()
+    ms = int((time.perf_counter() - start) * 1000)
+    log.info("explain source=%s ms=%d", result["source"], ms)
+    return result
 

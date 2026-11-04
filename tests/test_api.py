@@ -29,3 +29,13 @@ def test_missing_field_raises():
     with pytest.raises(ValidationError):
         explain_scenario(p, llm=boom)
 
+
+def test_explain_scenario_logs_source_and_timing(caplog):
+    import logging
+
+    with caplog.at_level(logging.INFO, logger="spendlens.ai"):
+        out = explain_scenario(payload(), llm=boom)
+        assert out["source"] == "template"
+    assert any("explain source=template ms=" in record.message for record in caplog.records)
+
+
