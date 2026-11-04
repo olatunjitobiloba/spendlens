@@ -158,14 +158,14 @@ export function ProVisual() {
         <ol className="mt-4 space-y-2.5">
           {timeline.map((t) => (
             <li key={t} className="flex items-center gap-2.5 text-[13px] text-t2">
-              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-4 text-positive" strokeWidth={2} />
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-4 text-primary" strokeWidth={2} />
               {t}
             </li>
           ))}
         </ol>
 
         <div className="mt-4 flex items-center justify-between gap-3">
-          <Status tone="positive">Pro unlocked</Status>
+          <Status tone="primary">Pro unlocked</Status>
           <span className="text-xs text-t3">Thu, 10:00</span>
         </div>
       </MockCard>

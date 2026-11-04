@@ -88,7 +88,7 @@ export function Deck({ className, children }: { className?: string; children: Re
       />
       <div
         aria-hidden="true"
-        className="absolute inset-x-1.5 -top-2.5 h-full rotate-[-2deg] rounded-2xl border border-line bg-panel-raised"
+        className="absolute inset-x-1.5 -top-2.5 h-full -rotate-2 rounded-2xl border border-line bg-panel-raised"
       />
       <div className="relative">{children}</div>
     </div>
@@ -100,10 +100,11 @@ export function Status({
   tone,
   children,
 }: {
-  tone: "positive" | "warn" | "neutral" | "brand";
+  tone: "primary" | "positive" | "warn" | "neutral" | "brand";
   children: React.ReactNode;
 }) {
   const tones = {
+    primary: "bg-primary/12 text-primary",
     positive: "bg-positive/12 text-positive",
     warn: "bg-warn/12 text-warn",
     neutral: "bg-foreground/[0.06] text-t3",

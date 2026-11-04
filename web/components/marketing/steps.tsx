@@ -39,7 +39,7 @@ export function Steps() {
                   <div className="mt-10 md:mt-auto">
                     <h3
                       id={`step-${step.number}`}
-                      className="text-[22px] font-[600] tracking-[-0.03em] sm:text-[24px]"
+                      className="text-[22px] font-semibold tracking-[-0.03em] sm:text-[24px]"
                     >
                       <span className="sr-only">Step {i + 1}: </span>
                       {step.title}
