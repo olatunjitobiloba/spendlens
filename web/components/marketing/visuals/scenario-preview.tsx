@@ -108,7 +108,6 @@ export function ScenarioPreview() {
               </dd>
             </div>
           </dl>
-          <p className="mt-3 text-xs text-t3">Scenario, not realised savings.</p>
         </div>
       </div>
       </div>
