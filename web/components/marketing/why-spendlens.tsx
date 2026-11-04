@@ -1,5 +1,10 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon, SquareLock02Icon } from "@hugeicons/core-free-icons";
+import {
+  AiMagicIcon,
+  Calculator01Icon,
+  CheckmarkCircle02Icon,
+  SquareLock02Icon,
+} from "@hugeicons/core-free-icons";
 
 import { KoraLogo } from "@/components/brand/kora-logo";
 import { why } from "@/configs/marketing";
@@ -7,7 +12,7 @@ import { fmtWhole } from "@/lib/format";
 import { sampleScenario } from "@/lib/sample-data";
 import { cn } from "@/lib/utils";
 import { SectionHeading } from "./section-heading";
-import { Status } from "./visuals/primitives";
+import { Status, WindowBar } from "./visuals/primitives";
 
 function Cell({
   title,
@@ -39,6 +44,31 @@ function Inset({ className, children }: { className?: string; children: React.Re
   );
 }
 
+/** Header strip that labels what produced a panel's content. */
+function SourceLabel({
+  icon,
+  tone,
+  children,
+}: {
+  icon: typeof Calculator01Icon;
+  tone: "code" | "ai";
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="-mx-4 -mt-4 mb-4 flex items-center gap-2 border-b border-line px-4 py-2.5 sm:-mx-5 sm:-mt-5 sm:px-5">
+      <span
+        className={cn(
+          "inline-flex size-5 items-center justify-center rounded-full",
+          tone === "code" ? "bg-brand text-white" : "bg-foreground text-background",
+        )}
+      >
+        <HugeiconsIcon icon={icon} className="size-3" strokeWidth={2} />
+      </span>
+      <span className="font-sans text-[12.5px] font-semibold text-foreground">{children}</span>
+    </div>
+  );
+}
+
 function CodeMaths() {
   const rows = [
     ["baseline", fmtWhole(sampleScenario.baseline)],
@@ -47,7 +77,9 @@ function CodeMaths() {
   return (
     <div className="grid w-full gap-2 sm:grid-cols-2">
       <Inset className="font-mono text-[12.5px]">
-        <p className="mb-3 text-t3">calculated by code</p>
+        <SourceLabel icon={Calculator01Icon} tone="code">
+          Calculated by code
+        </SourceLabel>
         <ul className="space-y-1.5">
           {rows.map(([k, v]) => (
             <li key={k} className="flex justify-between gap-4">
@@ -62,7 +94,9 @@ function CodeMaths() {
         </ul>
       </Inset>
       <Inset className="flex flex-col">
-        <p className="mb-3 font-mono text-[12.5px] text-t3">explained by AI</p>
+        <SourceLabel icon={AiMagicIcon} tone="ai">
+          Explained by AI
+        </SourceLabel>
         <p className="text-[14px] leading-relaxed text-t2">
           Your spend would come down to {fmtWhole(sampleScenario.result)} this month. More than half of
           the saving comes from eating out. Rent and groceries are protected, so they stay as they are.
@@ -168,7 +202,9 @@ function ApiSurface() {
     ["DELETE", "/v1/me/data", "Remove everything"],
   ];
   return (
-    <Inset className="overflow-x-auto p-0 sm:p-0">
+    <Inset className="overflow-hidden p-0 sm:p-0">
+      <WindowBar title="SpendLens API · v1" />
+      <div className="overflow-x-auto">
       <table className="w-full min-w-[420px] text-left font-mono text-[12.5px]">
         <caption className="sr-only">Some SpendLens API endpoints</caption>
         <tbody className="divide-y divide-line">
@@ -181,6 +217,7 @@ function ApiSurface() {
           ))}
         </tbody>
       </table>
+      </div>
     </Inset>
   );
 }

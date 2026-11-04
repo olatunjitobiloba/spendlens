@@ -26,6 +26,38 @@ export function Avatar({
   );
 }
 
+/** macOS-style window title bar with traffic lights. */
+export function WindowBar({
+  title,
+  aside,
+  className,
+}: {
+  title?: string;
+  aside?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid h-10 grid-cols-[1fr_auto_1fr] items-center gap-3 border-b border-line px-4",
+        className,
+      )}
+    >
+      <span aria-hidden="true" className="flex items-center gap-1.5">
+        <span className="size-3 rounded-full bg-[#FF5F57]" />
+        <span className="size-3 rounded-full bg-[#FEBC2E]" />
+        <span className="size-3 rounded-full bg-[#28C840]" />
+      </span>
+      {title ? (
+        <span className="truncate text-center text-xs font-medium text-t3">{title}</span>
+      ) : (
+        <span />
+      )}
+      <span className="justify-self-end">{aside}</span>
+    </div>
+  );
+}
+
 /** A small product card used inside previews. */
 export function MockCard({
   className,

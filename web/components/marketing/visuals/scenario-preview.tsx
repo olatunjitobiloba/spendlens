@@ -9,18 +9,21 @@ import {
   sampleScenario,
   sampleShares,
 } from "@/lib/sample-data";
-import { Avatar } from "./primitives";
+import { Avatar, WindowBar } from "./primitives";
 
 export function ScenarioPreview() {
   const { customer } = sampleProfiles;
 
   return (
-    <figure className="panel overflow-hidden p-2 sm:p-3">
+    <figure className="panel overflow-hidden">
       <figcaption className="sr-only">
         A sample SpendLens review for {sampleMonth}, showing spend by category and a savings
         scenario.
       </figcaption>
 
+      <WindowBar title="Partner Bank · Money Insights" />
+
+      <div className="p-2 sm:p-3">
       <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-3 sm:px-3">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar seed={customer.seed} name={customer.name} size={34} />
@@ -29,7 +32,7 @@ export function ScenarioPreview() {
             <p className="truncate text-xs text-t3">{sampleMonth} · synthetic data</p>
           </div>
         </div>
-        <p className="hidden text-xs text-t3 sm:block">Money Insights, inside Partner Bank</p>
+        <p className="hidden text-xs text-t3 sm:block">Powered by SpendLens API</p>
       </div>
 
       <div className="grid gap-2 md:grid-cols-[1.35fr_1fr]">
@@ -107,6 +110,7 @@ export function ScenarioPreview() {
           </dl>
           <p className="mt-3 text-xs text-t3">Scenario, not realised savings.</p>
         </div>
+      </div>
       </div>
     </figure>
   );
