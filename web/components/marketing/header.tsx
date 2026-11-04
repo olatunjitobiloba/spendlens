@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { GithubIcon } from "@hugeicons/core-free-icons";
-
+import { GithubLogo } from "@/components/brand/github-logo";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -57,7 +55,7 @@ export function Header() {
             aria-label="SpendLens on GitHub"
             className="inline-flex size-9 items-center justify-center rounded-full border border-line bg-panel text-t3 transition-colors duration-150 hover:border-line-strong hover:text-foreground"
           >
-            <HugeiconsIcon icon={GithubIcon} className="size-4" strokeWidth={1.8} />
+            <GithubLogo />
           </a>
           <ThemeToggle />
           <Button asChild className="hidden sm:inline-flex">

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight01Icon, GithubIcon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
+import { GithubLogo } from "@/components/brand/github-logo";
 import { LogoMark } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { closing } from "@/configs/marketing";
@@ -32,7 +33,7 @@ export function ClosingCta() {
             </Button>
             <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
               <a href={siteConfig.links.github} target="_blank" rel="noopener noreferrer">
-                <HugeiconsIcon icon={GithubIcon} strokeWidth={1.8} />
+                <GithubLogo />
                 View on GitHub
               </a>
             </Button>
