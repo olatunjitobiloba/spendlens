@@ -77,3 +77,27 @@ def test_tools_do_not_mutate_ctx():
     run_tool(ctx_copy, b, "list_categories", {})
     run_tool(ctx_copy, b, "get_category", {"name": "Food"})
     assert ctx_copy == CTX
+
+
+def test_scenario_result_fixture_accepted_directly():
+    import json
+    from pathlib import Path
+
+    fixture_path = Path(__file__).parent.parent / "fixtures" / "scenario_01.json"
+    scenario = json.loads(fixture_path.read_text())
+
+    b = Budget()
+    summary = run_tool(scenario, b, "get_summary", {})
+    assert summary["remaining_kobo"] == 16300000
+    assert summary["baseline_kobo"] == 18500000
+
+    cats = run_tool(scenario, b, "list_categories", {})
+    assert "categories" in cats
+    # Shopping (10_000_000), Food (6_000_000), Entertainment (2_500_000)
+    assert [c["name"] for c in cats["categories"]] == ["Shopping", "Food", "Entertainment"]
+
+    food = run_tool(scenario, b, "get_category", {"name": "Food"})
+    assert food["spend_kobo"] == 6000000
+    assert food["cut"] == {"category": "Food", "percent": 20, "reduction_kobo": 1200000}
+
+

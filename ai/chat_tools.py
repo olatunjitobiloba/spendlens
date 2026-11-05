@@ -29,6 +29,49 @@ class Budget:
 # }
 
 
+def make_chat_context(scenario: dict) -> dict:
+    """Adapts a backend ScenarioResult payload or dictionary into the chat tools context shape.
+
+    Accepts both:
+    1. Raw ScenarioResult shape (categories as list with total_kobo, protected_categories list)
+    2. Normalized chat context shape (categories as dict, protected list, cuts list)
+    """
+    if not isinstance(scenario, dict):
+        raise ValueError("Scenario payload must be a dictionary")
+
+    # If already normalized:
+    if isinstance(scenario.get("categories"), dict):
+        return scenario
+
+    categories_dict = {}
+    cuts_list = []
+    protected = scenario.get("protected_categories") or scenario.get("protected") or []
+
+    for row in scenario.get("categories", []):
+        if not isinstance(row, dict):
+            continue
+        cat_name = row.get("category", "")
+        total = row.get("total_kobo", 0)
+        categories_dict[cat_name] = total
+        reduction = row.get("reduction_kobo", 0)
+        percent = row.get("percent", 0)
+        if reduction > 0 or percent > 0:
+            cuts_list.append({
+                "category": cat_name,
+                "percent": percent,
+                "reduction_kobo": reduction,
+            })
+
+    return {
+        "baseline_kobo": scenario.get("baseline_kobo", 0),
+        "total_reduction_kobo": scenario.get("total_reduction_kobo", 0),
+        "remaining_kobo": scenario.get("remaining_kobo", 0),
+        "categories": categories_dict,
+        "protected": protected,
+        "cuts": cuts_list,
+    }
+
+
 def get_summary(ctx: dict, args: dict) -> dict:
     return {
         k: ctx[k]
@@ -82,6 +125,8 @@ def run_tool(ctx: dict, budget: Budget, name: str, args: dict) -> dict:
     if not budget.spend():
         return {"error": "budget_exceeded"}
     try:
-        return TOOLS[name](ctx, args if isinstance(args, dict) else {})
+        normalized_ctx = make_chat_context(ctx) if isinstance(ctx.get("categories"), list) else ctx
+        return TOOLS[name](normalized_ctx, args if isinstance(args, dict) else {})
     except Exception:
         return {"error": "tool_failed"}
+
