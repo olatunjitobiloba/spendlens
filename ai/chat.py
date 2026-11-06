@@ -80,3 +80,4 @@ def chat(ctx: dict, message: str, history: list | None = None, llm=complete) -> 
     except Exception:
         pass
     return {"answer": REFUSAL, "source": "refusal", "tool_calls": budget.calls}
+

@@ -69,3 +69,4 @@ def test_chat_with_scenario_fixture():
     out = chat(scenario, "how much on food?", llm=llm)
     assert out["source"] == "model"
     assert out["tool_calls"] == 1
+
