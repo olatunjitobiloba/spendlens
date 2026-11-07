@@ -49,6 +49,12 @@ def test_unknown_tool_is_harmless():
     assert chat(CTX, "x", llm=llm)["source"] == "model"
 
 
+def test_fenced_json_is_accepted():
+    fenced = "```json\n" + j(tool="get_summary", args={}) + "\n```"
+    llm = scripted(fenced, j(answer="You would keep ₦95,500.00 after savings."))
+    assert chat(CTX, "x", llm=llm)["source"] == "model"
+
+
 def test_markdown_fence_json_is_parsed():
     fenced = "```json\n" + j(answer="I can't check that.") + "\n```"
     assert chat(CTX, "x", llm=scripted(fenced))["source"] == "model"
