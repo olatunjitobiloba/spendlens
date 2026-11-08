@@ -76,3 +76,14 @@ def test_chat_with_scenario_fixture():
     assert out["source"] == "model"
     assert out["tool_calls"] == 1
 
+
+def test_partial_number_is_refused():
+    llm = scripted(j(tool="get_summary", args={}), j(answer="You would keep 5 naira."))
+    assert chat(CTX, "x", llm=llm)["source"] == "refusal"
+
+
+def test_comma_and_missing_decimals_are_accepted():
+    llm = scripted(j(tool="get_summary", args={}), j(answer="You keep ₦95,500, which is enough."))
+    assert chat(CTX, "x", llm=llm)["source"] == "model"
+
+
