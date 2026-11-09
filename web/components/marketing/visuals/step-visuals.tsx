@@ -7,8 +7,8 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { KoraLogo } from "@/components/brand/kora-logo";
-import { fmtWhole } from "@/lib/format";
-import { sampleProfiles, sampleScenario } from "@/lib/sample-data";
+import { fmtWhole } from "@/utils/format";
+import { sampleProfiles, sampleScenario } from "@/configs/sample-data";
 import { Avatar, Deck, MockCard, Status } from "./primitives";
 
 function FakeButton({ primary, children }: { primary?: boolean; children: React.ReactNode }) {

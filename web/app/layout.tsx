@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
-import { ThemeProvider } from "@/components/theme/theme-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import { aspekta, geistMono } from "@/configs/fonts";
 import { siteConfig } from "@/configs/site";
 import "./globals.css";

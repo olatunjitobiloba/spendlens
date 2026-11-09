@@ -8,9 +8,9 @@ import {
 
 import { KoraLogo } from "@/components/brand/kora-logo";
 import { why } from "@/configs/marketing";
-import { fmtWhole } from "@/lib/format";
-import { sampleScenario } from "@/lib/sample-data";
-import { cn } from "@/lib/utils";
+import { fmtWhole } from "@/utils/format";
+import { sampleScenario } from "@/configs/sample-data";
+import { cn } from "@/utils/cn";
 import { SectionHeading } from "./section-heading";
 import { Status, WindowBar } from "./visuals/primitives";
 

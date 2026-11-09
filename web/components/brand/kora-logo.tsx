@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 
 // Kora's official logo (from korahq.com). The mark keeps Kora blue; the
 // wordmark follows the current text colour so it reads in light and dark.

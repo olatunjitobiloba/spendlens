@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 
 /**
  * SpendLens mark: a lens ring with one slice of spend inside it.
