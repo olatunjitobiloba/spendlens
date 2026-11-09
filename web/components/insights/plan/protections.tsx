@@ -8,6 +8,8 @@ import { Icon } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
 import { UNCATEGORISED } from "@/configs/categories";
+import { SET_PROTECTIONS_KEY } from "@/configs/insights";
+import { setLocalFlag } from "@/hooks/use-local-flag";
 import { asApiError } from "@/hooks/use-resource";
 import { api, type ApiError } from "@/lib/api";
 import type { Analysis } from "@/types/api";
@@ -26,6 +28,7 @@ export function Protections({ analysis, onChanged }: { analysis: Analysis; onCha
     setError(null);
     try {
       await api.setProtections(next);
+      setLocalFlag(SET_PROTECTIONS_KEY, true);
       await onChanged();
     } catch (e) {
       setError(asApiError(e));

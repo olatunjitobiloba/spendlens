@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBlock } from "@/components/ui/loading";
 import { PageHeader } from "@/components/ui/page-header";
+import { TESTED_CUT_KEY } from "@/configs/insights";
+import { setLocalFlag } from "@/hooks/use-local-flag";
 import { asApiError, useResource } from "@/hooks/use-resource";
 import { api, type ApiError } from "@/lib/api";
 import type { Scenario } from "@/types/api";
@@ -48,6 +50,7 @@ export function PlanScreen() {
     try {
       setScenario(await api.createScenario({ range: a.range, cuts: list }));
       setLastCuts(JSON.stringify(cuts));
+      setLocalFlag(TESTED_CUT_KEY, true);
       requestAnimationFrame(() => resultRef.current?.scrollIntoView({ block: "start" }));
     } catch (e) {
       setError(asApiError(e));

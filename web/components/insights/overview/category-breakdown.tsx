@@ -1,7 +1,10 @@
 import Link from "next/link";
-import { SquareLock02Icon } from "@hugeicons/core-free-icons";
+import { PieChartIcon, SquareLock02Icon } from "@hugeicons/core-free-icons";
 
 import { Bar } from "@/components/ui/bar";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { HeaderLink } from "@/components/ui/header-link";
 import { Icon } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
@@ -10,37 +13,32 @@ import { UNCATEGORISED } from "@/configs/categories";
 import type { Analysis } from "@/types/api";
 import { reviewHref } from "@/utils/links";
 
-/** Headline total and spend by category. Each category links to its transactions. */
-export function SpendSummary({ analysis, month }: { analysis: Analysis; month: string }) {
-  const a = analysis;
+/** Spend by category. Each row links to the transactions behind it (PRD R2). */
+export function CategoryBreakdown({ analysis: a, month }: { analysis: Analysis | null; month: string }) {
   return (
-    <Section className="lg:row-span-2">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div>
-          <p className="text-[13px] font-medium text-t3">Spent</p>
-          <p className="mt-1 text-[32px] leading-none font-[600] tracking-[-0.04em] sm:text-[38px]">
-            <Money kobo={a.total_spent_kobo} className="font-sans" />
-          </p>
-        </div>
-        <dl className="flex gap-6 text-[13px]">
-          <div>
-            <dt className="text-t3">Money in</dt>
-            <dd>
-              <Money kobo={a.total_income_kobo} />
-            </dd>
-          </div>
-          <div>
-            <dt className="text-t3">Transactions</dt>
-            <dd className="font-mono tabular-nums">{a.txn_count}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <h2 className="sr-only">Spending by category</h2>
-      {a.categories.length === 0 ? (
-        <p className="mt-6 text-[13.5px] text-t3">No spending in this month.</p>
+    <Section
+      title="Spending by category"
+      description="Largest first, protected ones in grey"
+      aside={a && <HeaderLink href={reviewHref({ month })}>All transactions</HeaderLink>}
+      className="flex flex-col"
+    >
+      {!a || a.categories.length === 0 ? (
+        <EmptyState
+          icon={PieChartIcon}
+          title={a ? "No spending this month" : "No transactions yet"}
+          className="flex-1"
+          action={
+            !a && (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/insights/import">Import a CSV</Link>
+              </Button>
+            )
+          }
+        >
+          {a ? "Pick another month to see its categories." : "Import a CSV, or try the sample data."}
+        </EmptyState>
       ) : (
-        <ul className="mt-6 space-y-3.5">
+        <ul className="space-y-3.5">
           {a.categories.map((c) => (
             <li key={c.category} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1.5">
               <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px]">
@@ -60,7 +58,7 @@ export function SpendSummary({ analysis, month }: { analysis: Analysis; month: s
               </span>
               <span className="text-right text-[12.5px] text-t2">
                 <Money kobo={c.total_kobo} />
-                <span className="ml-2 hidden font-mono text-t4 sm:inline">{c.share_pct}%</span>
+                <span className="ml-2 hidden w-12 font-mono text-t4 sm:inline-block">{c.share_pct}%</span>
               </span>
               <span className="col-span-2">
                 <Bar pct={c.share_pct} muted={c.protected} />

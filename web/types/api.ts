@@ -90,10 +90,19 @@ export type ReconciliationCandidate = {
   b: Transaction;
 };
 
+export type MonthTotal = {
+  month: string; // "2026-10"
+  total_kobo: number;
+  /** Height against the largest month, one decimal. For bar heights only. */
+  pct_of_max: number;
+};
+
 export type Analysis = {
   range: DateRange;
   data_range: DateRange | null;
   available_months: string[]; // "2026-10"
+  /** Spend per month across all data, oldest first. */
+  monthly_totals: MonthTotal[];
   total_spent_kobo: number;
   total_income_kobo: number;
   txn_count: number;

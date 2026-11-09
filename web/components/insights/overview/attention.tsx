@@ -1,61 +1,69 @@
-import { Alert02Icon } from "@hugeicons/core-free-icons";
+import { Notification03Icon } from "@hugeicons/core-free-icons";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { EvidenceLink } from "@/components/ui/evidence-link";
-import { Icon } from "@/components/ui/icon";
-import { Notice } from "@/components/ui/notice";
+import { HeaderLink } from "@/components/ui/header-link";
 import { Section } from "@/components/ui/section";
 import { Status } from "@/components/ui/status";
 import type { Analysis } from "@/types/api";
 import { reviewHref } from "@/utils/links";
 
-const isDuplicateWarning = (w: string) => w.includes("possible duplicate");
+const isGap = (w: string) => w.startsWith("No transactions for");
 
 /** Uncertainty stated in words, each with a link to act on it (PRD R2, R3). */
-export function Attention({ analysis, month }: { analysis: Analysis; month: string }) {
-  const dupes = analysis.reconciliation_candidates.length;
-  const review = analysis.needs_review_count;
-  const gaps = analysis.coverage_warnings.filter((w) => !isDuplicateWarning(w));
+export function Attention({ analysis: a, month }: { analysis: Analysis | null; month: string }) {
+  const dupes = a?.reconciliation_candidates.length ?? 0;
+  const review = a?.needs_review_count ?? 0;
+  const gaps = a?.coverage_warnings.filter(isGap) ?? [];
+  const clear = !dupes && !review && !gaps.length;
 
-  if (!dupes && !review && !gaps.length) {
-    return (
-      <Notice tone="positive" title="Nothing needs your review">
-        Every transaction has a category and no possible duplicates are waiting.
-      </Notice>
-    );
-  }
-
-  const row = "flex flex-wrap items-center justify-between gap-2 py-2.5 first:pt-0";
   return (
-    <Section title="Needs your attention" aside={<Icon icon={Alert02Icon} className="text-warn" />}>
-      <ul className="divide-y divide-line text-[13.5px]">
-        {review > 0 && (
-          <li className={row}>
-            <span className="flex items-center gap-2">
-              <Status tone="warn">Needs review</Status>
-              {review} transaction{review === 1 ? " has" : "s have"} no category
-            </span>
-            <EvidenceLink href={reviewHref({ filter: "needs_review" })}>Review</EvidenceLink>
-          </li>
-        )}
-        {dupes > 0 && (
-          <li className={row}>
-            <span className="flex items-center gap-2">
-              <Status tone="warn">Possible duplicate</Status>
-              {dupes} pair{dupes === 1 ? "" : "s"} may be the same payment
-            </span>
-            <EvidenceLink href="/insights/review#duplicates">Compare</EvidenceLink>
-          </li>
-        )}
-        {gaps.map((w) => (
-          <li key={w} className={row}>
-            <span className="flex items-center gap-2">
-              <Status tone="neutral">Gap in data</Status>
-              {w}
-            </span>
-            <EvidenceLink href={reviewHref({ month })}>See this month</EvidenceLink>
-          </li>
-        ))}
-      </ul>
+    <Section
+      title="Needs your attention"
+      description="Things SpendLens was unsure about"
+      aside={a && <HeaderLink href="/insights/review">View all</HeaderLink>}
+      className="flex flex-col"
+    >
+      {clear ? (
+        <EmptyState icon={Notification03Icon} title="All clear" className="flex-1">
+          {a ? "Nothing is waiting for your review." : "Flags appear here once transactions arrive."}
+        </EmptyState>
+      ) : (
+        <ul className="divide-y divide-line text-[13.5px]">
+          {review > 0 && (
+            <li className="flex flex-col gap-1.5 py-2.5 first:pt-0">
+              <Status tone="warn" className="self-start">
+                Needs review
+              </Status>
+              <span>
+                {review} transaction{review === 1 ? " has" : "s have"} no category.{" "}
+                <EvidenceLink href={reviewHref({ filter: "needs_review" })}>Review</EvidenceLink>
+              </span>
+            </li>
+          )}
+          {dupes > 0 && (
+            <li className="flex flex-col gap-1.5 py-2.5 first:pt-0">
+              <Status tone="warn" className="self-start">
+                Possible duplicate
+              </Status>
+              <span>
+                {dupes} pair{dupes === 1 ? "" : "s"} may be the same payment.{" "}
+                <EvidenceLink href="/insights/review#duplicates">Compare</EvidenceLink>
+              </span>
+            </li>
+          )}
+          {gaps.map((w) => (
+            <li key={w} className="flex flex-col gap-1.5 py-2.5 first:pt-0">
+              <Status tone="neutral" className="self-start">
+                Gap in data
+              </Status>
+              <span>
+                {w} <EvidenceLink href={reviewHref({ month })}>See month</EvidenceLink>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </Section>
   );
 }

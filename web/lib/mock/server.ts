@@ -301,6 +301,17 @@ function availableMonths(db: Db): string[] {
   return [...new Set(db.txns.map((t) => monthOf(t.date)))].sort().reverse();
 }
 
+function monthlyTotals(db: Db) {
+  const months = availableMonths(db).slice().reverse();
+  const totals = months.map((m) => spend(db).filter((t) => monthOf(t.date) === m).reduce((s, t) => s + t.amount_kobo, 0));
+  const max = Math.max(0, ...totals);
+  return months.map((month, i) => ({
+    month,
+    total_kobo: totals[i],
+    pct_of_max: max ? Math.round((totals[i] * 1000) / max) / 10 : 0,
+  }));
+}
+
 function comparison(db: Db, range: DateRange): Comparison {
   const prevMonth = shiftMonth(monthOf(range.start), -1);
   const prevRange = monthRange(prevMonth);
@@ -334,6 +345,7 @@ function analysis(db: Db, q: Record<string, unknown>): Analysis {
   const base = {
     data_range: dr,
     available_months: availableMonths(db),
+    monthly_totals: monthlyTotals(db),
     needs_review_count: active(db).filter((t) => t.review_state === "needs_review").length,
     reconciliation_candidates: candidates(db),
     imports: db.imports,
