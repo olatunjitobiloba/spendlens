@@ -50,10 +50,6 @@ export function ModeBanner() {
 
   return (
     <p className="text-[12px] text-t3">
-      <Status tone="warn" className="mr-1.5 h-5 px-2 text-[11px]">
-        Sample mode
-      </Status>
-      Synthetic data, kept in this browser.
       {liveApiConfigured && (
         <>
           {" "}
