@@ -110,7 +110,6 @@ function ResultSheet({ scenario, month }: { scenario: Scenario; month: string })
             </AlertDialogDescription>
           </div>
         </div>
-        <Status tone="neutral">Scenario, not realised savings</Status>
       </div>
 
       <div className="mt-5">
