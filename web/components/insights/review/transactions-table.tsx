@@ -1,3 +1,4 @@
+import { BankBadge } from "@/components/ui/bank-badge";
 import { Money } from "@/components/ui/money";
 import { Status } from "@/components/ui/status";
 import type { Transaction } from "@/types/api";
@@ -24,10 +25,11 @@ export function TransactionsTable({
 }) {
   return (
     <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" tabIndex={0} aria-label="Transactions table">
-      <table className={cn("w-full min-w-[640px] text-left text-[13px]", dimmed && "opacity-60")}>
+      <table className={cn("w-full min-w-[760px] text-left text-[13px]", dimmed && "opacity-60")}>
         <thead className="text-t3">
           <tr className="border-b border-line">
             <th scope="col" className="py-2 pr-3 font-medium">Date</th>
+            <th scope="col" className="py-2 pr-3 font-medium">Bank</th>
             <th scope="col" className="py-2 pr-3 font-medium">Description</th>
             <th scope="col" className="py-2 pr-3 font-medium">Category</th>
             <th scope="col" className="py-2 pr-3 font-medium">Status</th>
@@ -39,6 +41,9 @@ export function TransactionsTable({
             <tr key={t.id} className={cn(t.review_state === "duplicate" && "text-t4")}>
               <td className="py-2 pr-3 whitespace-nowrap text-t3">
                 {formatDate(t.date, { day: "numeric", month: "short" })}
+              </td>
+              <td className="py-2 pr-3 text-[12.5px] text-t2">
+                <BankBadge bank={t.bank} />
               </td>
               <td className="py-2 pr-3">
                 {/* Rendered as text, never HTML (technical doc §13). */}

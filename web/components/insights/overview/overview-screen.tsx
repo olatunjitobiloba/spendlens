@@ -6,7 +6,6 @@ import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { LoadingBlock } from "@/components/ui/loading";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { useResource } from "@/hooks/use-resource";
@@ -16,6 +15,7 @@ import { monthToRange } from "@/utils/dates";
 import { formatMonth, formatRange } from "@/utils/format";
 import { ErrorNotice } from "../shared/error-notice";
 import { MonthSelect } from "../shared/month-select";
+import { OverviewSkeleton } from "../skeletons";
 import { Attention } from "./attention";
 import { CategoryBreakdown } from "./category-breakdown";
 import { ComparisonCard } from "./comparison-card";
@@ -42,7 +42,7 @@ export function OverviewScreen() {
   );
 
   if (analysis.error) return <ErrorNotice error={analysis.error} onRetry={analysis.reload} />;
-  if (!analysis.data) return <LoadingBlock label="Loading your summary" rows={5} />;
+  if (!analysis.data) return <OverviewSkeleton />;
 
   const raw = analysis.data;
   // No imports yet: the same dashboard, every card in its empty state.

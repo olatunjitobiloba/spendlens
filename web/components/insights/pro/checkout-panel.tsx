@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Money } from "@/components/ui/money";
+import { Spinner } from "@/components/ui/spinner";
 import { Notice } from "@/components/ui/notice";
 import { Section } from "@/components/ui/section";
 import { KORA_PUBLIC_KEY } from "@/configs/env";
@@ -16,7 +17,7 @@ import type { SandboxOutcome } from "@/lib/mock/server";
 import type { Me, Order } from "@/types/api";
 import { ErrorNotice } from "../shared/error-notice";
 import { PaymentStatus } from "./payment-status";
-import { ProFeatures } from "./pro-features";
+import { PlanComparison } from "./pro-features";
 import { SandboxSimulator } from "./sandbox-simulator";
 
 // Synthetic customer for sample mode only.
@@ -100,18 +101,23 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
   const inFlight = state.phase === "polling" || showSimulator;
 
   return (
-    <div className="grid items-start gap-3 lg:grid-cols-[1.2fr_1fr]">
-      <Section title="SpendLens Pro" description={`${me.pro_days} days of extra tools. No auto-renewal.`}>
-        <p className="text-[34px] leading-none font-[600] tracking-[-0.04em]">
-          <Money kobo={me.pro_price_kobo} className="font-sans" />
-        </p>
-        <p className="mt-1 text-[12.5px] text-t3">One payment for {me.pro_days} days. Test price in this demo.</p>
-        <div className="mt-5">
-          <ProFeatures />
-        </div>
-      </Section>
+    <div className="grid items-start gap-3 lg:grid-cols-[1.6fr_1fr]">
+      <PlanComparison priceKobo={me.pro_price_kobo} days={me.pro_days} current="free" />
 
-      <Section title="Pay with Kora" description="Card, bank transfer and other methods Kora supports.">
+      <Section
+        title="Upgrade to Pro"
+        description="Card, bank transfer and other methods Kora supports."
+        className="lg:sticky lg:top-6"
+      >
+        <div className="mb-4 rounded-2xl bg-brand/[0.07] p-4">
+          <p className="text-[12.5px] text-t3">Pay once with Kora</p>
+          <p className="mt-1 text-[30px] leading-none font-[650] tracking-[-0.04em]">
+            <Money kobo={me.pro_price_kobo} className="font-sans" />
+          </p>
+          <p className="mt-1.5 text-[12.5px] text-t3">
+            {me.pro_days} days of Pro. No auto-renewal. Test price in this demo.
+          </p>
+        </div>
         {!order || state.phase === "idle" ? (
           <form onSubmit={pay} className="space-y-3">
             {fixtures ? (
@@ -159,6 +165,7 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
               ))}
             {!showSimulator && (
               <Button type="submit" size="lg" className="w-full" disabled={busy || inFlight}>
+                {busy && <Spinner />}
                 {busy ? "Creating order…" : "Continue to payment"}
               </Button>
             )}

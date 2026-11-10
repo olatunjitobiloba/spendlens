@@ -1,5 +1,4 @@
-import { Tooltip } from "radix-ui";
-
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { MeProvider } from "@/providers/me-provider";
 import { DesktopSidebar, MobileSidebar } from "./sidebar/sidebar";
 
@@ -7,7 +6,7 @@ import { DesktopSidebar, MobileSidebar } from "./sidebar/sidebar";
 export function InsightsShell({ children }: { children: React.ReactNode }) {
   return (
     <MeProvider>
-      <Tooltip.Provider delayDuration={200}>
+      <TooltipProvider delayDuration={200}>
         <a
           href="#insights-main"
           className="sr-only z-50 rounded-full bg-brand px-4 py-2 text-sm text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -23,7 +22,7 @@ export function InsightsShell({ children }: { children: React.ReactNode }) {
             </main>
           </div>
         </div>
-      </Tooltip.Provider>
+      </TooltipProvider>
     </MeProvider>
   );
 }

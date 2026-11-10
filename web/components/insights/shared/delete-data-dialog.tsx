@@ -1,9 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog } from "radix-ui";
+import { Delete02Icon } from "@hugeicons/core-free-icons";
 
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { Spinner } from "@/components/ui/spinner";
 import { asApiError } from "@/hooks/use-resource";
 import { api, type ApiError } from "@/lib/api";
 import { ErrorNotice } from "./error-notice";
@@ -30,34 +42,34 @@ export function DeleteDataDialog({ open, onOpenChange }: { open: boolean; onOpen
   }
 
   return (
-    <Dialog.Root
+    <AlertDialog
       open={open}
       onOpenChange={(o) => {
+        if (busy) return;
         onOpenChange(o);
         if (!o) setError(null);
       }}
     >
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-[1.25rem] border border-line-strong bg-panel p-5 shadow-2xl">
-          <Dialog.Title className="text-[17px] font-[650] tracking-[-0.02em]">Delete all your financial data?</Dialog.Title>
-          <Dialog.Description className="mt-2 text-[13.5px] text-t3">
+      <AlertDialogContent className="rounded-[1.25rem] border border-line-strong bg-panel ring-0 sm:max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <Icon icon={Delete02Icon} className="size-5" />
+          </AlertDialogMedia>
+          <AlertDialogTitle className="text-[16px] font-[650]">Delete all your financial data?</AlertDialogTitle>
+          <AlertDialogDescription className="text-[13.5px]">
             This removes every import, transaction, correction, protection and scenario. It cannot be undone. Your Pro
             access, if any, is kept.
-          </Dialog.Description>
-          {error && <ErrorNotice error={error} className="mt-4" />}
-          <div className="mt-5 flex flex-wrap justify-end gap-2">
-            <Dialog.Close asChild>
-              <Button variant="outline" disabled={busy}>
-                Keep my data
-              </Button>
-            </Dialog.Close>
-            <Button className="bg-destructive text-white hover:bg-destructive/90" onClick={confirm} disabled={busy}>
-              {busy ? "Deleting…" : "Delete everything"}
-            </Button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {error && <ErrorNotice error={error} />}
+        <AlertDialogFooter className="rounded-b-[1.25rem] border-line bg-panel-raised/50">
+          <AlertDialogCancel disabled={busy}>Keep my data</AlertDialogCancel>
+          <Button className="bg-destructive text-white hover:bg-destructive/90" onClick={confirm} disabled={busy}>
+            {busy && <Spinner />}
+            {busy ? "Deleting…" : "Delete everything"}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

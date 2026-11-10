@@ -2,31 +2,51 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, Copy01Icon, LeftToRightListBulletIcon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Icon } from "@/components/ui/icon";
-import { LoadingBlock, Spinner } from "@/components/ui/loading";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Section } from "@/components/ui/section";
 import { Status } from "@/components/ui/status";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResource } from "@/hooks/use-resource";
 import { api } from "@/lib/api";
 import type { Transaction } from "@/types/api";
+import { cn } from "@/utils/cn";
 import { monthToRange } from "@/utils/dates";
 import { ErrorNotice } from "../shared/error-notice";
+import { ReviewSkeleton, RowsSkeleton } from "../skeletons";
 import { DuplicateCandidates } from "./duplicate-candidates";
 import { ReviewStats } from "./review-stats";
 import { TransactionFilters, type ReviewFilter } from "./transaction-filters";
 import { TransactionsTable } from "./transactions-table";
 
 const PAGE_SIZE = 20;
+type Tab = "transactions" | "duplicates";
+
+const tabTrigger =
+  "h-9 flex-none gap-2 rounded-full px-4 text-[13px] data-active:bg-panel data-active:shadow-sm dark:data-active:border-line-strong dark:data-active:bg-panel";
+
+function Count({ n, warn }: { n: number; warn?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[11px] tabular-nums",
+        warn && n > 0 ? "bg-warn/15 text-warn" : "bg-foreground/[0.07] text-t3",
+      )}
+    >
+      {n}
+    </span>
+  );
+}
 
 export function ReviewScreen() {
   const router = useRouter();
   const params = useSearchParams();
+  const tab: Tab = params.get("tab") === "duplicates" ? "duplicates" : "transactions";
   const filter: ReviewFilter = params.get("filter") === "needs_review" ? "needs_review" : "all";
   const category = params.get("category") ?? "";
   const month = params.get("month") ?? "";
@@ -35,6 +55,7 @@ export function ReviewScreen() {
   const page = Math.max(1, Number(params.get("page")) || 1);
 
   const analysis = useResource(() => api.analysis(), "review-analysis");
+  // Keyed on the list's own inputs, so switching tabs does not refetch it.
   const txns = useResource(
     () =>
       api.transactions({
@@ -46,16 +67,16 @@ export function ReviewScreen() {
         ids: ids ? ids.split(",") : undefined,
         ...monthToRange(month),
       }),
-    params.toString(),
+    [filter, category, month, ids, q, page].join("|"),
   );
 
-  function setParams(patch: Record<string, string | null>) {
+  function setParams(patch: Record<string, string | null>, { keepPage = false } = {}) {
     const next = new URLSearchParams(params.toString());
     for (const [k, v] of Object.entries(patch)) {
       if (v) next.set(k, v);
       else next.delete(k);
     }
-    if (!("page" in patch)) next.delete("page");
+    if (!keepPage && !("page" in patch)) next.delete("page");
     router.replace(`?${next.toString()}`, { scroll: false });
   }
 
@@ -66,7 +87,7 @@ export function ReviewScreen() {
 
   const a = analysis.data;
   if (analysis.error) return <ErrorNotice error={analysis.error} onRetry={analysis.reload} />;
-  if (!a) return <LoadingBlock label="Loading your transactions" rows={6} />;
+  if (!a) return <ReviewSkeleton />;
   if (a.imports.length === 0) {
     return (
       <>
@@ -85,6 +106,7 @@ export function ReviewScreen() {
     );
   }
 
+  const dupes = a.reconciliation_candidates.length;
   const hasFilters = Boolean(category || month || ids || q || filter !== "all");
   const totalPages = txns.data ? Math.max(1, Math.ceil(txns.data.total / PAGE_SIZE)) : 1;
 
@@ -104,78 +126,114 @@ export function ReviewScreen() {
           </Notice>
         ))}
 
-      {a.reconciliation_candidates.length > 0 && (
-        <div className="mb-3">
-          <DuplicateCandidates
-            items={a.reconciliation_candidates}
-            onDone={() => {
-              void analysis.reload();
-              void txns.reload();
-            }}
-          />
-        </div>
-      )}
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setParams({ tab: v === "duplicates" ? "duplicates" : null }, { keepPage: true })}
+        className="gap-3"
+      >
+        <TabsList className="h-auto rounded-full border border-line bg-panel-raised/60 p-1 group-data-horizontal/tabs:h-auto">
+          <TabsTrigger value="transactions" className={tabTrigger}>
+            <Icon icon={LeftToRightListBulletIcon} />
+            Transactions
+            {txns.data && <Count n={txns.data.total} />}
+          </TabsTrigger>
+          <TabsTrigger value="duplicates" className={tabTrigger}>
+            <Icon icon={Copy01Icon} />
+            Possible duplicates
+            <Count n={dupes} warn />
+          </TabsTrigger>
+        </TabsList>
 
-      <Section title="Transactions">
-        <TransactionFilters
-          key={q}
-          filter={filter}
-          category={category}
-          month={month}
-          q={q}
-          months={a.available_months}
-          needsReviewCount={a.needs_review_count}
-          onChange={setParams}
-        />
+        <TabsContent value="transactions">
+          <Section title="Transactions">
+            <TransactionFilters
+              key={q}
+              filter={filter}
+              category={category}
+              month={month}
+              q={q}
+              months={a.available_months}
+              needsReviewCount={a.needs_review_count}
+              onChange={setParams}
+            />
 
-        {hasFilters && (
-          <p className="mb-3 flex flex-wrap items-center gap-2 text-[12.5px] text-t3">
-            {ids && <Status tone="brand">Showing {ids.split(",").length} supporting transactions</Status>}
-            <button
-              type="button"
-              className="underline underline-offset-2 hover:text-foreground"
-              onClick={() => router.replace("?", { scroll: false })}
-            >
-              Clear filters
-            </button>
-          </p>
-        )}
-
-        {txns.error ? (
-          <ErrorNotice error={txns.error} onRetry={txns.reload} />
-        ) : !txns.data ? (
-          <Spinner label="Loading transactions" />
-        ) : txns.data.items.length === 0 ? (
-          <p className="flex items-center gap-2 py-6 text-[13.5px] text-t3">
-            <Icon icon={CheckmarkCircle02Icon} className="text-positive" />
-            {filter === "needs_review"
-              ? "Nothing needs review. Every transaction has a category."
-              : "No transactions match these filters."}
-          </p>
-        ) : (
-          <>
-            <TransactionsTable items={txns.data.items} dimmed={txns.loading} onSaved={onSaved} />
-            <nav aria-label="Pages" className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[13px] text-t3">
-              <span>
-                {txns.data.total} transaction{txns.data.total === 1 ? "" : "s"} · page {page} of {totalPages}
-              </span>
-              <span className="flex gap-2">
-                <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setParams({ page: String(page - 1) })}>
-                  Previous
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={page >= totalPages}
-                  onClick={() => setParams({ page: String(page + 1) })}
+            {hasFilters && (
+              <p className="mb-3 flex flex-wrap items-center gap-2 text-[12.5px] text-t3">
+                {ids && <Status tone="brand">Showing {ids.split(",").length} supporting transactions</Status>}
+                <button
+                  type="button"
+                  className="underline underline-offset-2 hover:text-foreground"
+                  onClick={() => router.replace("?", { scroll: false })}
                 >
-                  Next
-                </Button>
-              </span>
-            </nav>
-          </>
-        )}
-      </Section>
+                  Clear filters
+                </button>
+              </p>
+            )}
+
+            {txns.error ? (
+              <ErrorNotice error={txns.error} onRetry={txns.reload} />
+            ) : !txns.data ? (
+              <RowsSkeleton rows={8} />
+            ) : txns.data.items.length === 0 ? (
+              <p className="flex items-center gap-2 py-6 text-[13.5px] text-t3">
+                <Icon icon={CheckmarkCircle02Icon} className="text-positive" />
+                {filter === "needs_review"
+                  ? "Nothing needs review. Every transaction has a category."
+                  : "No transactions match these filters."}
+              </p>
+            ) : (
+              <>
+                <TransactionsTable items={txns.data.items} dimmed={txns.loading} onSaved={onSaved} />
+                <nav
+                  aria-label="Pages"
+                  className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[13px] text-t3"
+                >
+                  <span>
+                    {txns.data.total} transaction{txns.data.total === 1 ? "" : "s"} · page {page} of {totalPages}
+                  </span>
+                  <span className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page <= 1}
+                      onClick={() => setParams({ page: String(page - 1) })}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={page >= totalPages}
+                      onClick={() => setParams({ page: String(page + 1) })}
+                    >
+                      Next
+                    </Button>
+                  </span>
+                </nav>
+              </>
+            )}
+          </Section>
+        </TabsContent>
+
+        <TabsContent value="duplicates">
+          {dupes > 0 ? (
+            <DuplicateCandidates
+              items={a.reconciliation_candidates}
+              onDone={() => {
+                void analysis.reload();
+                void txns.reload();
+              }}
+            />
+          ) : (
+            <Section title="Possible duplicates">
+              <EmptyState icon={CheckmarkCircle02Icon} title="No possible duplicates">
+                Nothing looks like the same payment recorded twice. If SpendLens spots one after an import, it shows up
+                here.
+              </EmptyState>
+            </Section>
+          )}
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

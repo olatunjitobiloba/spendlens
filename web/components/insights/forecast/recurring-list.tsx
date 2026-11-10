@@ -1,7 +1,6 @@
 "use client";
 
 import { EvidenceLink } from "@/components/ui/evidence-link";
-import { Spinner } from "@/components/ui/loading";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
 import { Status } from "@/components/ui/status";
@@ -10,6 +9,7 @@ import { api } from "@/lib/api";
 import { formatDate } from "@/utils/format";
 import { reviewHref } from "@/utils/links";
 import { ErrorNotice } from "../shared/error-notice";
+import { RecurringSkeleton } from "../skeletons";
 
 const every = (days: number) => (days === 7 ? "Every week" : days === 14 ? "Every 2 weeks" : "Every month");
 // Confidence in words, not a bare number or colour (PRD R3).
@@ -27,7 +27,7 @@ export function RecurringList() {
       {recurring.error ? (
         <ErrorNotice error={recurring.error} onRetry={recurring.reload} />
       ) : !recurring.data ? (
-        <Spinner label="Looking for repeat payments" />
+        <RecurringSkeleton />
       ) : recurring.data.length === 0 ? (
         <p className="text-[13.5px] text-t3">
           No repeat payments found yet. It takes at least three payments at a steady interval.

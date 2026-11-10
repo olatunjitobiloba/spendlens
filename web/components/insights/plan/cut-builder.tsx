@@ -1,9 +1,5 @@
 "use client";
 
-import { SquareLock02Icon } from "@hugeicons/core-free-icons";
-
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
 import type { Analysis } from "@/types/api";
@@ -13,31 +9,31 @@ const QUICK = [0, 10, 20, 30];
 /** Whole number from 0 to 100, as the API requires. Input validation only. */
 export const isValidPercent = (v: string) => v === "" || /^(100|[1-9]?\d)$/.test(v);
 
+export const CUT_FORM_ID = "cut-form";
+
+export const anyInvalidCut = (cuts: Record<string, string>) => Object.values(cuts).some((v) => !isValidPercent(v));
+
+/** The cut inputs. Submitted by the Calculate button below the cards (form={CUT_FORM_ID}). */
 export function CutBuilder({
   analysis,
   cuts,
   setCuts,
   onCalculate,
-  busy,
-  stale,
 }: {
   analysis: Analysis;
   cuts: Record<string, string>;
   setCuts: (c: Record<string, string>) => void;
   onCalculate: () => void;
-  busy: boolean;
-  stale: boolean;
 }) {
   const flexible = analysis.categories.filter((c) => !c.protected);
-  const protectedCats = analysis.categories.filter((c) => c.protected);
-  const anyInvalid = Object.values(cuts).some((v) => !isValidPercent(v));
 
   return (
     <Section title="Test a cut" description="Pick a whole-number percent for each category you could spend less on.">
       <form
+        id={CUT_FORM_ID}
         onSubmit={(e) => {
           e.preventDefault();
-          if (!anyInvalid) onCalculate();
+          if (!anyInvalidCut(cuts)) onCalculate();
         }}
       >
         <ul className="space-y-2">
@@ -101,18 +97,6 @@ export function CutBuilder({
             );
           })}
         </ul>
-        {protectedCats.length > 0 && (
-          <p className="mt-3 flex flex-wrap items-center gap-1.5 text-[12.5px] text-t3">
-            <Icon icon={SquareLock02Icon} className="size-3.5" />
-            Not cut: {protectedCats.map((c) => c.category).join(", ")}
-          </p>
-        )}
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button type="submit" size="lg" disabled={busy || anyInvalid}>
-            {busy ? "Calculating…" : stale ? "Recalculate" : "Calculate"}
-          </Button>
-          {stale && !busy && <span className="text-[12.5px] text-warn">Inputs changed since the last result.</span>}
-        </div>
       </form>
     </Section>
   );

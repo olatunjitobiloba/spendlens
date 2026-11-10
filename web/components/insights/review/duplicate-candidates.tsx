@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 
+import { BankBadge } from "@/components/ui/bank-badge";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/loading";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
+import { Spinner } from "@/components/ui/spinner";
 import { Status } from "@/components/ui/status";
 import { asApiError } from "@/hooks/use-resource";
 import { api, type ApiError } from "@/lib/api";
@@ -21,6 +22,10 @@ function TxnSide({ t, label }: { t: Transaction; label: string }) {
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[12.5px]">
         <dt className="text-t3">Date</dt>
         <dd>{formatDate(t.date)}</dd>
+        <dt className="text-t3">Bank</dt>
+        <dd className="min-w-0">
+          <BankBadge bank={t.bank} />
+        </dd>
         <dt className="text-t3">Account</dt>
         <dd className="truncate">{t.account}</dd>
         <dt className="text-t3">Amount</dt>
@@ -34,11 +39,11 @@ function TxnSide({ t, label }: { t: Transaction; label: string }) {
 
 /** Side-by-side reconciliation (technical doc §7). */
 export function DuplicateCandidates({ items, onDone }: { items: ReconciliationCandidate[]; onDone: () => void }) {
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState<{ id: string; decision: "same" | "different" } | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
   async function decide(id: string, decision: "same" | "different") {
-    setBusy(id);
+    setBusy({ id, decision });
     setError(null);
     try {
       await api.confirmReconciliation(id, decision);
@@ -70,13 +75,14 @@ export function DuplicateCandidates({ items, onDone }: { items: ReconciliationCa
               <TxnSide t={c.b} label="Record B" />
             </div>
             <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Are these the same payment?">
-              <Button size="sm" onClick={() => decide(c.id, "same")} disabled={busy === c.id}>
+              <Button size="sm" onClick={() => decide(c.id, "same")} disabled={busy !== null}>
+                {busy?.id === c.id && busy.decision === "same" && <Spinner />}
                 Same payment
               </Button>
-              <Button size="sm" variant="outline" onClick={() => decide(c.id, "different")} disabled={busy === c.id}>
+              <Button size="sm" variant="outline" onClick={() => decide(c.id, "different")} disabled={busy !== null}>
+                {busy?.id === c.id && busy.decision === "different" && <Spinner />}
                 Different payments
               </Button>
-              {busy === c.id && <Spinner label="Saving" />}
             </div>
           </li>
         ))}

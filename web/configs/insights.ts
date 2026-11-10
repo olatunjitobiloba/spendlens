@@ -1,14 +1,10 @@
 import {
   Analytics01Icon,
-  ArrowDataTransferHorizontalIcon,
   ChartLineData01Icon,
-  CreditCardIcon,
   Crown02Icon,
-  Home01Icon,
+  FileImportIcon,
   Task01Icon,
   Target02Icon,
-  Upload04Icon,
-  Wallet01Icon,
 } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 
@@ -21,7 +17,7 @@ export const insightsNav: NavGroup[] = [
     label: "Insights",
     items: [
       { href: "/insights", label: "Overview", icon: Analytics01Icon },
-      { href: "/insights/import", label: "Import", icon: Upload04Icon },
+      { href: "/insights/import", label: "Import", icon: FileImportIcon },
       { href: "/insights/review", label: "Review", icon: Task01Icon },
       { href: "/insights/plan", label: "Plan", icon: Target02Icon },
     ],
@@ -33,14 +29,6 @@ export const insightsNav: NavGroup[] = [
       { href: "/insights/pro", label: "Plans and billing", icon: Crown02Icon },
     ],
   },
-];
-
-/** The fictional host app's own sections. Listed, not linked: they are not part of the demo. */
-export const hostNav: { label: string; icon: IconSvgElement }[] = [
-  { label: "Home", icon: Home01Icon },
-  { label: "Accounts", icon: Wallet01Icon },
-  { label: "Payments", icon: ArrowDataTransferHorizontalIcon },
-  { label: "Cards", icon: CreditCardIcon },
 ];
 
 export type GetStartedStep = { id: "import" | "review" | "protect" | "cut"; label: string; href: string };

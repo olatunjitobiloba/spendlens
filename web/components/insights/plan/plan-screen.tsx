@@ -1,26 +1,33 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Calculator01Icon, ViewIcon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { LoadingBlock } from "@/components/ui/loading";
+import { Icon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/ui/page-header";
+import { Spinner } from "@/components/ui/spinner";
 import { TESTED_CUT_KEY } from "@/configs/insights";
 import { setLocalFlag } from "@/hooks/use-local-flag";
 import { asApiError, useResource } from "@/hooks/use-resource";
-import { api, type ApiError } from "@/lib/api";
+import { api, isFixtureMode, type ApiError } from "@/lib/api";
 import type { Scenario } from "@/types/api";
 import { monthToRange } from "@/utils/dates";
 import { formatMonth } from "@/utils/format";
 import { ErrorNotice } from "../shared/error-notice";
 import { MonthSelect } from "../shared/month-select";
-import { CutBuilder } from "./cut-builder";
+import { PlanSkeleton } from "../skeletons";
+import { CUT_FORM_ID, CutBuilder, anyInvalidCut } from "./cut-builder";
 import { Protections } from "./protections";
 import { SavedScenarios } from "./saved-scenarios";
-import { ScenarioResult } from "./scenario-result";
+import { ScenarioResultDialog } from "./scenario-result";
+
+/** Sample mode answers in a blink; hold the loading state long enough to read. */
+const SAMPLE_MIN_WAIT_MS = 1200;
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function PlanScreen() {
   const params = useSearchParams();
@@ -31,27 +38,33 @@ export function PlanScreen() {
   const [lastCuts, setLastCuts] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  const [open, setOpen] = useState(false);
   const [savedVersion, setSavedVersion] = useState(0);
-  const resultRef = useRef<HTMLDivElement>(null);
 
   const a = analysis.data;
   const current = month ?? a?.range.start.slice(0, 7) ?? "";
   // A result only belongs to the month it was calculated for.
   const shown = scenario && scenario.range.start.slice(0, 7) === current ? scenario : null;
+  const stale = Boolean(shown) && JSON.stringify(cuts) !== lastCuts;
+  const invalid = anyInvalidCut(cuts);
 
   async function calculate() {
     if (!a) return;
     setBusy(true);
     setError(null);
+    setOpen(true);
     const list = a.categories
       .filter((c) => !c.protected)
       .map((c) => ({ category: c.category, percent: Number(cuts[c.category] || 0) }))
       .filter((c) => c.percent > 0);
     try {
-      setScenario(await api.createScenario({ range: a.range, cuts: list }));
+      const [result] = await Promise.all([
+        api.createScenario({ range: a.range, cuts: list }),
+        isFixtureMode() ? wait(SAMPLE_MIN_WAIT_MS) : null,
+      ]);
+      setScenario(result);
       setLastCuts(JSON.stringify(cuts));
       setLocalFlag(TESTED_CUT_KEY, true);
-      requestAnimationFrame(() => resultRef.current?.scrollIntoView({ block: "start" }));
     } catch (e) {
       setError(asApiError(e));
     } finally {
@@ -60,7 +73,7 @@ export function PlanScreen() {
   }
 
   if (analysis.error) return <ErrorNotice error={analysis.error} onRetry={analysis.reload} />;
-  if (!a) return <LoadingBlock label="Loading your categories" rows={6} />;
+  if (!a) return <PlanSkeleton />;
   if (a.imports.length === 0) {
     return (
       <>
@@ -94,24 +107,45 @@ export function PlanScreen() {
             setScenario(null);
           }}
         />
-        <div className="space-y-3">
-          <CutBuilder
-            analysis={a}
-            cuts={cuts}
-            setCuts={setCuts}
-            onCalculate={calculate}
-            busy={busy}
-            stale={Boolean(shown) && JSON.stringify(cuts) !== lastCuts}
-          />
-          {error && <ErrorNotice error={error} onRetry={calculate} />}
-          <div ref={resultRef} className="scroll-mt-4">
-            {shown && (
-              <ScenarioResult scenario={shown} month={current} onSaved={() => setSavedVersion((v) => v + 1)} />
-            )}
-          </div>
-          <SavedScenarios version={savedVersion} />
-        </div>
+        <CutBuilder analysis={a} cuts={cuts} setCuts={setCuts} onCalculate={calculate} />
       </div>
+
+      <div className="mt-5 flex flex-col items-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button
+            type="submit"
+            form={CUT_FORM_ID}
+            size="lg"
+            className="min-w-52 shadow-md shadow-brand/25"
+            disabled={busy || invalid}
+          >
+            {busy ? <Spinner /> : <Icon icon={Calculator01Icon} />}
+            {busy ? "Calculating…" : stale ? "Recalculate" : "Calculate"}
+          </Button>
+          {shown && !stale && !busy && (
+            <Button size="lg" variant="outline" onClick={() => setOpen(true)}>
+              <Icon icon={ViewIcon} />
+              View result
+            </Button>
+          )}
+        </div>
+        {invalid && <p className="text-[12.5px] text-destructive">Fix the highlighted percentages first.</p>}
+      </div>
+
+      <div className="mt-5">
+        <SavedScenarios version={savedVersion} />
+      </div>
+
+      <ScenarioResultDialog
+        open={open}
+        onOpenChange={setOpen}
+        scenario={shown}
+        busy={busy}
+        error={error}
+        onRetry={calculate}
+        month={current}
+        onSaved={() => setSavedVersion((v) => v + 1)}
+      />
     </>
   );
 }

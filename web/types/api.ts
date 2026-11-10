@@ -14,6 +14,8 @@ export type Transaction = {
   amount_kobo: number;
   direction: Direction;
   account: string;
+  /** Bank slug, name or CBN code (see configs/banks.ts). Null when unknown. */
+  bank?: string | null;
   category: string | null;
   review_state: ReviewState;
   import_id: string;

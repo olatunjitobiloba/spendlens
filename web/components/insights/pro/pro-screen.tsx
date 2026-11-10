@@ -4,7 +4,6 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { LoadingBlock } from "@/components/ui/loading";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Section } from "@/components/ui/section";
@@ -14,7 +13,8 @@ import { useMe } from "@/providers/me-provider";
 import { formatDate } from "@/utils/format";
 import { ErrorNotice } from "../shared/error-notice";
 import { CheckoutPanel } from "./checkout-panel";
-import { ProFeatures } from "./pro-features";
+import { PlanComparison, ProFeatures } from "./pro-features";
+import { ProSkeleton } from "../skeletons";
 
 function ProActive({ until, justPaid, onEnded }: { until: string | null; justPaid: boolean; onEnded: () => void }) {
   const fixtures = useFixtureMode();
@@ -69,21 +69,24 @@ export function ProScreen() {
     <>
       <PageHeader
         title="SpendLens Pro"
-        description="Free gives you one summary and a scenario to view. Pro adds the tools for keeping a plan going."
+        description="Free gives you the summary and scenarios to view. Pro adds the tools for keeping a plan going."
       />
       {me.error ? (
         <ErrorNotice error={me.error} onRetry={me.reload} />
       ) : !me.data ? (
-        <LoadingBlock label="Checking your plan" />
+        <ProSkeleton header={false} />
       ) : me.data.plan === "pro" ? (
-        <ProActive
-          until={me.data.pro_expires_at}
-          justPaid={justPaid}
-          onEnded={() => {
-            setJustPaid(false);
-            void me.reload();
-          }}
-        />
+        <div className="space-y-3">
+          <ProActive
+            until={me.data.pro_expires_at}
+            justPaid={justPaid}
+            onEnded={() => {
+              setJustPaid(false);
+              void me.reload();
+            }}
+          />
+          <PlanComparison priceKobo={me.data.pro_price_kobo} days={me.data.pro_days} current="pro" />
+        </div>
       ) : (
         <CheckoutPanel me={me.data} onPaid={onPaid} />
       )}

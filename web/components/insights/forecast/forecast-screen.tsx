@@ -5,7 +5,6 @@ import { Crown02Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { LoadingBlock } from "@/components/ui/loading";
 import { PageHeader } from "@/components/ui/page-header";
 import { Section } from "@/components/ui/section";
 import { useResource } from "@/hooks/use-resource";
@@ -13,13 +12,14 @@ import { api } from "@/lib/api";
 import { useIsPro, useMe } from "@/providers/me-provider";
 import { formatMonth } from "@/utils/format";
 import { ErrorNotice } from "../shared/error-notice";
+import { ForecastGridSkeleton } from "../skeletons";
 import { ForecastCard } from "./forecast-card";
 import { RecurringList } from "./recurring-list";
 
 function ForecastGrid() {
   const forecast = useResource(() => api.forecast(), "forecast");
   if (forecast.error) return <ErrorNotice error={forecast.error} onRetry={forecast.reload} />;
-  if (!forecast.data) return <LoadingBlock label="Working out ranges" rows={4} />;
+  if (!forecast.data) return <ForecastGridSkeleton />;
   const f = forecast.data;
   if (!f.categories.length) {
     return (
@@ -57,7 +57,7 @@ export function ForecastScreen() {
       <PageHeader title="Forecast and repeat payments" description="What next month may look like, and what keeps coming back." />
       <div className="space-y-3">
         {me.loading && !me.data ? (
-          <LoadingBlock label="Checking your plan" />
+          <ForecastGridSkeleton />
         ) : isPro ? (
           <ForecastGrid />
         ) : (

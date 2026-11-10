@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
+import { Spinner } from "@/components/ui/spinner";
 import { Status } from "@/components/ui/status";
 import { asApiError } from "@/hooks/use-resource";
 import { api, type ApiError } from "@/lib/api";
@@ -70,6 +71,7 @@ export function SaveScenario({ scenario, onSaved }: { scenario: Scenario; onSave
         />
       </div>
       <Button type="submit" variant="outline" disabled={busy}>
+        {busy && <Spinner />}
         {busy ? "Saving…" : "Save scenario"}
       </Button>
       {error && <ErrorNotice error={error} className="w-full" />}

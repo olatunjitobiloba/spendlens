@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { OverviewScreen } from "@/components/insights/overview/overview-screen";
-import { LoadingBlock } from "@/components/ui/loading";
+import { OverviewSkeleton } from "@/components/insights/skeletons";
 
 export const metadata: Metadata = { title: { absolute: "Money Insights · SpendLens" } };
 
 export default function Page() {
   return (
-    <Suspense fallback={<LoadingBlock label="Loading your summary" />}>
+    <Suspense fallback={<OverviewSkeleton />}>
       <OverviewScreen />
     </Suspense>
   );

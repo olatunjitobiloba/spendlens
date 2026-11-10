@@ -4,11 +4,15 @@ import { useState } from "react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 
 import { Icon } from "@/components/ui/icon";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CATEGORIES, UNCATEGORISED } from "@/configs/categories";
 import { cn } from "@/utils/cn";
 import { formatMonth } from "@/utils/format";
 
 export type ReviewFilter = "all" | "needs_review";
+
+/** Radix Select items cannot use an empty value, so "no filter" gets a sentinel. */
+const ALL = "__all__";
 
 export function TransactionFilters({
   filter,
@@ -28,7 +32,7 @@ export function TransactionFilters({
   onChange: (patch: Record<string, string | null>) => void;
 }) {
   const [search, setSearch] = useState(q);
-  const selectClass = "h-9 rounded-full border border-line-strong bg-panel px-3 text-[13px]";
+  const selectClass = "h-9 rounded-full border-line-strong bg-panel px-3.5 text-[13px] dark:bg-panel";
 
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -49,42 +53,38 @@ export function TransactionFilters({
         ))}
       </div>
 
-      <label className="sr-only" htmlFor="cat-filter">
-        Category
-      </label>
-      <select
-        id="cat-filter"
-        value={category}
-        onChange={(e) => onChange({ category: e.target.value || null })}
-        className={selectClass}
-      >
-        <option value="">All categories</option>
-        {[...CATEGORIES, UNCATEGORISED].map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
+      <Select value={category || ALL} onValueChange={(v) => onChange({ category: v === ALL ? null : v })}>
+        <SelectTrigger aria-label="Category" className={selectClass}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent position="popper" className="rounded-xl">
+          <SelectItem value={ALL} className="text-[13px]">
+            All categories
+          </SelectItem>
+          {[...CATEGORIES, UNCATEGORISED].map((c) => (
+            <SelectItem key={c} value={c} className="text-[13px]">
+              {c}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {months.length > 0 && (
-        <>
-          <label className="sr-only" htmlFor="month-filter">
-            Month
-          </label>
-          <select
-            id="month-filter"
-            value={month}
-            onChange={(e) => onChange({ month: e.target.value || null })}
-            className={selectClass}
-          >
-            <option value="">All months</option>
+        <Select value={month || ALL} onValueChange={(v) => onChange({ month: v === ALL ? null : v })}>
+          <SelectTrigger aria-label="Month" className={selectClass}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent position="popper" className="rounded-xl">
+            <SelectItem value={ALL} className="text-[13px]">
+              All months
+            </SelectItem>
             {months.map((m) => (
-              <option key={m} value={m}>
+              <SelectItem key={m} value={m} className="text-[13px]">
                 {formatMonth(m)}
-              </option>
+              </SelectItem>
             ))}
-          </select>
-        </>
+          </SelectContent>
+        </Select>
       )}
 
       <form

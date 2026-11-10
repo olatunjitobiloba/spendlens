@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { Notice } from "@/components/ui/notice";
-import { Spinner } from "@/components/ui/loading";
 import { PageHeader } from "@/components/ui/page-header";
 import { asApiError } from "@/hooks/use-resource";
 import { api, newIdempotencyKey, type ApiError } from "@/lib/api";
@@ -15,7 +14,7 @@ import { DoneView } from "./done-view";
 import { FilePicker } from "./file-picker";
 import { PastImports } from "./past-imports";
 import { PreviewView } from "./preview-view";
-import { SamplePanel } from "./sample-panel";
+import { SampleDialog } from "./sample-dialog";
 import { Stepper, type ImportStep } from "./stepper";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -37,6 +36,7 @@ export function ImportScreen() {
   const [clientError, setClientError] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sampleOpen, setSampleOpen] = useState(false);
   // One key per confirm action; a retry of the same confirm reuses it.
   const keyRef = useRef<string | null>(null);
   const autoSample = useRef(false);
@@ -66,6 +66,8 @@ export function ImportScreen() {
     } catch {
       setBusy(false);
       setClientError("The sample file could not be loaded. Reload the page and try again.");
+    } finally {
+      setSampleOpen(false);
     }
   }
 
@@ -109,18 +111,15 @@ export function ImportScreen() {
       <Stepper step={step} />
 
       {step === "choose" && (
-        <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr]">
-          <div className="space-y-3">
-            <FilePicker onFile={check} busy={busy} />
-            {busy && <Spinner label="Checking your file" />}
-            {clientError && (
-              <Notice tone="danger" title="That file can't be used">
-                {clientError}
-              </Notice>
-            )}
-            {error && <ErrorNotice error={error} onRetry={file ? () => check(file) : undefined} />}
-          </div>
-          <SamplePanel onUseSample={checkSample} busy={busy} />
+        <div className="space-y-3">
+          <FilePicker onFile={check} onTrySample={() => setSampleOpen(true)} busy={busy} />
+          {clientError && (
+            <Notice tone="danger" title="That file can't be used">
+              {clientError}
+            </Notice>
+          )}
+          {error && <ErrorNotice error={error} onRetry={file ? () => check(file) : undefined} />}
+          <SampleDialog open={sampleOpen} onOpenChange={setSampleOpen} onUseSample={checkSample} busy={busy} />
         </div>
       )}
 

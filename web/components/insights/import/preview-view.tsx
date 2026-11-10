@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Money } from "@/components/ui/money";
 import { Notice } from "@/components/ui/notice";
 import { Section } from "@/components/ui/section";
@@ -132,6 +133,7 @@ export function PreviewView({
           Choose a different file
         </Button>
         <Button size="lg" onClick={onConfirm} disabled={busy || n === 0}>
+          {busy && <Spinner />}
           {busy ? "Importing…" : `Import ${n} row${n === 1 ? "" : "s"}`}
         </Button>
       </div>

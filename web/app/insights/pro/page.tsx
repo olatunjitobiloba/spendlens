@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { ProScreen } from "@/components/insights/pro/pro-screen";
-import { LoadingBlock } from "@/components/ui/loading";
+import { ProSkeleton } from "@/components/insights/skeletons";
 
 export const metadata: Metadata = { title: "Pro" };
 
 export default function Page() {
   return (
-    <Suspense fallback={<LoadingBlock label="Checking your plan" />}>
+    <Suspense fallback={<ProSkeleton />}>
       <ProScreen />
     </Suspense>
   );

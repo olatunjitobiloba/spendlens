@@ -48,7 +48,7 @@ export function Attention({ analysis: a, month }: { analysis: Analysis | null; m
               </Status>
               <span>
                 {dupes} pair{dupes === 1 ? "" : "s"} may be the same payment.{" "}
-                <EvidenceLink href="/insights/review#duplicates">Compare</EvidenceLink>
+                <EvidenceLink href="/insights/review?tab=duplicates">Compare</EvidenceLink>
               </span>
             </li>
           )}

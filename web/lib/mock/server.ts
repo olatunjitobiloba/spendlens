@@ -81,6 +81,8 @@ function load(): Db {
   } catch {
     memoryDb = emptyDb();
   }
+  // Rows stored before transactions carried a bank get one from their account.
+  for (const t of memoryDb!.txns) t.bank ??= bankFor(t.account);
   return memoryDb!;
 }
 
@@ -116,6 +118,32 @@ function shiftMonth(month: string, by: number): string {
 }
 
 const inRange = (t: Transaction, r: DateRange) => t.date >= r.start && t.date <= r.end;
+
+// ---------- Banks ----------
+
+// The sample statement's two accounts, so the demo always shows the same banks.
+const SAMPLE_ACCOUNT_BANKS: Record<string, string> = {
+  "Current account 4821": "guaranty-trust-bank",
+  "Debit card 0937": "zenith-bank",
+};
+const FALLBACK_BANKS = [
+  "guaranty-trust-bank",
+  "zenith-bank",
+  "access-bank",
+  "united-bank-for-africa",
+  "first-bank-of-nigeria",
+  "kuda-bank",
+  "paycom",
+  "moniepoint-mfb-ng",
+];
+
+/** A file without a bank column: pick one per account, the same every time. */
+function bankFor(account: string): string {
+  if (SAMPLE_ACCOUNT_BANKS[account]) return SAMPLE_ACCOUNT_BANKS[account];
+  let h = 0;
+  for (const ch of account) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return FALLBACK_BANKS[h % FALLBACK_BANKS.length];
+}
 
 // ---------- CSV ----------
 
@@ -172,6 +200,7 @@ function parseCsv(text: string): { rows: ParsedRow[]; errors: RowError[]; total:
     const amountRaw = get("amount_kobo");
     const direction = (get("direction") || "debit").toLowerCase();
     const account = get("account") || "Imported account";
+    const bank = get("bank") || bankFor(account);
     const category = get("category") || null;
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(toDay(date)))
@@ -188,6 +217,7 @@ function parseCsv(text: string): { rows: ParsedRow[]; errors: RowError[]; total:
       amount_kobo: Number(amountRaw),
       direction,
       account,
+      bank,
       category: category ?? categorise(description, direction),
     });
   });

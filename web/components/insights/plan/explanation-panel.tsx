@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { SparklesIcon } from "@hugeicons/core-free-icons";
 
 import { Icon } from "@/components/ui/icon";
-import { Spinner } from "@/components/ui/loading";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import type { Explanation } from "@/types/api";
 
@@ -39,7 +39,14 @@ export function ExplanationPanel({ scenarioId }: { scenarioId: string }) {
         <Icon icon={SparklesIcon} className="size-3.5 text-brand" />
         In plain words
       </h3>
-      {state.status === "loading" && <Spinner className="mt-2" label="Writing an explanation of these numbers" />}
+      {state.status === "loading" && (
+        <div className="mt-2.5 space-y-2">
+          <span className="sr-only">Writing an explanation of these numbers</span>
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-11/12" />
+          <Skeleton className="h-3.5 w-3/5" />
+        </div>
+      )}
       {state.status === "failed" && (
         <p className="mt-2 text-[13px] text-t3">
           The explanation is not available right now. The numbers above are complete and do not depend on it.

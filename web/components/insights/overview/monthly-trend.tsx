@@ -3,6 +3,7 @@ import { ChartHistogramIcon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Hint } from "@/components/ui/hint";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
 import type { Analysis } from "@/types/api";
@@ -73,16 +74,24 @@ export function MonthlyTrend({ analysis: a, month }: { analysis: Analysis | null
                       scroll={false}
                       aria-current={active ? "true" : undefined}
                       aria-label={`${formatMonth(m.month)}: ${fmt(m.total_kobo)}${active ? " (selected)" : ""}`}
-                      title={`${formatMonth(m.month)} · ${fmt(m.total_kobo)}`}
                       className="group flex h-[calc(100%-1.5rem)] w-full items-end rounded-t-lg"
                     >
-                      <span
-                        className={cn(
-                          "block w-full rounded-t-lg transition-colors",
-                          active ? "bg-brand" : "bg-foreground/15 group-hover:bg-foreground/25",
-                        )}
-                        style={{ height: `${Math.max(2, m.pct_of_max)}%` }}
-                      />
+                      <Hint
+                        label={
+                          <span className="flex flex-col gap-0.5">
+                            <span className="opacity-70">{formatMonth(m.month)}</span>
+                            <span className="font-mono tabular-nums">{fmt(m.total_kobo)}</span>
+                          </span>
+                        }
+                      >
+                        <span
+                          className={cn(
+                            "block w-full rounded-t-lg transition-colors",
+                            active ? "bg-brand" : "bg-foreground/15 group-hover:bg-foreground/25",
+                          )}
+                          style={{ height: `${Math.max(2, m.pct_of_max)}%` }}
+                        />
+                      </Hint>
                     </Link>
                     <span className={cn("h-4 text-[12px]", active ? "font-medium text-foreground" : "text-t3")}>
                       {formatMonth(m.month, "short").split(" ")[0]}

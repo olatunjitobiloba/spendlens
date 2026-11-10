@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
 
+import { Hint } from "@/components/ui/hint";
 import { Icon } from "@/components/ui/icon";
 import {
   GET_STARTED_DISMISSED_KEY,
@@ -48,14 +49,16 @@ export function GetStartedCard({ onNavigate }: { onNavigate?: () => void }) {
             {count} of {getStartedSteps.length} done
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setDismissed(true)}
-          aria-label="Hide the get started checklist"
-          className="-mt-1 -mr-1 inline-flex size-7 items-center justify-center rounded-lg text-t3 hover:bg-foreground/[0.06] hover:text-foreground"
-        >
-          <Icon icon={Cancel01Icon} className="size-3.5" />
-        </button>
+        <Hint label="Hide checklist">
+          <button
+            type="button"
+            onClick={() => setDismissed(true)}
+            aria-label="Hide the get started checklist"
+            className="-mt-1 -mr-1 inline-flex size-7 items-center justify-center rounded-lg text-t3 hover:bg-foreground/[0.06] hover:text-foreground"
+          >
+            <Icon icon={Cancel01Icon} className="size-3.5" />
+          </button>
+        </Hint>
       </div>
 
       <div

@@ -206,6 +206,16 @@
   mask-image: radial-gradient(70% 60% at 50% 35%, #000 25%, transparent 75%);
 }
 
+/* Indeterminate progress bar in the scenario result dialog. */
+@keyframes scenario-progress {
+  from {
+    left: -33%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
 /* Stacked step cards: earlier cards shrink a touch as later ones cover them. */
 .step-card {
   transform-origin: 50% 0;

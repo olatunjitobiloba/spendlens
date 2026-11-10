@@ -5,6 +5,7 @@ import { Bar } from "@/components/ui/bar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { HeaderLink } from "@/components/ui/header-link";
+import { Hint } from "@/components/ui/hint";
 import { Icon } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
@@ -60,9 +61,11 @@ export function CategoryBreakdown({ analysis: a, month }: { analysis: Analysis |
                 <Money kobo={c.total_kobo} />
                 <span className="ml-2 hidden w-12 font-mono text-t4 sm:inline-block">{c.share_pct}%</span>
               </span>
-              <span className="col-span-2">
-                <Bar pct={c.share_pct} muted={c.protected} />
-              </span>
+              <Hint label={`${c.share_pct}% of spending · ${c.txn_count} transaction${c.txn_count === 1 ? "" : "s"}`}>
+                <span className="col-span-2 -my-1 py-1">
+                  <Bar pct={c.share_pct} muted={c.protected} />
+                </span>
+              </Hint>
             </li>
           ))}
         </ul>

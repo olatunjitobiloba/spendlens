@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Tooltip } from "radix-ui";
-
+import { Hint } from "@/components/ui/hint";
 import { Icon } from "@/components/ui/icon";
 import { insightsNav, type NavItem } from "@/configs/insights";
 import { cn } from "@/utils/cn";
@@ -31,21 +30,10 @@ function NavLink({ item, active, collapsed, onNavigate }: { item: NavItem; activ
       )}
     </Link>
   );
-  if (!collapsed) return link;
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>{link}</Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content
-          side="right"
-          sideOffset={10}
-          className="z-50 rounded-md border border-line-strong bg-panel px-2 py-1 text-[12px] font-medium shadow-lg"
-        >
-          {item.label}
-          {item.pro ? " · Pro" : ""}
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
+    <Hint label={`${item.label}${item.pro ? " · Pro" : ""}`} side="right" sideOffset={10} disabled={!collapsed}>
+      {link}
+    </Hint>
   );
 }
 

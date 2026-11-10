@@ -6,6 +6,7 @@ import { Dialog } from "radix-ui";
 import { Cancel01Icon, Menu01Icon, SidebarLeftIcon } from "@hugeicons/core-free-icons";
 
 import { LogoMark } from "@/components/brand/logo";
+import { Hint } from "@/components/ui/hint";
 import { Icon } from "@/components/ui/icon";
 import { SIDEBAR_COLLAPSED_KEY } from "@/configs/insights";
 import { useLocalFlag } from "@/hooks/use-local-flag";
@@ -68,15 +69,17 @@ export function DesktopSidebar() {
         header={
           <div className={cn("flex items-center justify-between gap-2 px-2", collapsed && "flex-col")}>
             <Brand collapsed={collapsed} />
-            <button
-              type="button"
-              onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              aria-expanded={!collapsed}
-              className={iconButton}
-            >
-              <Icon icon={SidebarLeftIcon} className="size-[18px]" />
-            </button>
+            <Hint label={collapsed ? "Expand sidebar" : "Collapse sidebar"} side={collapsed ? "right" : "bottom"}>
+              <button
+                type="button"
+                onClick={() => setCollapsed(!collapsed)}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!collapsed}
+                className={iconButton}
+              >
+                <Icon icon={SidebarLeftIcon} className="size-[18px]" />
+              </button>
+            </Hint>
           </div>
         }
       />
