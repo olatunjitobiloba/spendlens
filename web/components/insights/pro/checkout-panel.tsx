@@ -2,11 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { Crown02Icon } from "@hugeicons/core-free-icons";
+
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { Spinner } from "@/components/ui/spinner";
 import { Notice } from "@/components/ui/notice";
-import { Section } from "@/components/ui/section";
 import { KORA_PUBLIC_KEY } from "@/configs/env";
 import { useFixtureMode } from "@/hooks/use-fixture-mode";
 import { useOrderPolling } from "@/hooks/use-order-polling";
@@ -21,7 +30,10 @@ import { PlanComparison } from "./pro-features";
 import { SandboxSimulator } from "./sandbox-simulator";
 
 // Synthetic customer for sample mode only.
-const SAMPLE_CUSTOMER = { name: "Tolu Adebayo", email: "tolu.sample@example.com" };
+const SAMPLE_CUSTOMER = {
+  name: "Tolu Adebayo",
+  email: "tolu.sample@example.com",
+};
 
 export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
   const fixtures = useFixtureMode() ?? false;
@@ -34,6 +46,7 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
   const [error, setError] = useState<ApiError | Error | null>(null);
   const [closedByUser, setClosedByUser] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
+  const [open, setOpen] = useState(false);
   // One key per payment attempt; a retry of the same attempt reuses it.
   const keyRef = useRef<string | null>(null);
 
@@ -56,23 +69,35 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
         setShowSimulator(true);
         return;
       }
-      if (!KORA_PUBLIC_KEY) throw new Error("Kora Checkout is not configured on this deployment. Use sample mode to try payment.");
+      if (!KORA_PUBLIC_KEY)
+        throw new Error("Kora Checkout is not configured on this deployment. Use sample mode to try payment.");
+      // Kora opens its own popup; our dialog would trap focus and block it, so step aside
+      // and come back with the payment status once Kora reports.
+      setOpen(false);
       await openKoraCheckout(
         KORA_PUBLIC_KEY,
         created,
         { name: name.trim(), email: email.trim() },
         {
           // Hints for when to check. They never unlock anything.
-          onSuccess: () => polling.start(created),
-          onFailed: () => polling.start(created),
+          onSuccess: () => {
+            setOpen(true);
+            polling.start(created);
+          },
+          onFailed: () => {
+            setOpen(true);
+            polling.start(created);
+          },
           onClose: () => {
             setClosedByUser(true);
+            setOpen(true);
             polling.start(created);
           },
         },
       );
       polling.start(created);
     } catch (err) {
+      setOpen(true);
       setError(err instanceof Error && !("kind" in err) ? err : asApiError(err));
     } finally {
       setBusy(false);
@@ -101,93 +126,114 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
   const inFlight = state.phase === "polling" || showSimulator;
 
   return (
-    <div className="grid items-start gap-3 lg:grid-cols-[1.6fr_1fr]">
-      <PlanComparison priceKobo={me.pro_price_kobo} days={me.pro_days} current="free" />
+    <>
+      <PlanComparison
+        priceKobo={me.pro_price_kobo}
+        days={me.pro_days}
+        current="free"
+        action={
+          <Button className="w-full shadow-md shadow-brand/25" onClick={() => setOpen(true)}>
+            <Icon icon={Crown02Icon} />
+            {state.phase === "idle" ? "Upgrade" : "Payment status"}
+          </Button>
+        }
+      />
 
-      <Section
-        title="Upgrade to Pro"
-        description="Card, bank transfer and other methods Kora supports."
-        className="lg:sticky lg:top-6"
+      <AlertDialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!busy) setOpen(o);
+        }}
       >
-        <div className="mb-4 rounded-2xl bg-brand/[0.07] p-4">
-          <p className="text-[12.5px] text-t3">Pay once with Kora</p>
-          <p className="mt-1 text-[30px] leading-none font-[650] tracking-[-0.04em]">
-            <Money kobo={me.pro_price_kobo} className="font-sans" />
-          </p>
-          <p className="mt-1.5 text-[12.5px] text-t3">
-            {me.pro_days} days of Pro. No auto-renewal. Test price in this demo.
-          </p>
-        </div>
-        {!order || state.phase === "idle" ? (
-          <form onSubmit={pay} className="space-y-3">
-            {fixtures ? (
-              <Notice title="Sample mode">
-                Paying as the synthetic customer {SAMPLE_CUSTOMER.name}. No real money moves.
-              </Notice>
-            ) : (
-              <>
-                <div>
-                  <label htmlFor="pay-name" className="text-[13px] font-medium">
-                    Full name
-                  </label>
-                  <input
-                    id="pay-name"
-                    required
-                    autoComplete="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-xl border border-line-strong bg-panel px-3 text-[14px]"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pay-email" className="text-[13px] font-medium">
-                    Email for the receipt
-                  </label>
-                  <input
-                    id="pay-email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-xl border border-line-strong bg-panel px-3 text-[14px]"
-                  />
-                </div>
-              </>
-            )}
-            {error &&
-              ("kind" in error ? (
-                <ErrorNotice error={error as ApiError} onRetry={() => pay()} />
-              ) : (
-                <Notice tone="danger" title="Checkout could not open">
-                  {error.message}
+        <AlertDialogContent className="max-h-[92dvh] gap-0 overflow-y-auto rounded-[1.5rem] border border-line-strong bg-panel p-5 ring-0 data-[size=default]:max-w-[calc(100%-2rem)] data-[size=default]:sm:max-w-md sm:p-6">
+          <AlertDialogTitle className="text-[17px] font-[650] tracking-[-0.02em]">Upgrade to Pro</AlertDialogTitle>
+          <AlertDialogDescription className="mt-1 text-[13px] text-t3">
+            Card, bank transfer and other methods Kora supports.
+          </AlertDialogDescription>
+          <div className="mt-4 mb-4 rounded-2xl bg-brand/[0.07] p-4">
+            <p className="text-[12.5px] text-t3">Pay once with Kora</p>
+            <p className="mt-1 text-[30px] leading-none font-[650] tracking-[-0.04em]">
+              <Money kobo={me.pro_price_kobo} className="font-sans" />
+            </p>
+            <p className="mt-1.5 text-[12.5px] text-t3">
+              {me.pro_days} days of Pro. No auto-renewal. Test price in this demo.
+            </p>
+          </div>
+          {!order || state.phase === "idle" ? (
+            <form onSubmit={pay} className="space-y-3">
+              {fixtures ? (
+                <Notice title="Sample mode">
+                  Paying as the synthetic customer {SAMPLE_CUSTOMER.name}. No real money moves.
                 </Notice>
-              ))}
-            {!showSimulator && (
-              <Button type="submit" size="lg" className="w-full" disabled={busy || inFlight}>
-                {busy && <Spinner />}
-                {busy ? "Creating order…" : "Continue to payment"}
-              </Button>
-            )}
-          </form>
-        ) : null}
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="pay-name" className="text-[13px] font-medium">
+                      Full name
+                    </label>
+                    <input
+                      id="pay-name"
+                      required
+                      autoComplete="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1 h-10 w-full rounded-xl border border-line-strong bg-panel px-3 text-[14px]"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="pay-email" className="text-[13px] font-medium">
+                      Email for the receipt
+                    </label>
+                    <input
+                      id="pay-email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1 h-10 w-full rounded-xl border border-line-strong bg-panel px-3 text-[14px]"
+                    />
+                  </div>
+                </>
+              )}
+              {error &&
+                ("kind" in error ? (
+                  <ErrorNotice error={error as ApiError} onRetry={() => pay()} />
+                ) : (
+                  <Notice tone="danger" title="Checkout could not open">
+                    {error.message}
+                  </Notice>
+                ))}
+              {!showSimulator && (
+                <Button type="submit" size="lg" className="w-full" disabled={busy || inFlight}>
+                  {busy && <Spinner />}
+                  {busy ? "Creating order…" : "Continue to payment"}
+                </Button>
+              )}
+            </form>
+          ) : null}
 
-        {order && showSimulator && <SandboxSimulator order={order} onOutcome={simulate} />}
+          {order && showSimulator && <SandboxSimulator order={order} onOutcome={simulate} />}
 
-        <div className="mt-3">
-          <PaymentStatus
-            state={state}
-            closedByUser={closedByUser}
-            onCheckAgain={() => order && polling.start(order)}
-            onRetry={retry}
-          />
-        </div>
+          <div className="mt-3">
+            <PaymentStatus
+              state={state}
+              closedByUser={closedByUser}
+              onCheckAgain={() => order && polling.start(order)}
+              onRetry={retry}
+            />
+          </div>
 
-        <p className="mt-4 text-[12px] text-t4">
-          Pro switches on only after our server confirms payment with Kora. A success message in the browser alone
-          never unlocks anything.
-        </p>
-      </Section>
-    </div>
+          <p className="mt-4 text-[12px] text-t4">
+            Pro switches on only after our server confirms payment with Kora. A success message in the browser alone
+            never unlocks anything.
+          </p>
+
+          <AlertDialogCancel variant="ghost" className="mt-3 w-full" disabled={busy}>
+            {state.phase === "idle" ? "Not now" : "Close"}
+          </AlertDialogCancel>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

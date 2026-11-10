@@ -51,14 +51,14 @@ function Mark({ value, pro }: { value: boolean | string; pro?: boolean }) {
     <span
       className={cn(
         "inline-flex size-6 items-center justify-center rounded-full",
-        pro ? "bg-brand text-white" : "bg-positive/12 text-positive",
+        pro ? "bg-brand/12 text-foreground" : "bg-brand/80 text-foreground",
       )}
     >
       <Icon icon={Tick02Icon} className="size-3.5" strokeWidth={2.4} />
       <span className="sr-only">Included</span>
     </span>
   ) : (
-    <span className="inline-flex size-6 items-center justify-center rounded-full bg-foreground/[0.05] text-t4">
+    <span className="inline-flex size-6 items-center justify-center rounded-full bg-foreground/5 text-t4">
       <Icon icon={MinusSignIcon} className="size-3.5" />
       <span className="sr-only">Not included</span>
     </span>
@@ -70,10 +70,13 @@ export function PlanComparison({
   priceKobo,
   days,
   current,
+  action,
 }: {
   priceKobo: number;
   days: number;
   current: "free" | "pro";
+  /** Shown at the foot of the Pro column, e.g. an upgrade button. */
+  action?: React.ReactNode;
 }) {
   const col = "w-[22%] min-w-[7.5rem] px-3 text-center";
   return (
@@ -139,7 +142,7 @@ export function PlanComparison({
                   <td className={col}>
                     <Mark value={r.free} />
                   </td>
-                  <td className={cn(col, "bg-brand/[0.07]", last && "rounded-b-2xl")}>
+                  <td className={cn(col, "bg-brand/[0.07]", last && !action && "rounded-b-2xl")}>
                     <Mark value={r.pro} pro />
                   </td>
                 </tr>
@@ -147,6 +150,14 @@ export function PlanComparison({
             })}
           </tbody>
         ))}
+        {action && (
+          <tfoot>
+            <tr className="border-t border-line">
+              <td colSpan={2} />
+              <td className={cn(col, "rounded-b-2xl bg-brand/[0.07] pt-3 pb-4")}>{action}</td>
+            </tr>
+          </tfoot>
+        )}
       </table>
     </div>
   );
