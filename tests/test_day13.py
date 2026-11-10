@@ -21,6 +21,8 @@ CTX = {
 def test_bank_aliases_and_typo():
     assert normalize_bank("Acces Bank") == "access"
     assert normalize_bank(" GTB ") == "gtbank"
+    assert normalize_bank("Zenith") == "zenith"
+    assert normalize_bank("zenith bank") == "zenith"
 
 
 def test_unknown_or_missing_bank_is_other():

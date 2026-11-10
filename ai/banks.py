@@ -7,6 +7,8 @@ BANKS = {
     "access": "access",
     "access bank": "access",
     "acces bank": "access",
+    "zenith": "zenith",
+    "zenith bank": "zenith",
 }
 
 
