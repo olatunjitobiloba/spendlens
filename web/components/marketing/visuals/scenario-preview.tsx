@@ -1,14 +1,14 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { SquareLock02Icon } from "@hugeicons/core-free-icons";
 
-import { fmtWhole } from "@/lib/format";
+import { fmtWhole } from "@/utils/format";
 import {
   sampleCategories,
   sampleMonth,
   sampleProfiles,
   sampleScenario,
   sampleShares,
-} from "@/lib/sample-data";
+} from "@/configs/sample-data";
 import { Avatar, WindowBar } from "./primitives";
 
 export function ScenarioPreview() {

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "web", "run", "dev"],
+      "port": 5467
+    },
+    {
+      "name": "web-prod",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["--prefix", "web", "next", "start", "web", "-p", "5468"],
+      "port": 5468
+    }
+  ]
+}

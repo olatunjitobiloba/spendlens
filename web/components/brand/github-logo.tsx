@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 
 // GitHub's official mark (the Invertocat), drawn in the current text colour.
 export function GithubLogo({ className }: { className?: string }) {

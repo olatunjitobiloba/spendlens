@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import { avatarUrl } from "@/lib/avatar";
-import { cn } from "@/lib/utils";
+import { avatarUrl } from "@/utils/avatar";
+import { cn } from "@/utils/cn";
 
 export function Avatar({
   seed,
