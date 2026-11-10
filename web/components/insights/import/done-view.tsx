@@ -10,7 +10,7 @@ import { formatRange } from "@/utils/format";
 export function DoneView({ record }: { record: ImportRecord }) {
   return (
     <div className="space-y-3">
-      <Notice tone="positive" title={`${record.row_count} transactions imported`}>
+      <Notice tone="info" title={`${record.row_count} transactions imported`}>
         {record.date_range && <>Covering {formatRange(record.date_range)}. </>}
         Next, check anything SpendLens was unsure about.
       </Notice>

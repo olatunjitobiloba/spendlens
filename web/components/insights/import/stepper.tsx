@@ -1,3 +1,6 @@
+import { Tick02Icon } from "@hugeicons/core-free-icons";
+
+import { Icon } from "@/components/ui/icon";
 import { cn } from "@/utils/cn";
 
 export type ImportStep = "choose" | "check" | "done";
@@ -22,12 +25,12 @@ export function Stepper({ step }: { step: ImportStep }) {
             aria-hidden="true"
             className={cn(
               "inline-flex size-6 items-center justify-center rounded-full border font-mono text-[11.5px]",
-              i < at && "border-positive bg-positive/12 text-positive",
+              i < at && "border-brand bg-brand/12 text-brand",
               i === at && "border-foreground",
               i > at && "border-line-strong",
             )}
           >
-            {i < at ? "✓" : i + 1}
+            {i < at ? <Icon icon={Tick02Icon} className="size-3.5" strokeWidth={2.2} /> : i + 1}
           </span>
           {s.label}
           {i < at && <span className="sr-only">(done)</span>}
