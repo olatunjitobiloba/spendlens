@@ -1,6 +1,21 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from ai.banks import normalize_bank
+
+
+class Txn(BaseModel):
+    description: str
+    amount_kobo: int = Field(gt=0)
+    date: str
+    direction: Literal["debit", "credit"] = "debit"
+    bank: str = "other"
+
+    @field_validator("bank", mode="before")
+    @classmethod
+    def clean_bank(cls, v):
+        return normalize_bank(v)
 
 
 class DateRange(BaseModel):

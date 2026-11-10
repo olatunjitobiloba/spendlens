@@ -2,6 +2,7 @@ import re
 import statistics
 from collections import defaultdict
 from datetime import date, timedelta
+from itertools import pairwise
 from typing import Any
 
 MIN_OCCURRENCES = 3
@@ -52,7 +53,7 @@ def find_recurring(txns: list[Any]) -> list[dict]:
         days = sorted(days)
         if not key or len(days) < MIN_OCCURRENCES:
             continue
-        gaps = [(b - a).days for a, b in zip(days, days[1:])]
+        gaps = [(b - a).days for a, b in pairwise(days)]
         mid = statistics.median(gaps)
         for period, tol in PERIODS.items():
             if abs(mid - period) <= tol and all(abs(g - period) <= tol for g in gaps):
