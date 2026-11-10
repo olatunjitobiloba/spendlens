@@ -25,7 +25,6 @@ function Brand({ collapsed }: { collapsed: boolean }) {
       {!collapsed && (
         <span className="min-w-0">
           <span className="block truncate text-[14px] font-[650] tracking-[-0.02em]">Money Insights</span>
-          <span className="block truncate text-[11.5px] text-t3">powered by SpendLens</span>
         </span>
       )}
     </Link>
@@ -45,12 +44,7 @@ function SidebarBody({
   return (
     <div className="flex h-full flex-col gap-5 p-3">
       {header}
-      {!collapsed && (
-        <div className="px-1">
-          <PlanBadge />
-        </div>
-      )}
-      <div className="-mx-1 flex-1 overflow-y-auto px-1">
+      <div className="-mx-1 flex-1 overflow-y-auto px-1 py-3">
         <SidebarNav collapsed={collapsed} onNavigate={onNavigate} />
       </div>
       {!collapsed && <GetStartedCard onNavigate={onNavigate} />}
@@ -72,7 +66,7 @@ export function DesktopSidebar() {
       <SidebarBody
         collapsed={collapsed}
         header={
-          <div className={cn("flex items-center justify-between gap-2", collapsed && "flex-col")}>
+          <div className={cn("flex items-center justify-between gap-2 px-2", collapsed && "flex-col")}>
             <Brand collapsed={collapsed} />
             <button
               type="button"

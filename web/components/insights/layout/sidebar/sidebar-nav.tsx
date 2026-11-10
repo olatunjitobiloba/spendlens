@@ -20,11 +20,11 @@ function NavLink({ item, active, collapsed, onNavigate }: { item: NavItem; activ
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13.5px] font-medium transition-colors",
-        active ? "bg-foreground/[0.07] text-foreground" : "text-t3 hover:bg-foreground/[0.04] hover:text-foreground",
+        active ? "bg-foreground/[0.07] text-foreground" : "text-t3 hover:bg-foreground/4 hover:text-foreground",
         collapsed && "justify-center px-0",
       )}
     >
-      <Icon icon={item.icon} className="size-[18px]" />
+      <Icon icon={item.icon} className="size-4.5" />
       <span className={cn("flex-1 truncate", collapsed && "sr-only")}>{item.label}</span>
       {item.pro && !collapsed && (
         <span className="rounded-md bg-brand/12 px-1.5 py-0.5 text-[10px] font-[650] tracking-wide text-brand">PRO</span>
