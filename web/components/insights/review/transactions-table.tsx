@@ -11,7 +11,11 @@ function StateLabel({ t }: { t: Transaction }) {
   if (t.review_state === "needs_review" || (!t.category && t.direction === "debit"))
     return <Status tone="warn">Needs review</Status>;
   if (t.review_state === "corrected") return <Status tone="positive">Corrected</Status>;
-  return null;
+  return (
+    <Status tone="neutral" className="text-foreground/80">
+      No status
+    </Status>
+  );
 }
 
 export function TransactionsTable({
@@ -56,12 +60,14 @@ export function TransactionsTable({
               <td className="py-2 pr-3">
                 <StateLabel t={t} />
               </td>
-              <td className="py-2 text-right whitespace-nowrap">
-                {t.direction === "credit" && (
-                  <span className="text-positive">
-                    +<span className="sr-only">money in </span>
-                  </span>
+              <td
+                className={cn(
+                  "py-2 text-right whitespace-nowrap font-mono tabular-nums",
+                  t.review_state !== "duplicate" && (t.direction === "credit" ? "text-positive" : "text-destructive"),
                 )}
+              >
+                {t.direction === "credit" ? "+" : "−"}
+                <span className="sr-only">{t.direction === "credit" ? "money in " : "money out "}</span>
                 <Money kobo={t.amount_kobo} />
               </td>
             </tr>

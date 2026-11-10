@@ -224,11 +224,6 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
             />
           </div>
 
-          <p className="mt-4 text-[12px] text-t4">
-            Pro switches on only after our server confirms payment with Kora. A success message in the browser alone
-            never unlocks anything.
-          </p>
-
           <AlertDialogCancel variant="ghost" className="mt-3 w-full" disabled={busy}>
             {state.phase === "idle" ? "Not now" : "Close"}
           </AlertDialogCancel>
