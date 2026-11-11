@@ -20,7 +20,7 @@ export function ComparisonCard({ comparison }: { comparison: Comparison | null }
 
   if (!isPro) {
     return (
-      <Section title="Compared with last month" aside={<Status tone="brand">Pro</Status>} className="flex flex-col">
+      <Section title="Compared with last month"  className="flex flex-col">
         <EmptyState
           icon={Crown02Icon}
           title="Part of Pro"
@@ -31,7 +31,7 @@ export function ComparisonCard({ comparison }: { comparison: Comparison | null }
             </Button>
           }
         >
-          See which categories went up or down, line by line.
+          Effectively analyze categories.
         </EmptyState>
       </Section>
     );
