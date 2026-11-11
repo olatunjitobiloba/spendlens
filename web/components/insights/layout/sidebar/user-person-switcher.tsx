@@ -29,7 +29,7 @@ import { cn } from "@/utils/cn";
 import { DeleteDataDialog } from "../../shared/delete-data-dialog";
 
 /** Neutral fictional host app. Not modelled on any real bank (PRD §2). */
-function PersonAvatar({ fixtures }: { fixtures: boolean | null }) {
+function PersonAvatar() {
   return (
     <span className="relative shrink-0">
       <span
@@ -38,15 +38,6 @@ function PersonAvatar({ fixtures }: { fixtures: boolean | null }) {
       >
         FO
       </span>
-      {fixtures !== null && (
-        <span
-          aria-hidden="true"
-          className={cn(
-            "absolute -bottom-0.5 -left-0.5 size-3 rounded-full border-2 border-background",
-            fixtures ? "bg-warn" : "bg-positive",
-          )}
-        />
-      )}
     </span>
   );
 }
@@ -71,7 +62,7 @@ export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
             collapsed && "justify-center",
           )}
         >
-          <PersonAvatar fixtures={fixtures} />
+          <PersonAvatar  />
           {!collapsed && (
             <>
               <span className="min-w-0 flex-1">
