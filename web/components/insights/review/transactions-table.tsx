@@ -29,7 +29,7 @@ export function TransactionsTable({
 }) {
   return (
     <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" tabIndex={0} aria-label="Transactions table">
-      <table className={cn("w-full min-w-[760px] text-left text-[13px]", dimmed && "opacity-60")}>
+      <table className={cn("w-full min-w-190 text-left text-[13px]", dimmed && "opacity-60")}>
         <thead className="text-t3">
           <tr className="border-b border-line">
             <th scope="col" className="py-2 pr-3 font-medium">Date</th>
