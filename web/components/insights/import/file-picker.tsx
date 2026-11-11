@@ -4,8 +4,10 @@ import { useState } from "react";
 import {
   CloudUploadIcon,
   Csv02Icon,
+  FileEmpty01Icon,
   FileImportIcon,
   Loading03Icon,
+  QuestionFreeIcons,
   SparklesIcon,
   SquareLock02Icon,
   WeightScale01Icon,
@@ -13,6 +15,7 @@ import {
 
 import { Icon, type IconSvgElement } from "@/components/ui/icon";
 import { cn } from "@/utils/cn";
+import QuestionIcon from "@hugeicons/core-free-icons/QuestionIcon";
 
 function Fact({ icon, children }: { icon: IconSvgElement; children: React.ReactNode }) {
   return (
@@ -116,7 +119,7 @@ export function FilePicker({
         disabled={busy}
         className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-brand hover:bg-brand/[0.08] disabled:opacity-50"
       >
-        <Icon icon={SparklesIcon} className="size-3.5" />
+        <Icon icon={FileEmpty01Icon} className="size-3.5" />
         No file handy? Try with sample data
       </button>
     </div>
