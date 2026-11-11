@@ -15,14 +15,15 @@ def merchant_key(description: str) -> str:
     return " ".join(words[:3])
 
 
-def _extract_field(t: Any, field_name: str, fallback_name: str = "") -> Any:
+def extract_field(t: Any, field_name: str, fallback_name: str = "") -> Any:
+    """Read a field from a dict or object, falling back when missing or blank."""
     if isinstance(t, dict):
         val = t.get(field_name)
-        if val is None and fallback_name:
+        if (val is None or val == "") and fallback_name:
             val = t.get(fallback_name)
         return val
     val = getattr(t, field_name, None)
-    if val is None and fallback_name:
+    if (val is None or val == "") and fallback_name:
         val = getattr(t, fallback_name, None)
     return val
 
@@ -30,14 +31,14 @@ def _extract_field(t: Any, field_name: str, fallback_name: str = "") -> Any:
 def find_recurring(txns: list[Any]) -> list[dict]:
     groups = defaultdict(set)
     for t in txns:
-        direction = _extract_field(t, "direction")
+        direction = extract_field(t, "direction")
         if direction != "debit":
             continue
-        desc = str(_extract_field(t, "description") or "")
-        amt = _extract_field(t, "amount_kobo")
+        desc = str(extract_field(t, "description") or "")
+        amt = extract_field(t, "amount_kobo")
         if amt is None:
             continue
-        raw_date = _extract_field(t, "date", fallback_name="txn_date")
+        raw_date = extract_field(t, "date", fallback_name="txn_date")
         if not raw_date:
             continue
         date_str = str(raw_date)[:10]

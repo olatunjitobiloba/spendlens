@@ -1,16 +1,22 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from ai.banks import normalize_bank
 
 
 class Txn(BaseModel):
+    id: str | int | None = None
     description: str
     amount_kobo: int = Field(gt=0)
-    date: str
+    date: str = Field(validation_alias=AliasChoices("date", "txn_date"))
     direction: Literal["debit", "credit"] = "debit"
     bank: str = "other"
+    account_alias: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("account_alias", "account"),
+    )
+    reference: str | None = None
 
     @field_validator("bank", mode="before")
     @classmethod
