@@ -81,10 +81,10 @@ function CodeMaths() {
           Calculated by code
         </SourceLabel>
         <ul className="space-y-1.5">
-          {rows.map(([k, v]) => (
+          {rows.map(([k, v],i) => (
             <li key={k} className="flex justify-between gap-4">
               <span className="text-t3">{k}</span>
-              <span className="tabular-nums">{v}</span>
+              <span className={cn("tabular-nums", i !=0 && "text-destructive")}>{v}</span>
             </li>
           ))}
           <li className="flex justify-between gap-4 border-t border-line pt-2">
