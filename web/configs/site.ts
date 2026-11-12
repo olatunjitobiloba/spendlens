@@ -27,7 +27,7 @@ export const siteConfig = {
     docs: "https://github.com/olatunjitobiloba/spendlens#readme",
   },
   footerNote:
-    "Every number comes from code. AI only explains it. Demo data is synthetic.",
+    "Calculations run in code and AI only writes the explanations. All demo data is synthetic.",
 } as const;
 
 export type SiteConfig = typeof siteConfig;
