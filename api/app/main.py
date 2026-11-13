@@ -9,6 +9,7 @@ from .csv_import import ImportPreview, parse_preview
 from .config import get_settings
 from .imports import router as imports_router
 from .transactions import router as transactions_router
+from .analysis import router as analysis_router
 
 app = FastAPI(title="SpendLens API", version="0.1.0")
 settings = get_settings()
@@ -22,6 +23,7 @@ if settings.allowed_origin:
     )
 app.include_router(imports_router)
 app.include_router(transactions_router)
+app.include_router(analysis_router)
 
 
 @app.get("/health")

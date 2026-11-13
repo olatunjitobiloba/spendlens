@@ -214,3 +214,151 @@ end;
 $$;
 
 grant execute on function public.set_reconciliation_state(uuid, text) to authenticated;
+
+create or replace function public.set_protections(p_categories text[])
+returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  delete from public.protections where user_id = auth.uid();
+  insert into public.protections (user_id, category)
+  select auth.uid(), category from unnest(p_categories) as category;
+  return jsonb_build_object('categories', coalesce(to_jsonb(p_categories), '[]'::jsonb));
+end;
+$$;
+
+create or replace function public.get_analysis(p_start date, p_end date)
+returns jsonb
+language sql
+security invoker
+set search_path = public
+as $$
+  with eligible as (
+    select t.*
+    from public.transactions t
+    where t.user_id = auth.uid()
+      and t.txn_date between p_start and p_end
+      and t.direction = 'debit'
+      and not exists (
+        select 1 from public.reconciliation_links link
+        where link.user_id = auth.uid()
+          and link.state = 'confirmed'
+          and t.id = any(link.txn_ids)
+      )
+  ), category_rows as (
+    select coalesce(category, 'Uncategorized') as category, sum(amount_kobo)::bigint as total_kobo
+    from eligible group by coalesce(category, 'Uncategorized')
+  ), candidate_count as (
+    select count(*)::integer as count
+    from eligible t
+    where exists (
+      select 1 from public.reconciliation_links link
+      where link.user_id = auth.uid() and link.state = 'candidate' and t.id = any(link.txn_ids)
+    )
+  ), revision_source as (
+    select coalesce(string_agg(value, '|' order by value), '') as value
+    from (
+      select concat_ws(':', t.id, t.txn_date, t.amount_kobo, t.direction, t.category, t.review_state, t.status) as value
+      from public.transactions t where t.user_id = auth.uid()
+      union all
+      select concat_ws(':', link.id, link.kind, link.state, link.txn_ids::text) as value
+      from public.reconciliation_links link where link.user_id = auth.uid()
+    ) revisions
+  )
+  select jsonb_build_object(
+    'data_revision', encode(digest((select value from revision_source), 'sha256'), 'hex'),
+    'range', jsonb_build_object('start', p_start, 'end', p_end),
+    'baseline_kobo', coalesce((select sum(amount_kobo)::bigint from eligible), 0),
+    'categories', coalesce((select jsonb_agg(jsonb_build_object('category', category, 'total_kobo', total_kobo) order by total_kobo desc) from category_rows), '[]'::jsonb),
+    'coverage_warnings', (
+      select coalesce(jsonb_agg(message), '[]'::jsonb) from (
+        select 'No transactions in this range' as message where not exists (select 1 from eligible)
+        union all
+        select 'Limited transaction history' where (select count(*) from eligible) between 1 and 2
+        union all
+        select (select count::text || ' transactions need review' from candidate_count) where (select count from candidate_count) > 0
+      ) warnings
+    )
+  );
+$$;
+
+create or replace function public.calculate_scenario(
+  p_start date,
+  p_end date,
+  p_reductions jsonb
+) returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  analysis jsonb;
+  protected text[];
+begin
+  select coalesce(array_agg(category), '{}') into protected
+  from public.protections where user_id = auth.uid();
+  if exists (
+    select 1 from jsonb_to_recordset(p_reductions) as reduction(category text, percent integer)
+    where reduction.category = any(protected)
+  ) then
+    return jsonb_build_object('error', 'protected_category');
+  end if;
+
+  select public.get_analysis(p_start, p_end) into analysis;
+  return jsonb_build_object(
+    'data_revision', analysis->'data_revision',
+    'range', analysis->'range',
+    'baseline_kobo', analysis->'baseline_kobo',
+    'categories', (
+      with requested as (
+        select category, percent from jsonb_to_recordset(p_reductions) as reduction(category text, percent integer)
+      ), totals as (
+        select category, total_kobo from jsonb_to_recordset(analysis->'categories') as row(category text, total_kobo bigint)
+      )
+      select coalesce(jsonb_agg(jsonb_build_object(
+        'category', requested.category,
+        'total_kobo', coalesce(totals.total_kobo, 0),
+        'percent', requested.percent,
+        'reduction_kobo', coalesce(totals.total_kobo, 0) * requested.percent / 100
+      ) order by requested.category), '[]'::jsonb)
+      from requested left join totals using (category)
+    ),
+    'total_reduction_kobo', (
+      with requested as (
+        select category, percent from jsonb_to_recordset(p_reductions) as reduction(category text, percent integer)
+      ), totals as (
+        select category, total_kobo from jsonb_to_recordset(analysis->'categories') as row(category text, total_kobo bigint)
+      )
+      select coalesce(sum(coalesce(totals.total_kobo, 0) * requested.percent / 100), 0)
+      from requested left join totals using (category)
+    ),
+    'remaining_kobo', (
+      with requested as (
+        select category, percent from jsonb_to_recordset(p_reductions) as reduction(category text, percent integer)
+      ), totals as (
+        select category, total_kobo from jsonb_to_recordset(analysis->'categories') as row(category text, total_kobo bigint)
+      )
+      select (analysis->>'baseline_kobo')::bigint - coalesce(sum(coalesce(totals.total_kobo, 0) * requested.percent / 100), 0)
+      from requested left join totals using (category)
+    ),
+    'protected_categories', to_jsonb(protected),
+    'coverage_warnings', analysis->'coverage_warnings',
+    'evidence_txn_ids', (
+      select coalesce(jsonb_agg(id), '[]'::jsonb) from (
+        select t.id from public.transactions t
+        where t.user_id = auth.uid() and t.txn_date between p_start and p_end and t.direction = 'debit'
+          and coalesce(t.category, 'Uncategorized') in (
+            select category from jsonb_to_recordset(p_reductions) as reduction(category text, percent integer)
+          )
+        order by t.amount_kobo desc limit 10
+      ) evidence
+    )
+  );
+end;
+$$;
+
+grant execute on function public.set_protections(text[]) to authenticated;
+grant execute on function public.get_analysis(date, date) to authenticated;
+grant execute on function public.calculate_scenario(date, date, jsonb) to authenticated;
