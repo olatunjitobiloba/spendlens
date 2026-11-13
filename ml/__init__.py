@@ -9,6 +9,7 @@ from ml.types import (
     CategoryResult,
     Txn,
 )
+from ml.categorize import categorize
 
 __version__ = "0.1.0"
 
@@ -20,4 +21,5 @@ __all__ = [
     "Candidate",
     "CategoryResult",
     "Txn",
+    "categorize",
 ]

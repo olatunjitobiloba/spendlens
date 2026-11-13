@@ -1,6 +1,6 @@
 # ML V1: categorization and reconciliation
 
-Status: Step 2 explicitly authorized by the owner on 2026-11-11 (Africa/Lagos); subsequent steps remain gated by NEXT. Primary source: [ML_PLAN.md](../../../ML_PLAN.md).
+Status: Step 3 explicitly authorized by the owner on 2026-11-13 (Africa/Lagos); subsequent steps remain gated by NEXT. Primary source: [ML_PLAN.md](../../../ML_PLAN.md).
 Evidence: [progress](ml-v1-progress.md), [review](review.md), and
 [project tracker](../../progress-tracker.md).
 

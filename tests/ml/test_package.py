@@ -1,6 +1,8 @@
 """Public package checks, also copied outside the checkout for install verification."""
 
 from importlib import metadata
+from importlib.resources import files
+import json
 
 import ml
 from ml import Candidate, CategoryResult, Txn
@@ -15,6 +17,15 @@ def test_public_exports():
     assert ml.Candidate is Candidate
     assert ml.__version__ == "0.1.0"
     assert ml.MODEL_VERSION == "ml-0.1.0"
+    assert callable(ml.categorize)
+
+
+def test_packaged_rules():
+    # This check also runs against a regular install outside the source checkout.
+    resource = files("ml").joinpath("rules/categories.yaml")
+    rules = json.loads(resource.read_text(encoding="utf-8"))
+    assert set(rules) == set(ml.CATEGORIES)
+    assert rules["Uncategorized"] == []
 
 
 def test_installed_distribution():

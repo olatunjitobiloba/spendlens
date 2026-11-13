@@ -251,3 +251,95 @@ versions other than 3.13 were not exercised. No Python lint/type checker is
 configured; no UI, live provider, full-suite or performance claim is made.
 
 Verdict: **Approve for Step 2; no remaining Step 2 findings. Stop for owner `NEXT` before Step 3**.
+
+## Step 3 checkpoint: conservative categorization
+
+Date: 2026-11-13 02:28 WAT (Africa/Lagos). Scope: Step 3 only, explicitly
+requested by the owner. Reviewer: primary agent self-review using the review
+skill; tests and installed-package checks executed by delegated `gpt-6-luna`
+at `high` reasoning. This is not an independent review or the Step 6 audit.
+
+### Requirement audit
+
+| Requirement | Implementation and observed evidence | Status |
+| --- | --- | --- |
+| Expectations before logic | Added normalization and categorization expectations first, then implemented rules. Development fixtures/templates guided vocabulary; frozen challenge answers were not consulted or evaluated. | Passed |
+| Shared normalization and exact boundaries | `normalize_description` follows the Step 2 development oracle: lowercase, replace non-ASCII-letter/non-whitespace characters with spaces, collapse whitespace. Exact tests pin digits, punctuation, case, spacing, token splitting, substring negatives and contiguous phrases. | Passed |
+| Category vocabulary and conservative support (AC3) | JSON-compatible YAML has all eleven categories and no Uncategorized clues. Multiple same-category clues return 0.9; absent/conflicting evidence returns Uncategorized at 0.0. Tests cover every category and development fixture answer. | Passed |
+| Cardinality, order, IDs, nonmutation and determinism | Public `from ml import categorize`; tests exercise empty input and reversed generated histories for seeds 20261111 and 7, 746 rows each. Results preserve order/IDs, metadata and repeat-call equality; inputs remain unchanged. Invalid containers/elements and duplicate IDs use the Step 1 validator. | Passed |
+| Pure package and evidence boundary | Source reads only description plus ID association; no label/generator/AI/backend imports, network, logging or totals changes. Metadata-only changes cannot create category support. | Passed |
+| Packaged resource and required local run | Regular install into an isolated venv, copied suite outside checkout, and installed public-function/resource smoke all passed. Paths resolve under that venv's site-packages. | Passed |
+| Challenge freeze | Normalized-LF SHA-256 unchanged at `9e193f0b5d158a964cdec10fda5ee1df4114313a5d477e60dc8ca7e6ca5496bd`. Challenge metrics remain Step 5; no tuning against held-out failures. | Passed |
+
+### Changed files and responsibilities
+
+- `ml/normalize.py`: shared deterministic text helper for categorization and
+  future reconciliation; ASCII boundaries agree with the development oracle.
+- `ml/categorize.py`: validated ordered categorization and package-resource
+  loading; rule vocabulary validation fails closed with field-only errors.
+- `ml/rules/categories.yaml`: small development-derived word/phrase vocabulary,
+  parsed by the standard JSON library; no YAML or other runtime dependency.
+- `ml/__init__.py`: public categorizer export. `pyproject.toml` changes only
+  its package-data comment; the existing resource mapping suffices.
+- `tests/ml/test_normalize.py`, `tests/ml/test_categorize.py` and
+  `tests/ml/test_package.py`: exact behavior, separate development answers,
+  determinism/ordering, typed-call errors and packaged-resource proof.
+- `docs/ml_v1_handoff.md`: current callable behavior, text boundaries, confidence
+  semantics and resource status; Step 4 candidate contract remains unchanged.
+- Feature status/progress, this evolving review and project tracker record the
+  authorization and verified checkpoint; governing laws were not edited.
+
+### Verification results
+
+All acceptance commands below were delegated to Luna High. Repository cwd:
+`C:\Users\Caleb Babatunde\Documents\GitHub\spendlens`.
+Temporary verification root (T):
+`C:\Users\Caleb Babatunde\AppData\Local\Temp\spendlens-step3-7cedad24-d1a9-4c21-befc-f611c2640d5c`.
+Venv interpreter (P): `T\venv\Scripts\python.exe`, Python 3.13.15.
+T/P below expand to these exact paths; PowerShell invocation uses `&` for P.
+
+| Command / working directory | Observed result |
+| --- | --- |
+| `python -m pytest tests/ml/test_normalize.py tests/ml/test_categorize.py tests/ml/test_package.py --tb=no` / repository | Initial pre-install run: exit 1, 40 passed, 1 failed (`test_installed_distribution`). No behavior test failed. |
+| `python -m venv --system-site-packages T\venv`; `P -m pip install --no-build-isolation --no-deps .` / repository | Regular wheel built and installed, exit 0, `spendlens-ml` 0.1.0. No dependency download needed. Wheel SHA-256 `95931552605feef8eb83eea8343ebb03409244b7b1bb81205db4fb49fa086b60`. |
+| `python -m pytest tests/ml/test_package.py::test_installed_distribution --tb=short` / repository after install | Exit 0, 1 passed; initial metadata setup failure resolved. |
+| `P -m pytest tests/ml/test_normalize.py tests/ml/test_categorize.py tests/ml/test_package.py --tb=no` / repository | Exit 0, 41 passed, 0 failed. |
+| `P -m pytest checks --import-mode=importlib -o pythonpath= --tb=no` / T | Copied current three modules and development fixture: exit 0, 41 passed, 0 failed. No repository pytest config/source path injected. |
+| Installed-package smoke / T | Passed: `ml.__file__` is `T\venv\Lib\site-packages\ml\__init__.py`; resource is under `T\venv\Lib\site-packages\ml\rules\categories.yaml`. Public categorization preserves order and returns expected category/confidence/method/version metadata. |
+| Challenge integrity | Normalized-LF UTF-8 SHA-256 matches the Step 2 freeze. |
+
+Main-agent source/diff inspection found no Step 3 defects. `git diff --check`
+passed before the documentation checkpoint; final documentation check is recorded
+below. Installer-created `build/` and `spendlens_ml.egg-info/` were absent at
+baseline and removed only after Luna confirmed no live installer or test
+remained, using checked absolute paths within this workspace. Temporary venv
+and copied checks remain outside checkout. Existing unrelated untracked context
+and handoff documents were preserved; only authorized tracker/handoff changes
+were made. Git's sandbox global-ignore access warning remains an environment
+limit; command-local safe.directory enables repository inspection.
+
+### Design critique and UI verification
+
+No UI/server applies. This is intentionally a small explicit vocabulary, with
+whole-word/contiguous-phrase support and conservative abstention; it is not a
+general merchant classifier. Unicode transliteration is not implemented; the
+ASCII normalization matches the pre-existing development boundary oracle.
+Confidence is rule strength, not calibrated probability. No financial total is
+calculated or changed. No contract, dependency or feature-scope revision needed.
+
+### Remaining proof
+
+AC3 is verified. AC1/AC6 now have installed categorizer/resource and category
+metadata proof but still await reconciler/candidate identity and CLI checks.
+AC8 separate challenge evaluation remains Step 5. Reconciliation, report metrics,
+CI, full suites/AI regression checks and complete acceptance review remain their
+planned later steps. No Python lint/type checker is configured; Python versions
+other than 3.13 were not exercised. The venv reused system test/build tooling,
+so this is isolated package installation rather than clean dependency provisioning.
+Synthetic accuracy does not establish real-world accuracy.
+
+Verdict: **Approve for Step 3; no remaining Step 3 findings. Stop for owner
+`NEXT` before Step 4.**
+
+Final Step 3 documentation check: `git diff --check` passed after tracking
+updates; required tracker headings/table columns preserved. No later step started.
