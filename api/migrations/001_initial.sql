@@ -187,3 +187,30 @@ end;
 $$;
 
 grant execute on function public.commit_import(text, text, jsonb, jsonb, date, date) to authenticated;
+
+create or replace function public.set_reconciliation_state(
+  p_candidate_id uuid,
+  p_state text
+) returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  candidate public.reconciliation_links%rowtype;
+begin
+  if p_state not in ('confirmed', 'rejected') then
+    raise exception 'invalid reconciliation state';
+  end if;
+  update public.reconciliation_links
+  set state = p_state
+  where id = p_candidate_id and user_id = auth.uid()
+  returning * into candidate;
+  if not found then
+    raise exception 'candidate not found';
+  end if;
+  return jsonb_build_object('id', candidate.id, 'state', candidate.state);
+end;
+$$;
+
+grant execute on function public.set_reconciliation_state(uuid, text) to authenticated;
