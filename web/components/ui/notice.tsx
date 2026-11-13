@@ -37,14 +37,16 @@ export function Notice({
   return (
     <div
       role={tone === "danger" ? "alert" : undefined}
-      className={cn("flex flex-wrap items-start gap-x-3 gap-y-2 rounded-2xl border px-4 py-3", tones[tone], className)}
+      className={cn("grid items-start text-[13.5px] gap-x-3 gap-y-2 rounded-2xl border px-4 py-3", tones[tone], className)}
     >
-      <Icon
-        icon={tone === "neutral" || tone === "info" || tone === "positive" ? InformationCircleIcon : Alert02Icon}
-        className={cn("mt-0.5", iconTones[tone])}
-      />
-      <div className="min-w-0 flex-1 text-[13.5px]">
-        {title && <p className="font-[600]">{title}</p>}
+      <div className="flex items-center gap-x-1">
+        <Icon
+          icon={tone === "neutral" || tone === "info" || tone === "positive" ? InformationCircleIcon : Alert02Icon}
+          className={cn("mt-0.5", iconTones[tone])}
+        />
+        {title && <p className="font-semibold">{title}</p>}
+      </div>
+      <div className="min-w-0 flex-1 ">
         {children && <div className="text-t2">{children}</div>}
       </div>
       {action && <div className="flex shrink-0 flex-wrap gap-2">{action}</div>}

@@ -58,7 +58,7 @@ export function ExplanationPanel({ scenarioId }: { scenarioId: string }) {
           <p className="mt-2 text-[11.5px] text-t4">
             {state.data.source === "model"
               ? "Written by AI from the calculated numbers. Every figure was checked against them."
-              : "Standard summary of the calculated numbers."}
+              : ""}
           </p>
         </>
       )}
