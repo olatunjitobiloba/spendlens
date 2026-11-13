@@ -3,7 +3,6 @@
 from importlib import metadata
 from importlib.resources import files
 import json
-from typing import get_args
 
 import ml
 from ai.banks import BANKS as BANK_ALIASES, normalize_bank
@@ -29,7 +28,6 @@ def test_bank_registry_is_shared():
         assert bank in ml.BANKS
 
     assert set(ml.BANKS) == set(BANK_ALIASES.values()) | {"other"}
-    assert set(get_args(ml.Bank)) == set(ml.BANKS)
     assert normalize_bank("unknown synthetic institution") == "other"
 
 

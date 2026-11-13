@@ -180,3 +180,42 @@ focused suite was rerun afterward. Initial missing-distribution metadata failure
 resolved by installing the package into an isolated target. See the dated review
 entry for exact commands and environment. Owner-requested correction complete;
 no V2 implementation or hosted checks were started.
+
+## Registry-only bank typing correction — 2026-11-13 17:43:35 Africa/Lagos
+
+Owner clarification supersedes the earlier bank-literal compatibility decision:
+`ai.banks.BANKS` is the sole source of bank names and aliases. No `Bank` literal
+is maintained in AI or ML. `Bank = str` preserves the public ML import name;
+`Txn.bank` is validated against the registry-derived institution values plus
+`other`. The undefined-name error occurred because `Txn.bank` referenced `Bank`
+without a definition or import. The string alias resolves that error without
+introducing another bank-name list. AI normalization remains unchanged.
+
+Luna High, Python 3.13.15 / pytest 8.3.4, repository root:
+`python -m pytest tests/ml/test_contracts.py tests/ml/test_package.py --tb=short`
+passed 48 tests, exit 0; `python -m pytest tests --tb=short` passed 261 tests,
+exit 0. `PYTHONPATH` pointed to the previously installed temporary metadata target
+`C:/Users/Caleb Babatunde/AppData/Local/Temp/spendlens-bank-verify-target`;
+`ml.__file__` confirmed source resolution from the current checkout. The initial
+focused run without installed metadata had 47 passed and one metadata failure;
+using the existing target resolved the environment prerequisite. No fresh
+installation or hosted/live-provider check was performed. Current docs and the
+registry regression assertion reflect string typing without a bank literal.
+
+Self-review: no unresolved findings for this correction; no V2 work authorized.
+
+## Direct bank string annotation — 2026-11-13 17:48:12 Africa/Lagos
+
+Owner requested removal of the unnecessary `Bank = str` indirection.
+`Txn.bank` now uses `str` directly; the alias and its public export were removed.
+This supersedes earlier compatibility-alias guidance. Bank-name validation still
+uses values derived only from `ai.banks.BANKS` plus `other`; no behavior or bank
+registry changed. Active plan, architecture, standards and handoff docs agree.
+
+Luna High ran `python -m pytest tests/ml/test_contracts.py tests/ml/test_package.py --tb=short`
+from the repository root with the existing temporary install target on `PYTHONPATH`
+for distribution metadata: exit 0, 48 passed, 0 failed, Python 3.13.15 / pytest 8.3.4.
+Only focused checks were needed for this annotation/export simplification;
+no new full-suite or installed-package result is claimed. Diff whitespace check
+passed. Self-review found no remaining alias references in ML source or active
+contract docs. No V2 work started.

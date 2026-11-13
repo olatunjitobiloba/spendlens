@@ -70,7 +70,7 @@ class Txn:
     direction: Direction
     account_alias: str
     reference: str | None
-    bank: Bank
+    bank: str
 
     def __post_init__(self) -> None:
         # Validate the typed boundary without parsing CSV or coercing money/text.

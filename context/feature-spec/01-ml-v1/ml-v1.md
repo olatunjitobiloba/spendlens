@@ -335,3 +335,7 @@ future commands, not claims that they currently exist or pass.
 
 
 
+
+Owner clarification: `ai.banks.BANKS` is the sole source of bank names and
+aliases. `Txn.bank` uses `str` directly, without a type alias or `Literal` union;
+transaction validation reads registry-derived values plus `other`.
