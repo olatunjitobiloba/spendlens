@@ -21,6 +21,7 @@ import { ErrorNotice } from "../shared/error-notice";
 import { MonthSelect } from "../shared/month-select";
 import { PlanSkeleton } from "../skeletons";
 import { CUT_FORM_ID, CutBuilder, anyInvalidCut } from "./cut-builder";
+import { GoalCard } from "./goal-card";
 import { Protections } from "./protections";
 import { SavedScenarios } from "./saved-scenarios";
 import { ScenarioResultDialog } from "./scenario-result";
@@ -130,6 +131,10 @@ export function PlanScreen() {
           )}
         </div>
         {invalid && <p className="text-[12.5px] text-destructive">Fix the highlighted percentages first.</p>}
+      </div>
+
+      <div className="mt-5">
+        <GoalCard defaultMonthlySavingKobo={shown?.total_reduction_kobo ?? 0} />
       </div>
 
       <div className="mt-5">

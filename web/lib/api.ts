@@ -6,6 +6,8 @@ import type {
   Analysis,
   Explanation,
   Forecast,
+  GoalInput,
+  GoalProjection,
   Health,
   ImportPreview,
   ImportRecord,
@@ -223,4 +225,6 @@ export const api = {
   recurring: () => request<RecurringCandidate[]>("GET", "/v1/recurring"),
 
   deleteMyData: () => request<void>("DELETE", "/v1/me/data"),
+  projectGoal: (input: GoalInput) =>
+    request<GoalProjection>("POST", "/v1/goals/project", { body: input }),
 };
