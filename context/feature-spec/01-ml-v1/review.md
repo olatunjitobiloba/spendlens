@@ -166,3 +166,88 @@ Verdict: **Step 1 approved with the stated verification limits; await owner
 
 
 
+
+## Step 2 checkpoint: labeled fixtures and seeded generation
+
+Date: 2026-11-11 04:10 WAT (Africa/Lagos). Scope: Step 2 only, explicitly
+requested by the owner. Reviewer: primary agent self-review using the review
+skill; execution evidence supplied by delegated Luna High. Full-feature review
+remains Step 6.
+
+### Requirement audit
+
+| Requirement | Implementation and observed evidence | Status |
+| --- | --- | --- |
+| Expected answers before detector work | Development and challenge JSON have separate canonical transaction arrays, exact category/confidence maps and candidate kind/pair/confidence lists. No categorizer, rules or reconciler exists yet. | Implemented |
+| Fixed challenge independence | Independently worded invented descriptions, disjoint from development descriptions; authored against the same boundary matrix before rules. No model or production data involved. Fixture is not loaded by the generator. | Implemented; test result below |
+| Seeded personas and coverage (AC7) | `generate_dataset` defaults to seed 20261111; tests also use 7. Each persona has 373 rows, every day January 1–June 30, 2026 (181 dates); 746 total rows. Local `Random` leaves caller randomness unchanged; IDs and ordering remain stable. | Implemented; test result below |
+| Separate truth | Frozen dataset holds transaction tuples separately from category, persona and candidate labels; only canonical `Txn` objects are passed to future detectors. Money stays positive integer kobo and normalized bank metadata is required. | Implemented |
+| All required edge cases | Fixtures cover repeat imports, legitimate identical purchases, reference/account/direction/date/amount boundaries, normalization, fees, refunds, ambiguous and absent evidence, missing counterparts, both date directions and multiple counterpart pairs. Generator injects six named edge cases per persona and mixed missing/present times. | Implemented |
+| Local run | Required generator exercise delegated through the exact Step 2 pytest command. | See verification results |
+
+### Changed files and responsibilities
+
+- `ml/synthetic.py`: pure standard-library generator, immutable data/label
+  containers and derived manifest; no fixture/rule reads, logging or services.
+- `tests/ml/fixtures/development.json`: 23 cases, 57 rows, 10 expected candidate
+  pairs and all eleven category names, for future rule development.
+- `tests/ml/fixtures/challenge.json`: 23 independently worded cases, 57 rows and
+  10 expected candidate pairs. Same boundary matrix, separately stored answers;
+  no claims of an independent human reviewer or statistical representativeness.
+- `tests/ml/test_synthetic.py`: canonical fields, exact pair truth (each case
+  and concatenated split), coverage, manifest, edge category answers, determinism,
+  global-random isolation and invalid seed checks.
+- Feature plan status, feature progress, this review and project tracker record
+  the authorization and checkpoint. Existing unrelated worktree changes preserved.
+
+Manifest: schema 1; seeds 20261111 (default) and 7 (alternate verification);
+746 generated rows, 373 per persona, six candidate pairs. Each persona spans
+2026-01-01 through 2026-06-30. Fixed fixtures are unseeded authored examples.
+Challenge freeze SHA-256 of UTF-8 text with normalized LF newlines:
+`9e193f0b5d158a964cdec10fda5ee1df4114313a5d477e60dc8ca7e6ca5496bd`.
+Freeze is established at this checkpoint, after fixture-integrity repairs and
+before category-rule implementation. Future challenge failures must be reported
+without tuning rules against its answers. Synthetic accuracy does not establish
+real-world accuracy; Step 2 measures no detector performance.
+
+### Verification results
+
+All test runs used delegated `gpt-6-luna`, reasoning `high`, from the repository
+root, with `python -m pytest tests/ml/test_synthetic.py tests/ml/test_contracts.py`
+under Python 3.13.15 / pytest 8.3.4. An initial assumed virtual-environment
+executable did not resolve (exit 1); no tests ran in that attempt. Default Python
+provided the available environment without installation.
+
+First execution: exit 1, 54 collected, 51 passed, three failed. The hash pinned
+raw checkout bytes rather than normalized text, and pair auditing found two
+unlabeled cross-persona transfers. Fixed the hash convention and reserved
+non-round principal amounts per persona, separate from random daily amounts.
+Also isolated fixed fixture cases by amount and added concatenated-split pair
+auditing, preventing hidden cross-case positives.
+
+Second execution: exit 1, 54 collected, 53 passed, one failed. Independence
+checking caught identical digits/punctuation-only text in the two splits. Rewrote
+the challenge spelling and updated its freeze hash before rule work.
+
+Final focused execution: exit 0, 54 passed, 0 failed; no warnings shown (29.81 seconds).
+
+Tracked-change `git diff --check` passed. Git could not read the sandbox user's global ignore file; repository-local inspection succeeded with a command-local
+`safe.directory` override. No global Git setting was changed.
+
+### Design critique and UI verification
+
+No UI or server applies. Candidate labels remain review evidence, including
+legitimate repeated purchases; fees are separate rows and refunds are negative
+V1 cases. Descriptions are invented and are not logged. Self-review findings
+were fixed within Step 2; no governing law, result contract or dependency changed.
+
+### Remaining proof
+
+AC7 data-generation evidence belongs to this checkpoint. AC8 challenge provenance
+and freeze are established; separate development/challenge evaluation sections
+remain Step 5. Categorization, reconciliation, installed-resource/CLI checks,
+report metrics, CI and complete acceptance review remain later steps. Python
+versions other than 3.13 were not exercised. No Python lint/type checker is
+configured; no UI, live provider, full-suite or performance claim is made.
+
+Verdict: **Approve for Step 2; no remaining Step 2 findings. Stop for owner `NEXT` before Step 3**.
