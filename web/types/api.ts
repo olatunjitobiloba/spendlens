@@ -211,3 +211,19 @@ export type RecurringCandidate = {
 };
 
 export type Health = { status: "ok" | "degraded"; database: "ok" | "down" };
+
+export type GoalInput = {
+  goal_name: string;
+  target_kobo: number;
+  saved_kobo: number;
+  monthly_saving_kobo: number;
+  annual_rate_pct?: number;
+};
+
+export type GoalProjection = {
+  goal_name: string;
+  months_to_goal: number | null;
+  final_balance_kobo: number;
+  annual_rate_pct: number;
+  note: string;
+};

@@ -1,3 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spendlens-ml"
+version = "0.1.0"
+description = "Pure Python spending-review contracts and intelligence for SpendLens"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+# Share only the dependency-free bank registry, not the AI service modules.
+[tool.setuptools]
+py-modules = ["ai.banks"]
+
+[tool.setuptools.package-dir]
+ml = "ml"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ml", "ml.*"]
+namespaces = false
+
+# Include the Step 3 rules in regular package installations.
+[tool.setuptools.package-data]
+ml = ["rules/*.yaml"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]

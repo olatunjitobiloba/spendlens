@@ -6,6 +6,8 @@ import type {
   Analysis,
   Explanation,
   Forecast,
+  GoalInput,
+  GoalProjection,
   Health,
   ImportPreview,
   ImportRecord,
@@ -184,7 +186,7 @@ function csvForm(file: File) {
 }
 
 export const api = {
-  health: () => request<Health>("GET", "/health"),
+  health: (signal?: AbortSignal) => request<Health>("GET", "/health", { signal }),
 
   previewImport: (file: File) =>
     request<ImportPreview>("POST", "/v1/imports/preview", { form: csvForm(file) }),
@@ -223,4 +225,6 @@ export const api = {
   recurring: () => request<RecurringCandidate[]>("GET", "/v1/recurring"),
 
   deleteMyData: () => request<void>("DELETE", "/v1/me/data"),
+  projectGoal: (input: GoalInput) =>
+    request<GoalProjection>("POST", "/v1/goals/project", { body: input }),
 };

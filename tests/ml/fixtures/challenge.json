@@ -1,0 +1,1186 @@
+{
+  "schema_version": 1,
+  "split": "challenge",
+  "provenance": {
+    "authored": "2026-11-11",
+    "source": "Invented synthetic examples authored before rule implementation; no real data.",
+    "frozen": true,
+    "policy": "Challenge answers must not be used to tune rules; report failures unchanged."
+  },
+  "cases": [
+    {
+      "name": "repeat_import",
+      "transactions": [
+        {
+          "id": "challenge-repeat_import-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 1150000,
+          "direction": "debit",
+          "account_alias": "repeat_import-main",
+          "reference": "import-7",
+          "bank": "other"
+        },
+        {
+          "id": "challenge-repeat_import-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 1150000,
+          "direction": "debit",
+          "account_alias": "repeat_import-main",
+          "reference": "import-7",
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-repeat_import-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-repeat_import-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": [
+          {
+            "kind": "duplicate",
+            "txn_ids": [
+              "challenge-repeat_import-0",
+              "challenge-repeat_import-1"
+            ],
+            "confidence": 0.9
+          }
+        ]
+      }
+    },
+    {
+      "name": "legitimate_identical_purchase",
+      "transactions": [
+        {
+          "id": "challenge-legitimate_identical_purchase-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 2150000,
+          "direction": "debit",
+          "account_alias": "legitimate_identical_purchase-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-legitimate_identical_purchase-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 2150000,
+          "direction": "debit",
+          "account_alias": "legitimate_identical_purchase-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-legitimate_identical_purchase-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-legitimate_identical_purchase-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": [
+          {
+            "kind": "duplicate",
+            "txn_ids": [
+              "challenge-legitimate_identical_purchase-0",
+              "challenge-legitimate_identical_purchase-1"
+            ],
+            "confidence": 0.6
+          }
+        ]
+      }
+    },
+    {
+      "name": "one_missing_reference",
+      "transactions": [
+        {
+          "id": "challenge-one_missing_reference-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 3150000,
+          "direction": "debit",
+          "account_alias": "one_missing_reference-main",
+          "reference": "receipt",
+          "bank": "other"
+        },
+        {
+          "id": "challenge-one_missing_reference-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 3150000,
+          "direction": "debit",
+          "account_alias": "one_missing_reference-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-one_missing_reference-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-one_missing_reference-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": [
+          {
+            "kind": "duplicate",
+            "txn_ids": [
+              "challenge-one_missing_reference-0",
+              "challenge-one_missing_reference-1"
+            ],
+            "confidence": 0.6
+          }
+        ]
+      }
+    },
+    {
+      "name": "conflicting_references",
+      "transactions": [
+        {
+          "id": "challenge-conflicting_references-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 4150000,
+          "direction": "debit",
+          "account_alias": "conflicting_references-main",
+          "reference": "receipt-a",
+          "bank": "other"
+        },
+        {
+          "id": "challenge-conflicting_references-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 4150000,
+          "direction": "debit",
+          "account_alias": "conflicting_references-main",
+          "reference": "receipt-b",
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-conflicting_references-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-conflicting_references-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "duplicate_account_boundary",
+      "transactions": [
+        {
+          "id": "challenge-duplicate_account_boundary-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 5150000,
+          "direction": "debit",
+          "account_alias": "first",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-duplicate_account_boundary-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 5150000,
+          "direction": "debit",
+          "account_alias": "second",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-duplicate_account_boundary-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-duplicate_account_boundary-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "duplicate_direction_boundary",
+      "transactions": [
+        {
+          "id": "challenge-duplicate_direction_boundary-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 6150000,
+          "direction": "debit",
+          "account_alias": "duplicate_direction_boundary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-duplicate_direction_boundary-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 6150000,
+          "direction": "credit",
+          "account_alias": "duplicate_direction_boundary-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-duplicate_direction_boundary-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-duplicate_direction_boundary-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "duplicate_amount_boundary",
+      "transactions": [
+        {
+          "id": "challenge-duplicate_amount_boundary-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 7150000,
+          "direction": "debit",
+          "account_alias": "duplicate_amount_boundary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-duplicate_amount_boundary-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 7150001,
+          "direction": "debit",
+          "account_alias": "duplicate_amount_boundary-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-duplicate_amount_boundary-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-duplicate_amount_boundary-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "duplicate_date_boundary",
+      "transactions": [
+        {
+          "id": "challenge-duplicate_date_boundary-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 8150000,
+          "direction": "debit",
+          "account_alias": "duplicate_date_boundary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-duplicate_date_boundary-1",
+          "date": "2026-03-11",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 8150000,
+          "direction": "debit",
+          "account_alias": "duplicate_date_boundary-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-duplicate_date_boundary-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-duplicate_date_boundary-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "normalized_duplicate",
+      "transactions": [
+        {
+          "id": "challenge-normalized_duplicate-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "LUNCH AT LANTERN KITCHEN 123!!!",
+          "amount_kobo": 9150000,
+          "direction": "debit",
+          "account_alias": "normalized_duplicate-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-normalized_duplicate-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 9150000,
+          "direction": "debit",
+          "account_alias": "normalized_duplicate-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-normalized_duplicate-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-normalized_duplicate-1": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": [
+          {
+            "kind": "duplicate",
+            "txn_ids": [
+              "challenge-normalized_duplicate-0",
+              "challenge-normalized_duplicate-1"
+            ],
+            "confidence": 0.6
+          }
+        ]
+      }
+    },
+    {
+      "name": "transfer_same_day",
+      "transactions": [
+        {
+          "id": "challenge-transfer_same_day-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 10150000,
+          "direction": "debit",
+          "account_alias": "transfer_same_day-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_same_day-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 10150000,
+          "direction": "credit",
+          "account_alias": "transfer_same_day-b",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_same_day-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_same_day-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": [
+          {
+            "kind": "internal_transfer",
+            "txn_ids": [
+              "challenge-transfer_same_day-0",
+              "challenge-transfer_same_day-1"
+            ],
+            "confidence": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "name": "transfer_next_day",
+      "transactions": [
+        {
+          "id": "challenge-transfer_next_day-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 11150000,
+          "direction": "debit",
+          "account_alias": "transfer_next_day-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_next_day-1",
+          "date": "2026-03-11",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 11150000,
+          "direction": "credit",
+          "account_alias": "transfer_next_day-b",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_next_day-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_next_day-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": [
+          {
+            "kind": "internal_transfer",
+            "txn_ids": [
+              "challenge-transfer_next_day-0",
+              "challenge-transfer_next_day-1"
+            ],
+            "confidence": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "name": "transfer_reverse_dates",
+      "transactions": [
+        {
+          "id": "challenge-transfer_reverse_dates-0",
+          "date": "2026-03-11",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 12150000,
+          "direction": "debit",
+          "account_alias": "transfer_reverse_dates-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_reverse_dates-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 12150000,
+          "direction": "credit",
+          "account_alias": "transfer_reverse_dates-b",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_reverse_dates-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_reverse_dates-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": [
+          {
+            "kind": "internal_transfer",
+            "txn_ids": [
+              "challenge-transfer_reverse_dates-0",
+              "challenge-transfer_reverse_dates-1"
+            ],
+            "confidence": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "name": "transfer_two_days",
+      "transactions": [
+        {
+          "id": "challenge-transfer_two_days-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 13150000,
+          "direction": "debit",
+          "account_alias": "two-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_two_days-1",
+          "date": "2026-03-12",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 13150000,
+          "direction": "credit",
+          "account_alias": "two-b",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_two_days-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_two_days-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "transfer_same_account",
+      "transactions": [
+        {
+          "id": "challenge-transfer_same_account-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 14150000,
+          "direction": "debit",
+          "account_alias": "transfer_same_account-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_same_account-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 14150000,
+          "direction": "credit",
+          "account_alias": "transfer_same_account-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_same_account-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_same_account-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "transfer_same_direction",
+      "transactions": [
+        {
+          "id": "challenge-transfer_same_direction-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 15150000,
+          "direction": "debit",
+          "account_alias": "same-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_same_direction-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 15150000,
+          "direction": "debit",
+          "account_alias": "same-b",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_same_direction-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_same_direction-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "transfer_fee",
+      "transactions": [
+        {
+          "id": "challenge-transfer_fee-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 16150000,
+          "direction": "debit",
+          "account_alias": "fee-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_fee-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 16150000,
+          "direction": "credit",
+          "account_alias": "fee-b",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_fee-2",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Processing charge",
+          "amount_kobo": 16001000,
+          "direction": "debit",
+          "account_alias": "fee-a",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_fee-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_fee-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          },
+          "challenge-transfer_fee-2": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": [
+          {
+            "kind": "internal_transfer",
+            "txn_ids": [
+              "challenge-transfer_fee-0",
+              "challenge-transfer_fee-1"
+            ],
+            "confidence": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "name": "transfer_unequal_amount",
+      "transactions": [
+        {
+          "id": "challenge-transfer_unequal_amount-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 17150000,
+          "direction": "debit",
+          "account_alias": "unequal-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-transfer_unequal_amount-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 17149000,
+          "direction": "credit",
+          "account_alias": "unequal-b",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-transfer_unequal_amount-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-transfer_unequal_amount-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "no_transfer_clue",
+      "transactions": [
+        {
+          "id": "challenge-no_transfer_clue-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Account adjustment north",
+          "amount_kobo": 18150000,
+          "direction": "debit",
+          "account_alias": "noclue-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-no_transfer_clue-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Account adjustment south",
+          "amount_kobo": 18150000,
+          "direction": "credit",
+          "account_alias": "noclue-b",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-no_transfer_clue-0": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          },
+          "challenge-no_transfer_clue-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "missing_counterpart",
+      "transactions": [
+        {
+          "id": "challenge-missing_counterpart-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Transfer to unavailable account",
+          "amount_kobo": 19150000,
+          "direction": "debit",
+          "account_alias": "missing_counterpart-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-missing_counterpart-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "refund",
+      "transactions": [
+        {
+          "id": "challenge-refund-0",
+          "date": "2026-03-09",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 20150000,
+          "direction": "debit",
+          "account_alias": "refund-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-refund-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Refund for returned goods",
+          "amount_kobo": 20150000,
+          "direction": "credit",
+          "account_alias": "refund-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-refund-0": {
+            "category": "Food",
+            "confidence": 0.9
+          },
+          "challenge-refund-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "ambiguous",
+      "transactions": [
+        {
+          "id": "challenge-ambiguous-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Unspecified settlement",
+          "amount_kobo": 21000100,
+          "direction": "debit",
+          "account_alias": "ambiguous-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-ambiguous-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bus fare and lunch",
+          "amount_kobo": 21000200,
+          "direction": "debit",
+          "account_alias": "ambiguous-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-ambiguous-2",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "987 ???",
+          "amount_kobo": 21000300,
+          "direction": "debit",
+          "account_alias": "ambiguous-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-ambiguous-3",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "cinematicology",
+          "amount_kobo": 21000400,
+          "direction": "debit",
+          "account_alias": "ambiguous-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-ambiguous-0": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          },
+          "challenge-ambiguous-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          },
+          "challenge-ambiguous-2": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          },
+          "challenge-ambiguous-3": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": []
+      }
+    },
+    {
+      "name": "multiple_counterparts",
+      "transactions": [
+        {
+          "id": "challenge-multiple_counterparts-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Bank transfer to reserve account",
+          "amount_kobo": 22150000,
+          "direction": "debit",
+          "account_alias": "multi-a",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-multiple_counterparts-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 22150000,
+          "direction": "credit",
+          "account_alias": "multi-b",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-multiple_counterparts-2",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Reserve account deposit",
+          "amount_kobo": 22150000,
+          "direction": "credit",
+          "account_alias": "multi-c",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-multiple_counterparts-0": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-multiple_counterparts-1": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          },
+          "challenge-multiple_counterparts-2": {
+            "category": "Uncategorized",
+            "confidence": 0.0
+          }
+        },
+        "candidates": [
+          {
+            "kind": "internal_transfer",
+            "txn_ids": [
+              "challenge-multiple_counterparts-0",
+              "challenge-multiple_counterparts-1"
+            ],
+            "confidence": 0.8
+          },
+          {
+            "kind": "internal_transfer",
+            "txn_ids": [
+              "challenge-multiple_counterparts-0",
+              "challenge-multiple_counterparts-2"
+            ],
+            "confidence": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "name": "category_vocabulary",
+      "transactions": [
+        {
+          "id": "challenge-category_vocabulary-0",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "City shuttle ticket",
+          "amount_kobo": 23010000,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-1",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Mobile data bundle renewal",
+          "amount_kobo": 23010001,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-2",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Theatre admission",
+          "amount_kobo": 23010002,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-3",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Footwear shopping",
+          "amount_kobo": 23010003,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-4",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Water utility payment",
+          "amount_kobo": 23010004,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-5",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "College tuition instalment",
+          "amount_kobo": 23010005,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-6",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Clinic consultation",
+          "amount_kobo": 23010006,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-7",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Transfer to reserve",
+          "amount_kobo": 23010007,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-8",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Salary from invented employer",
+          "amount_kobo": 23010008,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        },
+        {
+          "id": "challenge-category_vocabulary-9",
+          "date": "2026-03-10",
+          "time": null,
+          "description": "Lunch at Lantern kitchen",
+          "amount_kobo": 23010009,
+          "direction": "debit",
+          "account_alias": "category_vocabulary-main",
+          "reference": null,
+          "bank": "other"
+        }
+      ],
+      "expected": {
+        "categories": {
+          "challenge-category_vocabulary-0": {
+            "category": "Transport",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-1": {
+            "category": "Airtime and Data",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-2": {
+            "category": "Entertainment",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-3": {
+            "category": "Shopping",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-4": {
+            "category": "Bills and Utilities",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-5": {
+            "category": "Education",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-6": {
+            "category": "Health",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-7": {
+            "category": "Savings and Transfers",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-8": {
+            "category": "Income",
+            "confidence": 0.9
+          },
+          "challenge-category_vocabulary-9": {
+            "category": "Food",
+            "confidence": 0.9
+          }
+        },
+        "candidates": []
+      }
+    }
+  ]
+}

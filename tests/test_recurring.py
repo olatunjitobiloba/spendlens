@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from ai.recurring import find_recurring, merchant_key
 
 
