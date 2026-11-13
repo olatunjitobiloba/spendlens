@@ -73,10 +73,18 @@ create table public.billing_orders (
   user_id uuid not null references auth.users(id) on delete cascade,
   reference text not null unique,
   amount_kobo bigint not null check (amount_kobo > 0),
+  idempotency_key text not null,
+  paid_amount_kobo bigint,
   currency text not null check (currency = 'NGN'),
   status text not null default 'pending' check (status in ('pending', 'paid', 'underpaid', 'overpaid', 'failed', 'refunded')),
   paid_at timestamptz,
   created_at timestamptz not null default now()
+  , unique (user_id, idempotency_key)
+);
+
+create table public.pro_entitlements (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  expires_at timestamptz not null
 );
 
 create table public.webhook_events (
@@ -102,6 +110,7 @@ alter table public.reconciliation_links enable row level security;
 alter table public.protections enable row level security;
 alter table public.scenarios enable row level security;
 alter table public.billing_orders enable row level security;
+alter table public.pro_entitlements enable row level security;
 alter table public.webhook_events enable row level security;
 alter table public.audit_events enable row level security;
 
@@ -362,3 +371,59 @@ $$;
 grant execute on function public.set_protections(text[]) to authenticated;
 grant execute on function public.get_analysis(date, date) to authenticated;
 grant execute on function public.calculate_scenario(date, date, jsonb) to authenticated;
+
+create or replace function public.create_billing_order(
+  p_reference text, p_amount_kobo bigint, p_idempotency_key text
+) returns jsonb language plpgsql security definer set search_path = public as $$
+declare row public.billing_orders%rowtype;
+begin
+  select * into row from public.billing_orders where user_id = auth.uid() and idempotency_key = p_idempotency_key;
+  if found then return jsonb_build_object('id', row.id, 'reference', row.reference, 'amount_kobo', row.amount_kobo, 'reused', true); end if;
+  insert into public.billing_orders (user_id, reference, amount_kobo, idempotency_key, currency)
+  values (auth.uid(), p_reference, p_amount_kobo, p_idempotency_key, 'NGN') returning * into row;
+  return jsonb_build_object('id', row.id, 'reference', row.reference, 'amount_kobo', row.amount_kobo, 'reused', false);
+end; $$;
+
+create or replace function public.get_billing_order(p_order_id uuid)
+returns jsonb language sql security definer set search_path = public as $$
+  select jsonb_build_object('id', id, 'reference', reference, 'amount_kobo', amount_kobo, 'currency', currency, 'status', status, 'paid_at', paid_at)
+  from public.billing_orders where id = p_order_id and user_id = auth.uid();
+$$;
+
+create or replace function public.process_kora_event(
+  p_event_hash text, p_event_type text, p_order_reference text, p_amount_kobo bigint,
+  p_currency text, p_status text, p_transaction_status text
+) returns jsonb language plpgsql security definer set search_path = public as $$
+declare row public.billing_orders%rowtype; event_id uuid; final_status text;
+begin
+  insert into public.webhook_events (event_hash, event_type) values (p_event_hash, p_event_type)
+  on conflict (event_hash) do nothing returning id into event_id;
+  if event_id is null then return jsonb_build_object('duplicate', true); end if;
+  select * into row from public.billing_orders where reference = p_order_reference for update;
+  if not found then return jsonb_build_object('ignored', 'unknown_reference'); end if;
+  if p_event_type = 'refund.success' then
+    update public.billing_orders set status = 'refunded' where id = row.id;
+    delete from public.pro_entitlements where user_id = row.user_id;
+    return jsonb_build_object('status', 'refunded');
+  end if;
+  if p_event_type = 'charge.failed' or p_status <> 'success' then
+    update public.billing_orders set status = 'failed' where id = row.id;
+    return jsonb_build_object('status', 'failed');
+  end if;
+  if p_currency <> row.currency then return jsonb_build_object('ignored', 'currency_mismatch'); end if;
+  if p_amount_kobo < row.amount_kobo or p_transaction_status = 'underpaid' then final_status := 'underpaid';
+  elsif p_amount_kobo > row.amount_kobo or p_transaction_status = 'overpaid' then final_status := 'overpaid';
+  else final_status := 'paid'; end if;
+  update public.billing_orders set status = final_status, paid_amount_kobo = p_amount_kobo,
+    paid_at = case when final_status in ('paid', 'overpaid') then now() else paid_at end where id = row.id;
+  if final_status in ('paid', 'overpaid') then
+    insert into public.pro_entitlements (user_id, expires_at) values (row.user_id, now() + interval '30 days')
+    on conflict (user_id) do update set expires_at = excluded.expires_at;
+  end if;
+  return jsonb_build_object('status', final_status);
+end; $$;
+
+grant execute on function public.create_billing_order(text, bigint, text) to authenticated;
+grant execute on function public.get_billing_order(uuid) to authenticated;
+grant usage on schema public to service_role;
+grant execute on function public.process_kora_event(text, text, text, bigint, text, text, text) to service_role;

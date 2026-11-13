@@ -57,3 +57,13 @@ class SupabaseGateway:
         if response.status_code >= 400:
             raise DatabaseError("Supabase rejected the request")
         return response.json() if response.content else None
+
+
+class SupabaseServiceGateway(SupabaseGateway):
+    """Service-role access is reserved for unauthenticated webhook processing."""
+
+    def __init__(self, settings: Settings) -> None:
+        if not settings.supabase_service_role_key:
+            raise DatabaseError("Supabase service role is not configured")
+        super().__init__(settings, settings.supabase_service_role_key)
+        self._headers["apikey"] = settings.supabase_service_role_key
