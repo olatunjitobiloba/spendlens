@@ -343,3 +343,93 @@ Verdict: **Approve for Step 3; no remaining Step 3 findings. Stop for owner
 
 Final Step 3 documentation check: `git diff --check` passed after tracking
 updates; required tracker headings/table columns preserved. No later step started.
+
+## Step 4 checkpoint: duplicate and internal-transfer candidates
+
+Date: 2026-11-13 10:12 WAT (Africa/Lagos). Scope: exact Step 4, explicitly
+requested by the owner. Reviewer: primary agent self-review using the review
+skill; execution evidence supplied by delegated `gpt-6-luna` at `high`
+reasoning. This is not independent review or the full-feature Step 6 audit.
+
+### Requirement audit
+
+| Requirement | Implementation and observed evidence | Status |
+| --- | --- | --- |
+| Expectations before logic | Added test_reconcile.py before reconcile.py; reference matrix, boundary cases, all-pair ordering and frozen identity expectation precede detector implementation. Development answers alone guide matching. | Passed |
+| Duplicates (AC4) | Same account/direction/amount/date/normalized description; both equal references yield 0.9, conflicting references veto, one/both absent yield 0.6. Tests include legitimate repeated purchases and every required-field mismatch. | Passed |
+| Transfers (AC5) | Opposite directions, different accounts, exact equal integer amounts, calendar distance at most one day in either direction, and complete normalized word transfer on either side yield 0.8. Tests cover offsets -2 through +2, both clue sides, unequal amounts, same account/direction, missing counterpart and no clue. | Passed |
+| Fee/refund safety | Separate fee rows are not netted into principal amounts; unequal net-credit case returns no candidate. Refund and no-clue negatives remain undetected; no refund-specific matcher added. | Passed |
+| Stable identity/order and all eligible pairs (AC6) | Sorted transaction IDs, JSON ensure_ascii=True with compact separators and full SHA-256 implement the frozen recipe. Precomputed duplicate identity assertion, three duplicate plus three transfer pairs, 24 input permutations and reversed generated data pin stable results. Public export, method rule and model version ml-0.1.0 verified. | Passed |
+| Explainability, privacy and nonmutation | Reasons describe rule evidence and never interpolate descriptions. Tests assert review wording, absence of a synthetic description marker, unchanged input order/fields; source contains no logging, networking, database, backend/AI import or total mutation. | Passed |
+| Existing labeled expectations and required local run | All 23 development cases checked individually and combined; generator seeds 20261111 and 7 checked against separate pair labels. Focused fixture execution through delegated tests passed. No labels enter detector inputs. | Passed |
+| Challenge independence | Delegated read-only normalized-LF UTF-8 hash matches the Step 2 freeze. Challenge answers were neither evaluated nor used to tune the detector. | Passed |
+
+### Changed files and responsibilities
+
+- `ml/reconcile.py`: typed public reconciler, duplicate grouping, amount/date
+  transfer indexing, conservative clue set, privacy-safe evidence and stable
+  candidate identity/order. No runtime dependency added.
+- `ml/__init__.py`: expose `find_reconciliation_candidates` consistently with
+  the existing public categorizer and frozen backend-facing contract.
+- `tests/ml/test_reconcile.py`: exact synthetic expected pairs, boundary and
+  safety checks, development fixture execution and generated-label checks.
+- `docs/ml_v1_handoff.md`: replace deferred detection wording with implemented
+  import, reference/clue/fee semantics and explicit review-only behavior.
+- Feature plan status, feature progress, this single review and project tracker:
+  owner authorization, observed evidence and the Step 4 checkpoint. Tracker
+  headings, columns and section order are preserved. Governing laws and existing
+  unrelated worktree changes remain untouched.
+
+Routine implementation choice: `TRANSFER_CLUES = {"transfer"}` matches the
+existing development oracle's complete-word test. It does not reuse broader
+category rules or infer transfers from account names/bank metadata. Grouping
+avoids comparing unrelated duplicate fields and transfer amount/date entries;
+every qualifying pair is still returned, without one-to-one assignment.
+
+### Verification results
+
+Working directory: `C:\Users\Caleb Babatunde\Documents\GitHub\spendlens`.
+Environment: PowerShell default Python 3.13.15, pytest 8.3.4. All automated
+execution below was performed by Luna High; none by the main agent.
+
+| Command / observed check | Result |
+| --- | --- |
+| `python -m pytest tests/ml/test_reconcile.py tests/ml/test_normalize.py tests/ml/test_contracts.py --tb=short` | Initial run: exit 0; 91 passed, 0 failed, no warnings; 1.04 seconds. |
+| Same focused command after readability cleanup | Expanded identity encoding/hash/digest, normalized-word and reference-evidence intermediates; rerun exit 0, 91 passed, 0 failed, no warnings; 2.08 seconds. |
+| Read-only SHA-256 of normalized-LF challenge UTF-8 | `9e193f0b5d158a964cdec10fda5ee1df4114313a5d477e60dc8ca7e6ca5496bd`; unchanged. |
+| Main-agent source and diff inspection | Read all Step 4 source/tests and affected documentation; matching, validation, result metadata, no mutation and layer boundaries agree with the saved plan. No remaining Step 4 findings. |
+
+The main agent independently computed the fixed identity test vector with
+PowerShell SHA-256 over the specified JSON bytes before implementing identity
+construction; this was fixture preparation, not test execution. No package
+installation, generated build directory, report or hosted CI run occurred.
+Git continues to warn about access to the sandbox user's global ignore file;
+command-local safe.directory permits local inspection without global changes.
+
+### Design critique and UI verification
+
+No UI/server applies. Duplicate and transfer candidates remain independent
+review kinds; bank is descriptive metadata and time is not a matching field.
+Rule strength is not a calibrated probability. Candidate output can contain
+several plausible matches; user/backend confirmation is required and no totals
+change. The conservative whole-word transfer vocabulary can miss other transfer
+spellings; no unsupported general detection or real-world accuracy is claimed.
+No contract, dependency or material plan revision was needed.
+
+### Remaining proof
+
+AC4/AC5 and AC6 candidate behavior have focused Step 4 evidence. AC1 final
+installed reconciler/CLI verification, AC8 split evaluation, AC9 report, AC10
+CI, AC11 complete regression/handoff evidence and full acceptance review remain
+their planned Steps 5–6. No numerical evaluation, full suite, hosted CI or
+Python-version matrix was run at Step 4. Python lint/type-check tooling is not
+configured. Synthetic accuracy does not establish real-world accuracy.
+
+Verdict: **Approve for Step 4; no remaining Step 4 findings. Stop for owner
+`NEXT` before Step 5.**
+
+Final Step 4 documentation inspection: required tracker sections/table columns
+preserved; `git diff --check` passed and explicit trailing-whitespace search of
+Step 4 sources/tests and updated records (including untracked handoff/tracker)
+found no matches. Only Git CRLF/global-ignore environment warnings were observed.
+No later step started.

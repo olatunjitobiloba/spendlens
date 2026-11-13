@@ -10,6 +10,7 @@ from ml.types import (
     Txn,
 )
 from ml.categorize import categorize
+from ml.reconcile import find_reconciliation_candidates
 
 __version__ = "0.1.0"
 
@@ -22,4 +23,5 @@ __all__ = [
     "CategoryResult",
     "Txn",
     "categorize",
+    "find_reconciliation_candidates",
 ]
