@@ -3,8 +3,10 @@
 from importlib import metadata
 from importlib.resources import files
 import json
+from typing import get_args
 
 import ml
+from ai.banks import BANKS as BANK_ALIASES, normalize_bank
 from ml import Candidate, CategoryResult, Txn
 
 
@@ -18,6 +20,17 @@ def test_public_exports():
     assert ml.__version__ == "0.1.0"
     assert ml.MODEL_VERSION == "ml-0.1.0"
     assert callable(ml.categorize)
+
+
+def test_bank_registry_is_shared():
+    # Every upstream alias must normalize to an accepted ML institution.
+    for alias, bank in BANK_ALIASES.items():
+        assert normalize_bank(alias) == bank
+        assert bank in ml.BANKS
+
+    assert set(ml.BANKS) == set(BANK_ALIASES.values()) | {"other"}
+    assert set(get_args(ml.Bank)) == set(ml.BANKS)
+    assert normalize_bank("unknown synthetic institution") == "other"
 
 
 def test_packaged_rules():

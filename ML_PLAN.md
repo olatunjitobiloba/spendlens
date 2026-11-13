@@ -46,6 +46,11 @@ forecast_category(history: list[Txn], category: str, horizon_days: int) -> Forec
 
 Freeze interfaces by Nov 1 and share with Olamilekan (backend) and Olatunji (AI). Every result carries `model_version`, confidence, and a method label (`rule`, `model`, or `baseline`) as appropriate. Proposed additions to the TRD are `model_version` on every result and `method` on reconciliation candidates; preserve confidence fields and confirm the additions with the team before freezing. V1 uses method `rule`; its confidence describes rule strength, not measured probability.
 
+Bank names and aliases are authoritative in `ai/banks.py`. ML derives its
+accepted institution values from that registry plus `other`, and the distribution
+ships that dependency-free module without AI service code. The `Bank` literal
+remains the frozen typing contract and must stay aligned with the registry.
+
 The canonical ML transaction requires `bank`. The integration caller passes
 the output of `ai.banks.normalize_bank`: `opay`, `gtbank`, `ecobank`, `access`,
 `zenith`, or `other`. If the import source does not identify a supported

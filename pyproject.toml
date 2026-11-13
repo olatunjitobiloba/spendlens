@@ -12,7 +12,10 @@ dependencies = []
 [project.optional-dependencies]
 test = ["pytest>=7"]
 
-# Include only ML sources; adjacent application directories remain independent.
+# Share only the dependency-free bank registry, not the AI service modules.
+[tool.setuptools]
+py-modules = ["ai.banks"]
+
 [tool.setuptools.package-dir]
 ml = "ml"
 

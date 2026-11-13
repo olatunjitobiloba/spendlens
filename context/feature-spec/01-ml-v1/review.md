@@ -433,3 +433,347 @@ preserved; `git diff --check` passed and explicit trailing-whitespace search of
 Step 4 sources/tests and updated records (including untracked handoff/tracker)
 found no matches. Only Git CRLF/global-ignore environment warnings were observed.
 No later step started.
+
+## Step 6 prerequisite audit: 2026-11-13 10:32 WAT
+
+Owner requested the exact Step 6. Reviewer: primary agent self-review using
+the review skill; this is a dependency inspection, not a completed full-feature
+review or independent approval. Current files and progress were inspected
+before relying on earlier evidence. No source, fixtures or governing laws changed.
+
+Priority: Must fix before final verification.
+Confidence: 5.
+What I found: Step 5 is unimplemented in the current worktree. The paths
+`ml/eval/run.py`, `tests/ml/test_eval.py`, `reports/eval_v1.md` and
+`.github/workflows/ml-v1.yml` all fail filesystem existence checks.
+Why it matters: Step 6 explicitly depends on Steps 1–5 and requires installed
+CLI execution, report inspection and a complete AC1–AC11 audit.
+Trigger and effect: Attempting final verification now cannot establish the
+evaluation/report/CI requirements; passing earlier-step tests cannot fill them.
+Where: `ml-v1.md`, Step 6 dependencies and substeps 2–5.
+Suggested fix: Obtain the owner's scope decision to implement Step 5 first,
+then perform Step 6 against that implementation under the saved checkpoints.
+
+| Acceptance scope | Current evidence and remaining proof | Status |
+| --- | --- | --- |
+| AC1 | Earlier package/categorizer install proof exists; installed reconciler and CLI final proof missing, CLI source absent. | Pending |
+| AC2–AC7 | Earlier Steps 1–4 evidence retained above; complete source audit and fresh final suites have not run. | Final verification pending |
+| AC8 | Earlier challenge freeze/provenance evidence exists; separate evaluation sections absent. | Pending |
+| AC9 | Evaluator, metric tests and generated report absent. | Not implemented |
+| AC10 | Planned workflow absent; no hosted-run evidence inspected. | Not implemented |
+| AC11 | Earlier contract/handoff evidence exists; final AI regression suite and provider-free evaluation not run. | Pending |
+
+No test/evaluation commands were run, no dependencies installed and no artifacts
+regenerated at this checkpoint. Luna execution has not been attempted; this is
+a missing implementation dependency, not a delegation failure. Python lint/type
+checking is not configured. UI/server checks are N/A. The command-local Git
+safe.directory override permitted inspection; global-ignore permission warnings
+persist. Existing untracked context and handoff files were preserved.
+
+Verdict: **Blocked for complete Step 6 approval.** This records a review verdict,
+not feature completion. Step 5 implementation is a separate main step under the
+saved plan; no silent sequence or scope change was made.
+
+
+## Step 5 checkpoint: evaluation, CI and local handoff documentation
+
+Date: 2026-11-13 11:03 WAT (Africa/Lagos). Scope: exact Step 5, explicitly authorized
+by the owner after the earlier Step 6 prerequisite inspection. That dependency
+finding is resolved by this implementation; the earlier inspection is retained
+as history and is not a completed Step 6 review. Reviewer: primary agent
+self-review; tests/evaluation/package execution by gpt-6-luna at high reasoning.
+This is not independent review or full-feature approval.
+
+### Requirement audit
+
+| Requirement | Implementation and observed evidence | Status |
+| --- | --- | --- |
+| Known-answer metrics before logic | Wrote test_eval.py before evaluator; hand-scored accuracy, per-class precision/recall, abstention, confident errors and pair TP/FP/FN. Final tests also assert rendered nonperfect counts/rates. | Passed |
+| Denominators and absent classes | Exact counts and fractions; all-row denominators include correctly predicted Uncategorized. Zero denominators render N/A, never invented perfect scores. | Passed |
+| Development-only baseline | Majority of combined generated/fixed development labels; ties use category vocabulary order. Non-tie/tie known answers and challenge-only label perturbation verify baseline isolation. | Passed |
+| Split separation and data independence | Three separate sections: generated development, fixed development and frozen challenge. Canonical inputs alone reach detectors; labels stay in scoring. IDs must be unique/aligned; pair scoring includes kind and unordered IDs. | Passed |
+| Challenge freeze | Loader checks normalized UTF-8 SHA-256 against the Step 2 freeze; tampering test rejects changes. Production categorizer, reconciler, rules and challenge files unchanged. | Passed |
+| CLI/report and local run | Same non-interactive command for developers/CI; exit 0 and actual report inspected. Metadata includes seed, actual counts/spans, fixture digests, package/model versions, commit link and dirty worktree state. No descriptions/raw rows printed. | Passed |
+| Report limitations | Synthetic caveat, all applicable metrics, baseline, confident-error/abstention comparison, zero-denominator conventions and V1 forecast N/A. Challenge weakness retained honestly without tuning. | Passed |
+| CI setup | Workflow installs package/test extras and existing AI offline dependencies, runs repository tests then evaluation, uploads generated report after success; contents permission read only. Temporary copied-source regular install includes evaluator/rules files. | Passed configuration/package inspection; hosted run pending |
+| Local handoff | Callable example, exact typed contracts, metadata, bank distinction, backend confirmation boundary, assets/CLI usage and measured limitations in guide/README. No external message sent. | Passed locally; external recipient confirmation remains pending |
+
+### Changed files and responsibilities
+
+- ml/eval/__init__.py and run.py: fixed offline evaluation and report CLI using
+  standard library only; local Git inspection never contacts a remote host.
+- tests/ml/test_eval.py: known-answer metrics/baseline/rendering, split and
+  challenge integrity, alignment/error behavior and safe commit-link tests.
+- reports/eval_v1.md: generated synthetic evidence, including weak challenge
+  categorization, baseline comparison and explicit dirty-source provenance.
+- .github/workflows/ml-v1.yml: package/dependency setup, offline repository
+  tests, evaluation and successful-run report artifact.
+- README.md and docs/ml_v1_handoff.md: setup, callable example, developer tooling
+  and integration/confirmation boundaries. Evaluation fixtures remain repository
+  assets; installed code accepts --fixtures for explicit outside-checkout use.
+- Feature plan status, progress, this single review and project tracker: actual
+  authorization, measured checkpoint evidence and remaining Step 6/hosted limits.
+  Governing laws, existing AI contracts, detectors and unrelated changes preserved.
+
+### Verification results
+
+Working directory: C:\Users\Caleb Babatunde\Documents\GitHub\spendlens.
+Environment: Windows PowerShell, Python 3.13.15, pytest 8.3.4, pluggy 1.6.0;
+pydantic 2.13.5, httpx 0.28.1, setuptools 80.10.2. All automated checks below
+ran through Luna High; no tests/evaluations ran in the main agent.
+
+| Command / observed check | Result |
+| --- | --- |
+| python -m pytest tests/ml/test_eval.py --tb=short | Final exit 0: 19 passed, 0 failed. Earlier 12- and 14-case focused runs passed before additional integrity/rendering tests. |
+| python -m ml.eval.run --out reports/eval_v1.md | Exit 0; generated report inspected after final source changes. Subsequent edits were test/docs only. |
+| python -m pip install --no-deps --no-build-isolation --target <temp>/installed <temp>/source | Exit 0. Source is a temporary copy of pyproject.toml and ml/, avoiding root/system changes or dependency downloads. Wheel spendlens_ml-0.1.0 built/installed. RECORD includes ml/eval/__init__.py, ml/eval/run.py and ml/rules/categories.yaml. |
+| Default interpreter package/dependency inspection | AI/build dependencies available; spendlens-ml distribution metadata absent in default interpreter. Temporary installation above proves CI package layout; default environment was not modified. |
+| Source/report/workflow self-review | No remaining Step 5 defects. CI installation precedes tests requiring distribution metadata; no actual hosted CI result claimed. |
+
+Temporary install evidence: %TEMP%/spendlens-step5-75f9040bddd344be858af2a7dea83d35,
+with source and installed subdirectories. This is package contents proof, not
+Step 6 clean-environment public runtime/full-suite verification.
+
+| Split | Correct / rows | Abstentions | Confident mistakes | Baseline correct / rows |
+| --- | --- | --- | --- | --- |
+| Generated development, seed 20261111 | 746/746 | 82/746 | 0 | 82/746 |
+| Fixed development | 57/57 | 18/57 | 0 | 18/57 |
+| Frozen challenge | 17/57 | 56/57 | 1 | 18/57 |
+
+Candidate precision and recall are 1.000000 for duplicate and internal_transfer
+on each synthetic split: generated expected counts 4/2 and fixed/challenge 4/6.
+Each persona has 373 generated rows spanning 2026-01-01 through 2026-06-30.
+The development-majority category is Uncategorized. Challenge accuracy 0.298246
+is below baseline 0.315789; high development scores reflect development vocabulary
+and are not evidence of general coverage. No rule or challenge tuning followed.
+Synthetic accuracy does not establish real-world accuracy.
+
+Implementation review corrections, all resolved and covered by final tests:
+derive fixture case counts instead of hardcoding them; reject nonmapping answer
+tables; replace relative commit links with credential-free absolute GitHub links;
+assert known baseline/rendered values instead of comparing a helper to itself.
+No contract shape, runtime dependency or material plan revision was required.
+
+### Design critique and UI verification
+
+No UI/server applies. The CLI is developer/CI evaluation tooling, not a backend
+CSV endpoint. It consumes only synthetic fixtures and uses the same public pure
+functions as callers. Unknown Git provenance is explicit when invoked outside a
+Git checkout; this run records source commit
+373f777a68d0c729252503cdcd1f09f2fbbc2711 and dirty worktree state. Git origin is
+read locally only to build a sanitized source link. Reasons/candidates never
+change totals, and AI receives only its existing validated aggregate contract.
+
+### Remaining proof
+
+AC8 split evidence and AC9 report have Step 5 local proof. AC10 configuration
+is implemented; a hosted run needs authorized publication/execution and is not
+claimed. AC11 local integration guidance is updated; complete AI regressions
+remain Step 6. AC1 installed public-function/CLI runtime and the complete AC1–AC11
+review remain Step 6, along with full ML/repository suites and ai.eval --fake.
+No Python lint/type checker is configured. No live provider, external handoff,
+publication, V2 implementation or full Step 6 audit occurred.
+
+Verdict: **Approve for Step 5 with the explicit hosted-CI limitation.** Stop for
+owner NEXT before Step 6; this does not mark the complete V1 feature verified.
+
+
+Final Step 5 documentation check: git diff --check passed; explicit trailing-space
+search across new/updated ML evaluator, tests, workflow, report and documentation
+found no matches (rg exit 1 means no matches). Tracker headings, columns and
+section order preserved; new completed-work/verification rows remain inside their
+existing tables. Only Git CRLF/global-ignore environment warnings were observed.
+No source or test changes followed the final 19-pass run.
+
+
+## Step 6 integration finding and resolution in progress
+
+Date: 2026-11-13 12:32 WAT (Africa/Lagos). Owner authorized Step 6 with NEXT and
+subsequently excluded GitHub execution/checks. Main agent self-review; all
+execution through delegated Luna High. No hosted runs were initiated.
+
+Priority: Must fix.
+Confidence: 5.
+What I found: The full repository suite could not collect both evaluation test
+modules because tests/test_eval.py and tests/ml/test_eval.py were imported as
+the same unqualified test_eval module.
+Why it matters: The required repository regression suite and configured CI
+command stopped before executing tests; focused ML success did not prove the
+combined test surface worked.
+Trigger and effect: python -m pytest tests collected 238 items then exited 2
+with one import-file-mismatch collection error.
+Where: tests/test_eval.py:1 and tests/ml/test_eval.py:1; neither tests directory
+had an __init__.py package marker.
+Suggested fix: Add tests/__init__.py and tests/ml/__init__.py so pytest imports
+tests.test_eval and tests.ml.test_eval separately, without renaming the planned
+test file, changing pytest configuration or altering production code.
+
+Implementation fix applied: both package markers added. Focused ML rerun passed
+152 tests, exit 0; the affected full repository rerun is still pending here.
+No new automated test is needed to mirror the markers: the previously failing
+full-suite collection is the direct regression check. Installed production code
+is unaffected, so its successful 22-assertion outside-checkout smoke does not
+need repetition. Provider-free AI evaluation already passed 20/20 and its
+existing report was preserved byte-for-byte. Final acceptance audit follows
+once the remaining local checks complete.
+
+
+## Step 6 checkpoint: complete review and final local verification
+
+Date: 2026-11-13 12:38 WAT (Africa/Lagos). Owner authorized Step 6 with NEXT, then
+explicitly excluded GitHub execution/checks. Scope: complete ML V1 implementation
+and AC1–AC11, including Steps 1–5 and the two test-package marker fixes.
+Reviewer: primary-agent self-review using the review skill; test/runtime execution
+by delegated gpt-6-luna at high reasoning. This is not independent code review.
+Earlier dated findings and reruns remain intact above.
+
+### Requirement audit
+
+| Criterion | Source and observed evidence | Result |
+| --- | --- | --- |
+| AC1: install/import/resources/CLI | Clean noneditable install of a temporary copy of current pyproject.toml and ml/. Outside-checkout Python -I smoke verified ml, categorizer, reconciler and evaluator under venv site-packages, rules resource and installed CLI. RECORD contains only ml and distribution metadata. | Passed locally |
+| AC2: canonical frozen contract | types.py and contract tests cover exact fields, required normalized bank, positive integer kobo (reject bool/float/string), date/time rules, frozen results, safe field-only errors and unique call IDs. Standard-library imports only; no backend/network coupling. | Passed |
+| AC3: categorization | categorize.py, normalize.py and packaged JSON-compatible rules implement exact vocabulary, whole-word/phrase support, ordered cardinality and 0.9/0.0 policy. Tests cover ambiguity, boundaries, metadata independence, seeds and no mutation; installed smoke verifies observable outputs. | Passed |
+| AC4: duplicates | reconcile.py and exact tests cover account/direction/amount/date/normalized-description matching, complete reference matrix and legitimate repeated purchases. Every qualifying pair remains a candidate; no deletion/totals mutation. | Passed |
+| AC5: internal transfers | Tests pin equal opposite amounts, distinct accounts, both date orders at +/-1 day and +/-2 rejection, either-side clue, fees without netting, missing counterparts, no-clue and refund negatives. | Passed |
+| AC6: IDs/metadata/reasons | Frozen types and SHA-256 identity recipe, precomputed digest, all-pair expected results, 24 permutations, stable kind/ID order, confidence/method/version and description-free review reasons. Installed reversal smoke also passed. | Passed |
+| AC7: generator and labels | synthetic.py and tests verify deterministic private RNG, 746 rows, 373 per persona, all 181 dates January–June, seeds 20261111/7, complete separate labels, edge injections and exhaustive pair truth. | Passed |
+| AC8: challenge independence | Fixture provenance/authorship precedes rules; normalized challenge digest remains frozen. Distinct descriptions and independent answer tables verified; evaluator presents separate development/challenge sections and isolates baseline fitting. No rules or challenge answers changed after evaluation. | Passed |
+| AC9: report correctness | Known-answer metric/baseline/rendering tests passed in complete suites. Final CLI exit 0; actual report inspected for seed, counts/spans, class metrics, abstentions, confident mistakes, pair metrics, baseline, versions, commit/dirty state, N/A forecast metrics and synthetic caveat. | Passed |
+| AC10: CI configuration | Workflow installs the package and offline test dependencies, runs repository tests/evaluation and retains successful report artifact; no invented numerical ML gate. Package installation and those commands have local proof. Owner explicitly excluded GitHub execution/checks. | Configuration reviewed; hosted execution excluded, not claimed |
+| AC11: existing AI and handoff | Full repository suite 260 passed; provider-free AI evaluation 20/20. Existing AI contracts/implementation unchanged, fake artifact restored byte-for-byte. Guide documents callable examples, bank/category separation, metadata, candidate confirmation and measured limits. No external handoff performed. | Passed locally |
+
+### Changed files and responsibilities
+
+- tests/__init__.py and tests/ml/__init__.py: give AI and ML tests distinct
+  qualified module names; resolve the combined-suite collection failure without
+  renaming planned tests, changing pytest settings or touching production logic.
+- reports/eval_v1.md: regenerated through the exact final command; fixed metrics
+  and source provenance inspected. Source remains dirty and is disclosed.
+- docs/ml_v1_handoff.md: replace pending installed-verification wording and record
+  actual local verification, environment, test fix and remaining limits.
+- Feature plan status, progress, this single review and project tracker: final
+  evidence, AC mapping, finding resolution and owner-excluded GitHub execution.
+  Governing laws, production ML/AI code, rules, fixed data and unrelated worktree
+  files were preserved. No source change required a contract/architecture update.
+
+### Verification results
+
+Repository working directory: C:/Users/Caleb Babatunde/Documents/GitHub/spendlens.
+Verification root (T below):
+C:/Users/Caleb Babatunde/AppData/Local/Temp/spendlens-step6-2e3bc0a1dfcc42ad9ca298a9115429fc.
+P below is T/venv/Scripts/python.exe; S is T/source, containing copied
+pyproject.toml and ml/. Clean venv has no system-site-packages. Python 3.13.15,
+pip 26.2.1, pytest 9.2.0, pydantic 2.14.3, httpx 0.28.1.
+Every test/evaluation command was executed by Luna High, never the main agent.
+
+| Effective command / observed check | CWD | Result |
+| --- | --- | --- |
+| python -m venv T/venv | Repository | Clean environment created; no system installation changed. |
+| & P -m pip install --disable-pip-version-check --timeout 60 S 'pytest>=7' 'pydantic>=2,<3' 'httpx>=0.27,<1' | Repository; build source is S | Final exit 0; regular spendlens-ml 0.1.0 installed. Initial sandbox WinError 10013 required scoped escalation; an initial escalated dependency attempt timed out, then completed with the recorded timeout. |
+| & P -I T/installed_smoke.py, with PYTHONPATH unset | T, outside checkout | Exit 0; 22 assertions. Modules resolved from site-packages; only optional pytest extra appears in metadata, no runtime dependencies. RECORD and packaged rules inspected. Temporary harness import-alias/optional-extra assumptions were corrected before the successful smoke; repository production code was unchanged. |
+| & P -I -m ml.eval.run --fixtures C:/Users/Caleb Babatunde/Documents/GitHub/spendlens/tests/ml/fixtures --out T/installed_eval.md | T | Exit 0; actual installed CLI report has 746/57/57 rows and caveat. Source metadata is explicitly unavailable/unknown outside Git. |
+| & P -m pytest tests/ml | Repository | Initial exit 0, 152 passed (10.09s); after package-marker fix, exit 0, 152 passed (29.20s). |
+| & P -m pytest tests | Repository | Initial exit 2: 238 collected and one import-file-mismatch error, no tests executed. After marker fix, exit 0: 260 passed in 43.41s; tests.ml.test_eval and tests.test_eval collect separately. |
+| & P -m ai.eval --fake | Repository | Exit 0; 20/20 pass; fallback/check-fail/error/retry all zero. p50 1.430ms and p95 3.938ms measure local harness execution, not model latency. No repeat needed after test-only markers. |
+| & P -m ml.eval.run --out reports/eval_v1.md | Repository | Final exit 0; actual report inspected. Source commit 373f777a68d0c729252503cdcd1f09f2fbbc2711; dirty worktree disclosed. |
+
+Evidence under T: installed_smoke.py, installed_smoke_output.json,
+installed_eval.md, eval_fake_generated.json and ai_fake_output.txt. Existing
+docs/eval_fake.json was snapshotted/restored; before/after SHA-256:
+763061061E08F6F1440A2FD6B88F86C2B0C1A22778D7869EC98DAEA87DC4BE1C.
+No unrelated generated artifact was retained as a new change.
+
+Source review covered all ML modules, packaging, rules, tests, fixture provenance
+and representative data, CLI/report, workflow and handoff, plus existing AI
+boundary/verification setup. Local branch ml-logic has HEAD 373f777; verified
+cached origin/HEAD targets origin/main (f6d6586), merge base 7880b00. Contract
+implementation already on that base was included in the full review, alongside
+later committed steps and uncommitted Step 5/6 files. No fetch/push/merge occurred.
+
+Before the owner's exclusion, the read-only GitHub connector returned zero runs
+for HEAD within its first-page PR-triggered scope. That limited query was not
+proof of all triggers or of this uncommitted workflow. No further GitHub checks,
+runs, publication or messages occurred after the owner's instruction; hosted
+execution is excluded from this checkpoint, not represented as passing.
+
+### Design critique and UI verification
+
+The sole Must fix finding was the combined test-collection collision, recorded
+above and now resolved with directly observed full-suite success. No unresolved
+Must fix or Should fix findings remain. Public functions stay pure, typed and
+review-only; metadata does not supply category evidence and no candidate changes
+totals. AI retains validated aggregates only. No database/API/UI/billing work,
+forecast/recurrence implementation or new runtime dependency was introduced.
+UI/server/device checks are N/A for this pure package.
+
+Synthetic measurements remain: generated development 746/746 correct,
+82 abstentions; fixed development 57/57 correct, 18 abstentions; challenge
+17/57 correct (0.298246), 56 abstentions and one confident mistake, below the
+majority baseline 18/57 (0.315789). Duplicate/transfer precision and recall are
+1.000000 in these synthetic splits, with expected pair counts 4/2 generated and
+4/6 in each fixed split. The high development scores do not establish general
+coverage. No rule or challenge tuning followed the results.
+
+### Remaining proof
+
+GitHub execution/checks were excluded by the owner. External recipient
+confirmation/handoff and Python versions/platforms beyond Windows/Python 3.13
+were not verified; none is claimed. Python lint/type-check tooling is not
+configured, so no passing result is invented. No live provider evaluation was
+needed or run. Dirty-source provenance and synthetic limitations are explicit.
+These are recorded limits, not unfinished local Step 6 checks.
+
+Verdict: **Approve for the local ML V1 implementation with the recorded limits.**
+Step 6 is complete locally. Stop at the final NEXT checkpoint; do not start V2.
+
+
+Final Step 6 documentation verification: git diff --check passed after recording
+results; tracker headings, columns and order retained. pyvenv.cfg directly
+confirms include-system-site-packages=false, and the main-agent read-only SHA-256
+check confirms the original fake report hash above after all local checks. The
+source/report evidence was inspected rather than inferred from passing counts.
+No source/test changes followed the successful final suites; only documentation
+was updated. Stop at the final checkpoint.
+
+## Owner-directed bank-source correction — 2026-11-13 13:08:43 Africa/Lagos
+
+Scope: `ml/types.py`, `pyproject.toml`, `tests/ml/test_package.py` and the related
+bank-source documentation. This is a self-review, not independent review.
+
+The earlier ML registry was derived from its own literal list. It now reads
+institution values directly from `ai.banks.BANKS`, deduplicates in source order
+and includes `other`. All aliases and the fallback remain owned by
+`ai/banks.py`; callers still normalize with `ai.banks.normalize_bank`.
+The literal `Bank` remains the frozen typing contract; the compatibility test
+requires it to match the authoritative registry. Only this dependency-free module
+and the empty AI initializer are included alongside ML in the distribution.
+No AI service imports, runtime dependency, network operation or candidate/category
+behavior change was introduced. The owner explicitly requested this source and
+related documentation correction, including the narrow architecture clarification.
+
+Luna High verification, Python 3.13.15 / pytest 8.3.4, repository root unless noted:
+
+- `python -m pip install . --no-deps --no-build-isolation --target $target`:
+  exit 0. Target is `C:/Users/Caleb Babatunde/AppData/Local/Temp/spendlens-bank-verify-target`.
+  Installed contents include `ai/banks.py` and empty `ai/__init__.py`, exclude
+  `ai/api.py`, `ai/schemas.py`, providers and all other AI service modules.
+- With `PYTHONPATH=$target`, `python -m pytest tests/ml/test_contracts.py tests/ml/test_package.py --tb=short`:
+  exit 0, 48 passed. Final focused rerun followed the formatting-only source edit.
+- With `PYTHONPATH=$target`, `python -m pytest tests --tb=short`:
+  exit 0, 261 passed. This run preceded only the final vertical-formatting edit;
+  the focused rerun covered that edit afterward.
+- Copied `tests/ml/test_package.py`, from temporary outside-checkout working directory
+  `C:/Users/Caleb Babatunde/AppData/Local/Temp/spendlens-bank-verify-isolated`,
+  with `PYTHONPATH=$target`, `python -m pytest tests/ml/test_package.py --tb=short`:
+  exit 0, 4 passed.
+
+The initial focused run had 47 passed and one missing-distribution-metadata failure;
+the base environment had not installed `spendlens-ml`. The isolated installation
+resolved it. An early full-suite attempt was stopped to satisfy that prerequisite;
+no result is claimed for that attempt. No live provider or hosted GitHub checks
+were run. Existing unrelated worktree changes were preserved.
+
+No unresolved findings in this correction. Verdict: **Approve**, with the existing
+V1 synthetic-coverage and platform limitations retained. This correction does not
+claim new model-performance evidence or authorize V2.

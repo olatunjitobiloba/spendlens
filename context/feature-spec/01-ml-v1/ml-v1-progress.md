@@ -5,9 +5,9 @@ Links: [plan](ml-v1.md), [single review record](review.md),
 
 ## Current checkpoint
 
-- Main step: 4, duplicate and internal-transfer candidates, complete at this checkpoint.
-- Status: public reconciler, stable pair IDs/order, exact confidence/evidence and input safety verified. Luna High: 91 passed, exit 0; challenge hash unchanged.
-- Waiting for: owner `NEXT` to authorize Step 5 only.
+- Main step: 6, complete review and final verification, complete locally after owner NEXT.
+- Status: Luna High verified a clean regular install, 22 outside-checkout smoke assertions, 152 ML tests, 260 repository tests, 20/20 fake AI cases and the regenerated ML report. The test import collision is resolved.
+- Waiting for: final owner review at the required NEXT checkpoint. GitHub execution/checks were excluded by the owner; no V2 work started.
 
 ## Step log
 
@@ -18,8 +18,8 @@ Links: [plan](ml-v1.md), [single review record](review.md),
 | 2: Labeled data | Exact category/pair answers, independent challenge wording/freeze, seeded personas, separate labels, manifest and exhaustive pair/data checks. | ml/synthetic.py; tests/ml/fixtures/development.json; tests/ml/fixtures/challenge.json; tests/ml/test_synthetic.py; feature status/progress/review and tracker. | Luna High: `python -m pytest tests/ml/test_synthetic.py tests/ml/test_contracts.py`, exit 0, 54 passed, 0 failed, no warnings. Earlier failures and fixes preserved in review. | Generator exercised for seeds 20261111 and 7; 746 rows, 373 per persona, every date 2026-01-01–2026-06-30; six candidate labels. Each fixed split: 23 cases, 57 rows, 10 pair labels. | Complete; waiting for `NEXT`. |
 | 3: Categorization | Pinned boundary expectations before logic; implemented complete-word/phrase rules, unique-category support and abstention; verified ordered metadata, validation, nonmutation and resource packaging. | ml/normalize.py; ml/categorize.py; ml/rules/categories.yaml; ml/__init__.py; pyproject.toml comment; tests/ml/test_normalize.py; tests/ml/test_categorize.py; tests/ml/test_package.py; handoff and tracking records. | Luna High: focused and copied outside-checkout suites each exit 0, 41 passed. Initial pre-install run: 40 passed, installed-distribution check failed; resolved by regular installation. | Python 3.13.15 regular install exit 0; public categorizer and rule resource resolve from venv site-packages; smoke and unchanged challenge hash passed. | Complete; waiting for `NEXT`. |
 | 4: Reconciliation | Wrote pair expectations before logic; implemented all eligible duplicate/transfer pairs, frozen identity recipe, stable ordering, privacy-safe reasons and no mutations. | ml/reconcile.py; ml/__init__.py; tests/ml/test_reconcile.py; handoff and feature/tracker records. | Luna High: `python -m pytest tests/ml/test_reconcile.py tests/ml/test_normalize.py tests/ml/test_contracts.py --tb=short`, exit 0, 91 passed, 0 failed, no warnings; challenge hash unchanged. | Development cases separately and combined, generated seeds 20261111 and 7, 24 input permutations and invalid-call checks exercised through delegated tests; no server. | Complete; waiting for `NEXT`. |
-| 5: Evaluation/CI/handoff docs | None. | None. | Not run; implementation pending. | None. | Pending. |
-| 6: Full review/verification | None. | None. | Not run; implementation pending. | None. | Pending. |
+| 5: Evaluation/CI/handoff docs | Fixed evaluation, separate split metrics, development-majority baseline, integrity tests, CI and callable integration guide. | ml/eval; tests/ml/test_eval.py; reports/eval_v1.md; .github/workflows/ml-v1.yml; README; handoff and tracking records. | Luna High: focused suite 19 passed, 0 failed, exit 0; CLI exit 0; temporary regular install exit 0 with evaluator/rules in RECORD. | Generated report inspected: 746 generated development rows and 57 rows per fixed split; challenge 17/57 correct, 56 abstentions, one confident mistake. | Complete locally; hosted CI pending; stop for NEXT. |
+| 6: Full review/verification | Audited AC1–AC11, verified clean installed runtime, fixed combined-suite collection with test package markers, ran final checks and documented limits. | tests/__init__.py; tests/ml/__init__.py; report; handoff and feature/tracker records. | Luna High: 152 ML and 260 repository tests passed; fake AI 20/20; report CLI exit 0. Earlier full-suite collection error resolved and rerun evidence retained in review. | Clean noneditable install; 22 assertions and installed CLI outside checkout passed; distribution/rules inspected. | Complete locally; final checkpoint; GitHub execution excluded by owner. |
 
 ## Review findings and fixes
 
@@ -32,11 +32,10 @@ Links: [plan](ml-v1.md), [single review record](review.md),
 
 ## Blockers and remaining limitations
 
-- Steps 1–4 contracts, packaging, labeled data, categorization and reconciliation are implemented; measured ML evaluation remains pending. The planned `python -m ml.eval.run --out reports/eval_v1.md` command will generate the fixed synthetic evaluation report for local review and CI.
+- Steps 1–6 have local checkpoint evidence. Challenge categorization remains below its majority baseline (17/57 versus 18/57); this measured limitation was retained without changing rules or challenge answers.
 - Concrete result schemas and validation, including required `Txn.bank`, are recorded in the handoff contract and verified by Step 1 tests.
 - Confirm current backend/AI recipients before any externally authorized handoff.
-- Hosted CI execution requires authorized publication; a workflow file alone is
-  not CI run evidence.
+- Owner excluded GitHub execution/checks from this checkpoint. The workflow remains configuration only; no hosted success is claimed.
 - Initial `git status` hit ownership protection; a command-local safe.directory
   override enabled read-only inspection. No global Git configuration changed.
 - Existing `.gitignore` changes and untracked instruction/context documents were
@@ -44,12 +43,13 @@ Links: [plan](ml-v1.md), [single review record](review.md),
 
 ## Final verification
 
-- Documentation inspection: Steps 1–4 reviewed against ML_PLAN.md and the saved plan; dated self-reviews and challenge freeze evidence are retained in review.md.
-- Tests/runtime: Step 4 focused delegated suite passed 91 tests, exit 0, no warnings. Prior installation/resource evidence and environment limits remain in the dated Step 1/3 records. No Step 4 server/UI run applies; installed reconciler and full-feature verification remain Step 6.
-- Acceptance criteria status: AC3 retains Step 3 proof; AC4/AC5 duplicate and transfer behavior and AC6 candidate identity/metadata now have Step 4 focused proof. AC1 awaits installed reconciler/CLI checks; AC2 and AC7 retain prior proof. Evaluation, CI and complete acceptance review remain pending.
-
-
-
+- Complete self-review mapped AC1–AC11 to source, tests, report, installed runtime and local handoff evidence in [review.md](review.md). No unresolved Must fix or Should fix finding remains; reviewer independence is not claimed.
+- Luna High clean environment: Python 3.13.15, pytest 9.2.0, pydantic 2.14.3, httpx 0.28.1. Regular installation and outside-checkout smoke passed 22 assertions, including module paths, packaged rules, both public functions and installed CLI.
+- Final commands: `python -m pytest tests/ml` passed 152; `python -m pytest tests` passed 260; `python -m ai.eval --fake` passed 20/20; `python -m ml.eval.run --out reports/eval_v1.md` exited 0. All ran through Luna High; no test/evaluation ran in the main agent.
+- Full-suite collection initially failed on duplicate test_eval module names. Added tests/__init__.py and tests/ml/__init__.py, then reran affected suites successfully. No production logic or pytest configuration changed.
+- Existing docs/eval_fake.json was restored byte-for-byte; fresh fake-run evidence is retained in the temporary verification directory. The final ML report discloses its dirty source worktree and synthetic-only scope.
+- AC1–AC9 and AC11 have local proof. AC10 workflow configuration is reviewed; GitHub execution/checks were excluded by the owner and no hosted result is claimed. External handoff was not performed. Python versions/platforms beyond Windows/Python 3.13 were not exercised; no Python lint/type checker is configured. UI/server checks are N/A.
+- Local Step 6 complete; final checkpoint reached. Do not start V2 automatically.
 
 ## Step 2 verification and provenance
 
@@ -122,3 +122,61 @@ No challenge evaluation or tuning occurred. Main-agent self-review found no
 remaining Step 4 defects; full-feature review remains Step 6. No dependency,
 contract shape or governing-law change was needed. Steps 5–6 remain pending;
 no real-world performance claim is made.
+
+
+## Step 5 verification
+
+Owner explicitly authorized Step 5 first on 2026-11-13 after the recorded
+Step 6 prerequisite inspection. Luna High performed all test/evaluation
+execution. Final focused command `python -m pytest tests/ml/test_eval.py --tb=short`
+exited 0: 19 passed, 0 failed. CLI `python -m ml.eval.run --out reports/eval_v1.md`
+exited 0. See the single review record for exact environment and package evidence.
+
+Generated development: 746/746 correct, 82 abstentions, zero confident mistakes.
+Fixed development: 57/57 correct, 18 abstentions, zero confident mistakes.
+Challenge: 17/57 correct, 56 abstentions, one confident mistake; majority baseline
+is 18/57. Candidate precision/recall are 1.0 for duplicate and internal_transfer
+on each synthetic split. These measurements do not establish real-world accuracy.
+The weak challenge categorization result is retained without revising rules or
+challenge answers. Forecast metrics are N/A for V1.
+
+Metric/report integrity checks cover explicit denominators, zero-support N/A,
+class counts, pair matching by kind, duplicate predictions, split separation,
+challenge freeze and baseline isolation, report rendering, CLI errors and
+credential-free commit links. Git provenance discloses the dirty worktree.
+Runtime dependencies remain standard-library only. The CLI uses repository
+synthetic fixtures, with --fixtures for outside-checkout invocation.
+
+The CI workflow installs the package plus existing offline AI test dependencies,
+runs repository tests and the same evaluation command, and retains the report.
+Hosted execution requires an authorized push/run and is not claimed. No team
+messages or external handoff occurred. Step 6 complete review, full suites,
+provider-free AI evaluation and clean-environment runtime verification remain
+pending. Stop at the Step 5 NEXT checkpoint.
+
+
+## Step 6 final checkpoint
+
+Owner NEXT authorized the complete final audit. Local verification passed after
+resolving the combined AI/ML test collection collision with two package markers.
+The single review contains the dated finding, resolution, effective commands,
+environment, AC1–AC11 mapping and remaining limitations. The implementation is
+locally verified, not a real-world accuracy or hosted-CI claim. Owner explicitly
+excluded GitHub execution/checks. No team messages, publication or V2 work occurred.
+
+## Owner-directed bank-source correction — 2026-11-13 13:08:43 Africa/Lagos
+
+`ml.BANKS` now derives normalized institution values from `ai.banks.BANKS`,
+preserving registry order and adding the `other` fallback. Alias normalization
+continues to use `ai.banks.normalize_bank` at the integration boundary. The frozen
+`Bank` typing contract is checked for registry compatibility. The ML distribution
+ships only the dependency-free bank module and empty AI initializer, without AI
+service modules. No categorization/reconciliation behavior changed.
+
+Luna High: focused contract/package suite 48 passed; complete repository suite
+261 passed; copied package suite outside checkout 4 passed; regular target
+installation succeeded. Full suite preceded the final formatting-only expansion;
+focused suite was rerun afterward. Initial missing-distribution metadata failure
+resolved by installing the package into an isolated target. See the dated review
+entry for exact commands and environment. Owner-requested correction complete;
+no V2 implementation or hosted checks were started.

@@ -5,6 +5,8 @@ from datetime import date as Date, time as Time
 from math import isfinite
 from typing import Literal, get_args
 
+from ai.banks import BANKS as BANK_ALIASES
+
 MODEL_VERSION = "ml-0.1.0"
 
 Category = Literal[
@@ -21,17 +23,12 @@ Category = Literal[
     "Uncategorized",
 ]
 
-Bank = Literal[
-    "opay",
-    "gtbank",
-    "ecobank",
-    "access",
-    "zenith",
-    "other",
-]
-
 CATEGORIES: tuple[str, ...] = get_args(Category)
-BANKS: tuple[str, ...] = get_args(Bank)
+# Read institution values from the shared alias registry, preserving its order.
+_bank_values = list(BANK_ALIASES.values())
+_bank_values.append("other")
+_unique_banks = dict.fromkeys(_bank_values)
+BANKS: tuple[str, ...] = tuple(_unique_banks)
 Direction = Literal["debit", "credit"]
 CandidateKind = Literal["duplicate", "internal_transfer"]
 Method = Literal["rule"]
