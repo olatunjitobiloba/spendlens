@@ -2,6 +2,7 @@
 __pycache__/
 .env
 .env.*
+!.env.example
 *.csv
 .pytest_cache/
 node_modules/

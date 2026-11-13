@@ -16,7 +16,7 @@ def _load_env_file():
                 k, v = line.split("=", 1)
                 k = k.strip()
                 v = v.strip().strip("'\"")
-                if k not in os.environ:
+                if v and k not in os.environ:
                     os.environ[k] = v
 
 
@@ -60,7 +60,7 @@ def complete(system: str, user: str, timeout: float = 10.0) -> str:
     # 1. Try Groq (Primary)
     groq_key = os.environ.get("GROQ_API_KEY")
     if groq_key:
-        groq_model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+        groq_model = os.environ.get("GROQ_MODEL") or "llama-3.3-70b-versatile"
         try:
             return _call_provider(
                 base_url="https://api.groq.com/openai/v1",
@@ -80,7 +80,7 @@ def complete(system: str, user: str, timeout: float = 10.0) -> str:
     # 2. Try Gemini (Secondary / Fallback)
     gemini_key = os.environ.get("GEMINI_API_KEY")
     if gemini_key:
-        gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+        gemini_model = os.environ.get("GEMINI_MODEL") or "gemini-2.5-flash"
         try:
             return _call_provider(
                 base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
@@ -98,11 +98,12 @@ def complete(system: str, user: str, timeout: float = 10.0) -> str:
             )
 
     # 3. Fall back to generic OpenAI-compatible configuration if present
-    if "LLM_API_KEY" in os.environ:
+    llm_key = os.environ.get("LLM_API_KEY")
+    if llm_key:
         return _call_provider(
-            base_url=os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1"),
-            api_key=os.environ["LLM_API_KEY"],
-            model=os.environ.get("LLM_MODEL", "gpt-4o-mini"),
+            base_url=os.environ.get("LLM_BASE_URL") or "https://api.openai.com/v1",
+            api_key=llm_key,
+            model=os.environ.get("LLM_MODEL") or "gpt-4o-mini",
             system=system,
             user=user,
             timeout=timeout,

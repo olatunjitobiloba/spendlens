@@ -10,5 +10,6 @@ export const mainNav: NavItem[] = [
 
 export const footerNav: NavItem[] = [
   { label: "How it works", href: "/#how" },
+  { label: "Privacy", href: "/privacy" },
   { label: "GitHub", href: siteConfig.links.github, external: true },
 ];

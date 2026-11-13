@@ -199,7 +199,7 @@ function ApiSurface() {
     ["GET", "/v1/analysis", "Totals, coverage, warnings"],
     ["PUT", "/v1/protections", "Lock essential categories"],
     ["POST", "/v1/scenarios", "Calculate a savings cut"],
-    ["DELETE", "/v1/me/data", "Remove everything"],
+    ["GET", "/health", "Check API readiness"],
   ];
   return (
     <Inset className="overflow-hidden p-0 sm:p-0">
