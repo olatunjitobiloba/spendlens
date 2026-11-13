@@ -20,5 +20,6 @@ def test_enrichment_returns_bank_and_duplicate_status_without_removing_rows():
     assert preview.errors == []
     assert len(rows) == 2
     assert rows[0]["bank"] == "gtbank"
+    assert rows[0]["txn_date"] == "2026-01-01"
     assert rows[1]["status"] == "Possible duplicate"
     assert sum(row["amount_kobo"] for row in rows) == 300100

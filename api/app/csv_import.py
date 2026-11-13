@@ -82,9 +82,15 @@ def parse_preview(content: bytes) -> ImportPreview:
 
 def parse_and_enrich(content: bytes) -> tuple[ImportPreview, list[dict[str, object]]]:
     """Produce the transaction values that a commit route will persist."""
+    preview, transactions, _ = prepare_commit(content)
+    return preview, transactions
+
+
+def prepare_commit(content: bytes) -> tuple[ImportPreview, list[dict[str, object]], list[dict[str, object]]]:
+    """Produce transaction and duplicate-candidate values for one atomic commit."""
     preview = parse_preview(content)
     if preview.errors:
-        return preview, []
+        return preview, [], []
 
     reader = csv.DictReader(io.StringIO(content.decode("utf-8"), newline=""))
     rows = [_parse_row(row, line) for line, row in enumerate(reader, start=2)]
@@ -94,11 +100,11 @@ def parse_and_enrich(content: bytes) -> tuple[ImportPreview, list[dict[str, obje
     transaction_statuses = statuses(duplicates, categories)
     categories_by_id = {result.txn_id: result for result in categories}
 
-    return preview, [
+    transactions = [
         {
             "source_row": row.source_row,
-            "date": row.txn.date.isoformat(),
-            "time": row.txn.time.isoformat() if row.txn.time else None,
+            "txn_date": row.txn.date.isoformat(),
+            "txn_time": row.txn.time.isoformat() if row.txn.time else None,
             "description": row.txn.description,
             "amount_kobo": row.txn.amount_kobo,
             "direction": row.txn.direction,
@@ -111,6 +117,14 @@ def parse_and_enrich(content: bytes) -> tuple[ImportPreview, list[dict[str, obje
         }
         for row in rows
     ]
+    candidates = [
+        {
+            "kind": candidate["kind"],
+            "txn_source_rows": [int(transaction_id) for transaction_id in candidate["txn_ids"]],
+        }
+        for candidate in duplicates
+    ]
+    return preview, transactions, candidates
 
 
 def _parse_row(row: dict[str, str | None], line_number: int) -> ImportRow:
