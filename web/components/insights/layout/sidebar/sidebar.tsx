@@ -21,11 +21,11 @@ const iconButton =
 
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
-    <Link href="/insights" className="flex min-w-0 items-center gap-2.5 rounded-lg" aria-label="Money Insights overview">
+    <Link href="/insights" className="flex min-w-0 items-center gap-2.5 rounded-lg" aria-label="SpendLens overview">
       <LogoMark size={28} />
       {!collapsed && (
         <span className="min-w-0">
-          <span className="block truncate text-[14px] font-[650] tracking-[-0.02em]">Money Insights</span>
+          <span className="block truncate text-[14px] font-[650] tracking-[-0.02em]">SpendLens</span>
         </span>
       )}
     </Link>
@@ -108,7 +108,7 @@ export function MobileSidebar() {
           aria-describedby={undefined}
           className="fixed inset-y-0 left-0 z-50 w-[min(18rem,85vw)] border-r border-line bg-background shadow-2xl lg:hidden"
         >
-          <Dialog.Title className="sr-only">Money Insights menu</Dialog.Title>
+          <Dialog.Title className="sr-only">SpendLens menu</Dialog.Title>
           <SidebarBody
             collapsed={false}
             onNavigate={close}
