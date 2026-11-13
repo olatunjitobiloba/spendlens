@@ -24,7 +24,6 @@ Canonical V1 CSV: UTF-8, at most 5 MB and 5,000 rows; columns `date` (YYYY-MM-DD
 
 ```python
 MODEL_VERSION = "ml-0.1.0"
-Bank = Literal["opay", "gtbank", "ecobank", "access", "zenith", "other"]
 
 @dataclass(frozen=True)
 class Txn:
@@ -36,7 +35,7 @@ class Txn:
     direction: str         # debit or credit
     account_alias: str
     reference: str | None
-    bank: Bank               # required normalized institution
+    bank: str               # required normalized institution
 
 categorize(txns: list[Txn]) -> list[CategoryResult]
 find_reconciliation_candidates(txns: list[Txn]) -> list[Candidate]
@@ -45,6 +44,11 @@ forecast_category(history: list[Txn], category: str, horizon_days: int) -> Forec
 ```
 
 Freeze interfaces by Nov 1 and share with Olamilekan (backend) and Olatunji (AI). Every result carries `model_version`, confidence, and a method label (`rule`, `model`, or `baseline`) as appropriate. Proposed additions to the TRD are `model_version` on every result and `method` on reconciliation candidates; preserve confidence fields and confirm the additions with the team before freezing. V1 uses method `rule`; its confidence describes rule strength, not measured probability.
+
+Bank names and aliases are authoritative in `ai/banks.py`. ML derives its
+accepted institution values from that registry plus `other`, and the distribution
+ships that dependency-free module without AI service code. The transaction field is annotated directly as `str`; there is no separate
+bank type alias or institution registry.
 
 The canonical ML transaction requires `bank`. The integration caller passes
 the output of `ai.banks.normalize_bank`: `opay`, `gtbank`, `ecobank`, `access`,
@@ -86,4 +90,6 @@ Implementation order: contract/package setup → labeled examples and seeded gen
 
 Consolidated from the ML Engineer Product Requirements Document and Technical Requirements Document (both draft for team review, Oct 29, 2026). This plan is the single working reference; proposed thresholds and contract changes remain proposals until agreed.
 
-
+`ai.banks.BANKS` is the sole bank-name and alias registry. `Txn.bank` uses
+`str` directly; no bank type alias or literal list is maintained. `Txn` validates
+strings against registry-derived values plus the `other` fallback.

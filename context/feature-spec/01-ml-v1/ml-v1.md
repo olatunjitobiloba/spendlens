@@ -1,6 +1,6 @@
 # ML V1: categorization and reconciliation
 
-Status: Step 1 authorized by the owner on 2026-11-05 (Africa/Lagos); subsequent steps remain gated by NEXT. Primary source: [ML_PLAN.md](../../../ML_PLAN.md).
+Status: Step 6 locally verified on 2026-11-13 (Africa/Lagos), following owner NEXT. AC1–AC11 audit, clean installed runtime, full suites and evaluations are recorded in the single review. Owner excluded GitHub execution/checks. Final checkpoint reached; no V2 work started. Primary source: [ML_PLAN.md](../../../ML_PLAN.md).
 Evidence: [progress](ml-v1-progress.md), [review](review.md), and
 [project tracker](../../progress-tracker.md).
 
@@ -44,7 +44,7 @@ Constraints and decisions:
 - Preserve the eleven exact category names from ML_PLAN.md.
 - Require the normalized institution as `Txn.bank` (`opay`, `gtbank`,
   `ecobank`, `access`, `zenith`, or `other`). The integration caller supplies
-  the output of `ai.banks.normalize_bank`; ML does not import AI or repeat alias rules.
+  the output of `ai.banks.normalize_bank`; ML imports only the dependency-free `ai.banks` registry and does not repeat alias rules or load AI services.
   The table may call this column “Bank Category.” It is descriptive metadata,
   separate from spending category, and does not affect ML decisions.
 - JSON-compatible YAML rules use the standard JSON parser; no YAML dependency.
@@ -335,3 +335,7 @@ future commands, not claims that they currently exist or pass.
 
 
 
+
+Owner clarification: `ai.banks.BANKS` is the sole source of bank names and
+aliases. `Txn.bank` uses `str` directly, without a type alias or `Literal` union;
+transaction validation reads registry-derived values plus `other`.

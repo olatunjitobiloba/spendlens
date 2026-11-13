@@ -12,7 +12,10 @@ dependencies = []
 [project.optional-dependencies]
 test = ["pytest>=7"]
 
-# Include only ML sources; adjacent application directories remain independent.
+# Share only the dependency-free bank registry, not the AI service modules.
+[tool.setuptools]
+py-modules = ["ai.banks"]
+
 [tool.setuptools.package-dir]
 ml = "ml"
 
@@ -21,7 +24,7 @@ where = ["."]
 include = ["ml", "ml.*"]
 namespaces = false
 
-# Rules arrive in Step 3 and must survive regular package installation.
+# Include the Step 3 rules in regular package installations.
 [tool.setuptools.package-data]
 ml = ["rules/*.yaml"]
 

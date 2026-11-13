@@ -1,0 +1,13 @@
+{
+  "Food": ["food", "canteen", "rice"],
+  "Transport": ["transport", "bus fare"],
+  "Airtime and Data": ["airtime"],
+  "Entertainment": ["cinema ticket"],
+  "Shopping": ["clothing purchase"],
+  "Bills and Utilities": ["electricity", "utility bill"],
+  "Education": ["school tuition"],
+  "Health": ["pharmacy", "medicine"],
+  "Savings and Transfers": ["transfer to own wallet", "transfer to external wallet", "transfer to savings"],
+  "Income": ["monthly salary", "allowance received"],
+  "Uncategorized": []
+}
