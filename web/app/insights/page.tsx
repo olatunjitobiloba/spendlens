@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { OverviewScreen } from "@/components/insights/overview/overview-screen";
 import { OverviewSkeleton } from "@/components/insights/skeletons";
 
-export const metadata: Metadata = { title: { absolute: "Money Insights · SpendLens" } };
+export const metadata: Metadata = { title: "Overview" };
 
 export default function Page() {
   return (

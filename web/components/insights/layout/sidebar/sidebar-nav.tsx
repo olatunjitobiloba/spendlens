@@ -40,7 +40,7 @@ function NavLink({ item, active, collapsed, onNavigate }: { item: NavItem; activ
 export function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Money Insights" className="space-y-5">
+    <nav aria-label="SpendLens" className="space-y-5">
       {insightsNav.map((group) => (
         <div key={group.label}>
           <p

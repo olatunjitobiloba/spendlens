@@ -48,7 +48,7 @@ export const faqs = [
   },
   {
     q: "Where do the numbers come from?",
-    a: "From code. Totals, cuts and results are calculated by the API and checked before they reach you. AI is only used to explain a result in plain language, and it never produces a number.",
+    a: "From code. Totals, cuts and results are calculated in code and checked before they reach you. Plain-language explanations are phrased via Groq and Google Gemini using only aggregate category totals and coverage warnings, never raw transactions.",
   },
   {
     q: "What happens when there isn't enough data?",
@@ -67,8 +67,8 @@ export const faqs = [
     a: "Through Kora Checkout. Pro unlocks only after our server confirms the order is paid. A success message in the browser alone never unlocks anything.",
   },
   {
-    q: "Can I delete my data?",
-    a: "Yes. One action removes every import and everything worked out from it.",
+    q: "How is demo data stored?",
+    a: "Sample mode runs on synthetic data kept locally in your browser, so you can clear it anytime. Server-side storage and account deletion are not live until the backend API is deployed.",
   },
 ] as const;
 

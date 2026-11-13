@@ -23,6 +23,11 @@ def test_bank_aliases_and_typo():
     assert normalize_bank(" GTB ") == "gtbank"
     assert normalize_bank("Zenith") == "zenith"
     assert normalize_bank("zenith bank") == "zenith"
+    assert normalize_bank("guaranty-trust-bank") == "gtbank"
+    assert normalize_bank("zenith-bank") == "zenith"
+    assert normalize_bank("access-bank") == "access"
+    assert normalize_bank("ecobank-nigeria") == "ecobank"
+    assert normalize_bank("paycom") == "opay"
 
 
 def test_unknown_or_missing_bank_is_other():

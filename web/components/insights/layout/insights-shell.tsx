@@ -1,5 +1,6 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MeProvider } from "@/providers/me-provider";
+import { ServerWakeBanner } from "../shared/server-wake-banner";
 import { DesktopSidebar, MobileSidebar } from "./sidebar/sidebar";
 
 /** The SpendLens module as a host app would embed it: sidebar plus content. */
@@ -18,6 +19,7 @@ export function InsightsShell({ children }: { children: React.ReactNode }) {
           <div className="flex min-w-0 flex-1 flex-col">
             <MobileSidebar />
             <main id="insights-main" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-10 sm:px-6 lg:px-8 lg:pt-8">
+              <ServerWakeBanner />
               {children}
             </main>
           </div>

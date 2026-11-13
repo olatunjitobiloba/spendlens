@@ -184,7 +184,7 @@ function csvForm(file: File) {
 }
 
 export const api = {
-  health: () => request<Health>("GET", "/health"),
+  health: (signal?: AbortSignal) => request<Health>("GET", "/health", { signal }),
 
   previewImport: (file: File) =>
     request<ImportPreview>("POST", "/v1/imports/preview", { form: csvForm(file) }),
