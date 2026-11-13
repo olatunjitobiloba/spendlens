@@ -6,6 +6,7 @@ __pycache__/
 *.csv
 .pytest_cache/
 node_modules/
+*.egg-info/
 does-not-exist-dir/
 .superpowers/
 docs/superpowers/plans/
