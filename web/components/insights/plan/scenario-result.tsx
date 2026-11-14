@@ -56,10 +56,14 @@ function Totals({ scenario }: { scenario: Scenario }) {
 
 function Breakdown({ scenario, month }: { scenario: Scenario; month: string }) {
   const cut = scenario.categories.filter((c) => c.percent > 0);
-  if (!cut.length) return <p className="mt-4 text-[13.5px] text-t3">No cuts chosen, so spending stays the same.</p>;
+  if (!cut.length) return (
+    <div className="flex items-center p-2 justify-center">
+      <p className="mt-4 text-[13.5px] text-t3 text-center">No cuts chosen, so spending stays the same.</p>
+    </div>
+  )
   return (
     <div className="mt-4 overflow-x-auto" tabIndex={0} aria-label="Cut by category">
-      <table className="w-full min-w-[480px] text-left text-[13px]">
+      <table className="w-full min-w-120 text-left text-[13px]">
         <thead className="text-t3">
           <tr className="border-b border-line">
             <th scope="col" className="py-2 pr-3 font-medium">Category</th>
@@ -268,7 +272,7 @@ export function ScenarioResultDialog({
             {exportFailed ? (
               <span className="text-destructive">The image could not be made. Try again.</span>
             ) : (
-              ready && "Download the figures to share them."
+              ready && ""
             )}
           </span>
           <div className="flex gap-2">

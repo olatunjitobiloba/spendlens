@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Crown02Icon } from "@hugeicons/core-free-icons";
-
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -12,7 +10,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { Spinner } from "@/components/ui/spinner";
 import { Notice } from "@/components/ui/notice";

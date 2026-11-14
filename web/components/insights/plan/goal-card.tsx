@@ -1,231 +1,169 @@
 "use client";
 
-import { useState } from "react";
-import { Target02Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
-import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
-import { Section } from "@/components/ui/section";
-import { Spinner } from "@/components/ui/spinner";
-import { api } from "@/lib/api";
-import type { GoalProjection } from "@/types/api";
+import type { Scenario } from "@/types/api";
+import { cn } from "@/utils/cn";
+import { fmtWhole } from "@/utils/format";
+import { MAX_TARGET_KOBO, monthsToGoal, parseNairaToKobo } from "@/utils/goal";
 
-const INITIAL_PROJECTION: GoalProjection = {
-  goal_name: "Emergency fund",
-  months_to_goal: 10,
-  final_balance_kobo: 50_000_000,
-  annual_rate_pct: 0,
-  note: "Projection uses the rate you entered. It is an assumption, not a forecast or advice.",
-};
+const INPUT_ID = "goal-target";
+const TITLE_ID = "goal-title";
 
+/**
+ * Turns the calculated cut into a goal timeline: the scenario's monthly saving
+ * against a target the user types. Needs a fresh scenario to work from.
+ */
 export function GoalCard({
-  defaultMonthlySavingKobo = 0,
-  className,
+  scenario,
+  stale,
+  target,
+  setTarget,
+  onEditCut,
 }: {
-  defaultMonthlySavingKobo?: number;
-  className?: string;
+  scenario: Scenario | null;
+  stale: boolean;
+  target: string;
+  setTarget: (v: string) => void;
+  onEditCut: () => void;
 }) {
-  const [goalName, setGoalName] = useState("Emergency fund");
-  const [targetNaira, setTargetNaira] = useState("500000");
-  const [savedNaira, setSavedNaira] = useState("0");
-  const [monthlyNaira, setMonthlyNaira] = useState(
-    defaultMonthlySavingKobo > 0 ? String(Math.round(defaultMonthlySavingKobo / 100)) : "50000",
-  );
-  const [prevDefault, setPrevDefault] = useState(defaultMonthlySavingKobo);
-  const [ratePct, setRatePct] = useState("");
-  const [projection, setProjection] = useState<GoalProjection | null>(INITIAL_PROJECTION);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const parsed = parseNairaToKobo(target);
+  const tooBig = parsed !== null && parsed > MAX_TARGET_KOBO;
+  const targetKobo = tooBig ? null : parsed;
+  const bad = target.trim() !== "" && targetKobo === null;
+  const monthly = scenario?.total_reduction_kobo ?? 0;
+  const ready = !!scenario && !stale && monthly > 0;
+  const months = ready && targetKobo !== null ? monthsToGoal(targetKobo, monthly) : null;
+  // The ring shows how much of the target one month of the cut covers.
+  const share = months ? 1 / months : 0;
 
-  // Sync monthly savings prop change during render per React guidelines
-  if (defaultMonthlySavingKobo !== prevDefault) {
-    setPrevDefault(defaultMonthlySavingKobo);
-    if (defaultMonthlySavingKobo > 0) {
-      setMonthlyNaira(String(Math.round(defaultMonthlySavingKobo / 100)));
-    }
-  }
-
-  async function calculate() {
-    const target = Math.round(Number(targetNaira.replace(/,/g, "")) * 100);
-    const saved = Math.round(Number(savedNaira.replace(/,/g, "")) * 100);
-    const monthly = Math.round(Number(monthlyNaira.replace(/,/g, "")) * 100);
-    const rate = ratePct.trim() ? Number(ratePct) : 0;
-
-    if (!goalName.trim()) {
-      setError("Please enter a goal name.");
-      return;
-    }
-    if (isNaN(target) || target <= 0) {
-      setError("Target amount must be greater than 0.");
-      return;
-    }
-    if (isNaN(saved) || saved < 0) {
-      setError("Saved amount cannot be negative.");
-      return;
-    }
-    if (isNaN(monthly) || monthly < 0) {
-      setError("Monthly saving cannot be negative.");
-      return;
-    }
-    if (isNaN(rate) || rate < 0 || rate > 100) {
-      setError("Rate must be between 0 and 100%.");
-      return;
-    }
-
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await api.projectGoal({
-        goal_name: goalName.trim(),
-        target_kobo: target,
-        saved_kobo: saved,
-        monthly_saving_kobo: monthly,
-        annual_rate_pct: rate,
-      });
-      setProjection(res);
-    } catch {
-      setError("Could not calculate goal projection.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const message = !scenario
+    ? "Calculate a cut first. The goal uses what that cut saves each month."
+    : stale
+      ? "Your cuts changed. Recalculate to update the goal."
+      : monthly <= 0
+        ? "This scenario saves nothing yet. Add a cut to start moving."
+        : months === null
+          ? "Enter a target below to see when your cut gets you there."
+          : months === 1
+            ? "One month of this cut covers it. Nice."
+            : "Keep the cut going and you'll reach your target.";
 
   return (
-    <Section
-      title={
-        <span className="flex items-center gap-2">
-          <Icon icon={Target02Icon} className="text-brand size-4.5" />
-          Savings Goal
-        </span>
-      }
-      description="See how your monthly cuts turn into long-term savings."
-      className={className}
+    <section
+      aria-labelledby={TITLE_ID}
+      className="w-full rounded-[1.25rem] border border-line bg-panel"
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-3">
-          <div>
-            <label htmlFor="goal-name" className="block text-[12.5px] font-medium text-t2">
-              Goal name
-            </label>
-            <input
-              id="goal-name"
-              type="text"
-              value={goalName}
-              maxLength={60}
-              placeholder="e.g. Laptop, Rent deposit"
-              onChange={(e) => setGoalName(e.target.value)}
-              className="mt-1 h-9 w-full rounded-lg border border-line-strong bg-panel px-3 text-[13px] outline-none focus:border-brand"
-            />
+      <header className="flex items-center justify-between gap-4 border-b border-line px-4 py-3.5 sm:px-5">
+        <h2 id={TITLE_ID} className="text-[12px] font-semibold tracking-[0.08em] text-t3 uppercase">
+          Goal
+        </h2>
+        <button
+          type="button"
+          onClick={onEditCut}
+          className="inline-flex items-center gap-0.5 rounded-md text-[13px] font-semibold text-brand hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          Edit cut
+          <Icon icon={ArrowRight01Icon} className="size-3.5" strokeWidth={2.2} />
+        </button>
+      </header>
+
+      <div className="flex flex-col items-center px-4 pt-8 pb-6 text-center sm:px-5" aria-live="polite">
+        <div className="grid w-full max-w-2xl grid-cols-[1fr_auto_1fr] items-end gap-3">
+          <div className="pb-1 text-left">
+            <p className="text-[11.5px] text-t4">Each month</p>
+            <p className="mt-0.5 text-[14px] font-semibold">{ready ? <Money kobo={monthly} /> : "—"}</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="goal-target" className="block text-[12.5px] font-medium text-t2">
-                Target (₦)
-              </label>
-              <input
-                id="goal-target"
-                type="text"
-                inputMode="numeric"
-                value={targetNaira}
-                placeholder="500,000"
-                onChange={(e) => setTargetNaira(e.target.value)}
-                className="mt-1 h-9 w-full rounded-lg border border-line-strong bg-panel px-3 font-mono text-[13px] outline-none focus:border-brand"
-              />
-            </div>
-            <div>
-              <label htmlFor="goal-saved" className="block text-[12.5px] font-medium text-t2">
-                Already saved (₦)
-              </label>
-              <input
-                id="goal-saved"
-                type="text"
-                inputMode="numeric"
-                value={savedNaira}
-                placeholder="0"
-                onChange={(e) => setSavedNaira(e.target.value)}
-                className="mt-1 h-9 w-full rounded-lg border border-line-strong bg-panel px-3 font-mono text-[13px] outline-none focus:border-brand"
-              />
-            </div>
+          <TargetRing share={share} muted={!ready} />
+          <div className="pb-1 text-right">
+            <p className="text-[11.5px] text-t4">Target</p>
+            <p className="mt-0.5 font-mono text-[14px] font-semibold tabular-nums">
+              {targetKobo !== null ? fmtWhole(targetKobo) : "—"}
+            </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="goal-monthly" className="block text-[12.5px] font-medium text-t2">
-                Monthly saving (₦)
-              </label>
-              <input
-                id="goal-monthly"
-                type="text"
-                inputMode="numeric"
-                value={monthlyNaira}
-                placeholder="50,000"
-                onChange={(e) => setMonthlyNaira(e.target.value)}
-                className="mt-1 h-9 w-full rounded-lg border border-line-strong bg-panel px-3 font-mono text-[13px] outline-none focus:border-brand"
-              />
-            </div>
-            <div>
-              <label htmlFor="goal-rate" className="block text-[12.5px] font-medium text-t2">
-                Assumed return % <span className="text-t4">(optional)</span>
-              </label>
-              <input
-                id="goal-rate"
-                type="text"
-                inputMode="decimal"
-                value={ratePct}
-                placeholder="0"
-                onChange={(e) => setRatePct(e.target.value)}
-                className="mt-1 h-9 w-full rounded-lg border border-line-strong bg-panel px-3 font-mono text-[13px] outline-none focus:border-brand"
-              />
-            </div>
-          </div>
-
-          {error && <p className="text-[12px] text-destructive">{error}</p>}
-
-          <Button size="sm" onClick={calculate} disabled={busy} className="w-full">
-            {busy ? <Spinner /> : "Update projection"}
-          </Button>
         </div>
 
-        <div className="flex flex-col justify-between rounded-xl bg-panel-raised/60 p-4 border border-line">
-          <div>
-            <p className="text-[11.5px] font-medium tracking-wide uppercase text-t4">Projected timeline</p>
-            {projection ? (
-              <div className="mt-2">
-                {projection.months_to_goal === 0 ? (
-                  <p className="text-[26px] font-[700] text-positive">Goal reached</p>
-                ) : projection.months_to_goal !== null ? (
-                  <>
-                    <p className="text-[34px] font-[700] tracking-tight text-foreground">
-                      {projection.months_to_goal}{" "}
-                      <span className="text-[18px] font-medium text-t3">
-                        {projection.months_to_goal === 1 ? "month" : "months"}
-                      </span>
-                    </p>
-                    <p className="mt-1 text-[13px] text-t3">
-                      Final balance: <Money kobo={projection.final_balance_kobo} className="font-semibold text-foreground" />
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-[22px] font-[600] text-warn">Over 50 years</p>
-                    <p className="mt-1 text-[12.5px] text-t3">Increase monthly savings to reach this goal sooner.</p>
-                  </>
-                )}
-              </div>
-            ) : (
-              <p className="mt-2 text-[13px] text-t3">Calculate to see projection.</p>
-            )}
-          </div>
+        {months !== null && (
+          <p className="mt-6 text-[28px] leading-none font-semibold tracking-[-0.02em]">
+            <span className="font-mono tabular-nums">{months}</span>{" "}
+            <span className="text-[17px] font-[500] text-t3">{months === 1 ? "month" : "months"}</span>
+          </p>
+        )}
+        <p className={cn("max-w-sm text-[14px] leading-relaxed text-t3", months !== null ? "mt-2" : "mt-6")}>
+          {message}
+        </p>
+      </div>
 
-          {projection?.note && (
-            <p className="mt-4 border-t border-line/60 pt-3 text-[11px] leading-relaxed text-t4">
-              {projection.note}
+      <div className="flex flex-col gap-1.5 border-t border-line px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <label htmlFor={INPUT_ID} className="text-[13px] font-[500] text-t2">
+          Target amount
+        </label>
+        <div className="sm:w-52">
+          <span className="relative block">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[13px] text-t3"
+            >
+              ₦
+            </span>
+            <input
+              id={INPUT_ID}
+              inputMode="decimal"
+              value={target}
+              placeholder="150,000"
+              aria-invalid={bad}
+              aria-describedby={bad ? `${INPUT_ID}-err` : undefined}
+              onChange={(e) => setTarget(e.target.value)}
+              className={cn(
+                "h-9 w-full rounded-xl border bg-panel pr-3 pl-7 font-mono text-[13px]",
+                bad ? "border-destructive" : "border-line-strong",
+              )}
+            />
+          </span>
+          {bad && (
+            <p id={`${INPUT_ID}-err`} className="mt-1 text-[12px] text-destructive">
+              {tooBig
+                ? `The most you can set is ${fmtWhole(MAX_TARGET_KOBO)}.`
+                : "Use an amount like 150000 or 150,000.50."}
             </p>
           )}
         </div>
       </div>
-    </Section>
+    </section>
+  );
+}
+
+/** Decorative target. The outer arc fills with one month's share of the goal. */
+function TargetRing({ share, muted }: { share: number; muted: boolean }) {
+  const r = 60;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(1, share));
+
+  return (
+    <svg viewBox="0 0 132 132" aria-hidden="true" className={cn("size-32 transition-opacity", muted && "opacity-50")}>
+      <circle cx="66" cy="66" r={r} fill="none" strokeWidth="6" className="stroke-foreground/[0.06]" />
+      <circle
+        cx="66"
+        cy="66"
+        r={r}
+        fill="none"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - pct)}
+        transform="rotate(-90 66 66)"
+        className={cn("stroke-brand transition-[stroke-dashoffset] duration-700 ease-out", pct === 0 && "opacity-0")}
+      />
+      <circle cx="66" cy="66" r="46" className="fill-brand/10" />
+      <circle cx="66" cy="66" r="34" fill="none" strokeWidth="5" className="stroke-brand/35" />
+      <circle cx="66" cy="66" r="20" fill="none" strokeWidth="5" className="stroke-brand/70" />
+      <circle cx="66" cy="66" r="7" className="fill-brand" />
+      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M30 102 L64 68 M53 66 H66 V79" strokeWidth="8" className="stroke-panel" />
+        <path d="M30 102 L64 68 M53 66 H66 V79" strokeWidth="3.5" className="stroke-foreground" />
+      </g>
+    </svg>
   );
 }

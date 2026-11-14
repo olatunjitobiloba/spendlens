@@ -25,8 +25,6 @@ export function SaveScenario({ scenario, onSaved }: { scenario: Scenario; onSave
   if (!isPro) {
     return (
       <p className="flex flex-wrap items-center gap-2 text-[13px] text-t3">
-        <Status tone="brand">Pro</Status>
-        Save scenarios and compare them later.
         <Link href="/insights/pro" className="font-medium text-primary underline-offset-4 hover:underline">
           Unlock Pro
         </Link>
