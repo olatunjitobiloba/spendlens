@@ -27,6 +27,8 @@ export type TransactionQuery = {
   page?: number;
   page_size?: number;
   category?: string;
+  /** Bank slug, as in configs/banks.ts. */
+  bank?: string;
   review_state?: ReviewState;
   q?: string;
   ids?: string[];
@@ -103,6 +105,8 @@ export type Analysis = {
   range: DateRange;
   data_range: DateRange | null;
   available_months: string[]; // "2026-10"
+  /** Banks that appear in the data, as slugs or names. Optional: older APIs omit it. */
+  available_banks?: string[];
   /** Spend per month across all data, oldest first. */
   monthly_totals: MonthTotal[];
   total_spent_kobo: number;
@@ -227,3 +231,21 @@ export type GoalProjection = {
   annual_rate_pct: number;
   note: string;
 };
+
+// Chat
+
+export type ChatRole = "user" | "assistant";
+
+/** One prior turn sent back for context. The API keeps the last six. */
+export type ChatTurn = { role: ChatRole; text: string };
+
+export type ChatRequest = { message: string; history: ChatTurn[] };
+
+export type ChatReply = {
+  answer: string;
+  /** "refusal" when the model could not ground an answer in the user's figures. */
+  source: "model" | "refusal";
+  tool_calls: number;
+};
+
+export type Transcription = { text: string };

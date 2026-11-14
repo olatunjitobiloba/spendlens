@@ -1,4 +1,5 @@
 import {
+  AiChat02Icon,
   Analytics01Icon,
   ChartLineData01Icon,
   Crown02Icon,
@@ -20,6 +21,7 @@ export const insightsNav: NavGroup[] = [
       { href: "/insights/import", label: "Import", icon: FileImportIcon },
       { href: "/insights/review", label: "Review", icon: Task01Icon },
       { href: "/insights/plan", label: "Plan", icon: Target02Icon },
+      { href: "/insights/chat", label: "AI chat", icon: AiChat02Icon },
     ],
   },
   {
@@ -47,3 +49,4 @@ export const SIDEBAR_COLLAPSED_KEY = `${STORAGE_PREFIX}sidebar-collapsed`;
 export const GET_STARTED_DISMISSED_KEY = `${STORAGE_PREFIX}get-started-dismissed`;
 export const TESTED_CUT_KEY = `${STORAGE_PREFIX}tested-cut`;
 export const SET_PROTECTIONS_KEY = `${STORAGE_PREFIX}set-protections`;
+export const CHATS_KEY = `${STORAGE_PREFIX}chats:v1`;

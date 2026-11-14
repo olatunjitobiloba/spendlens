@@ -5,10 +5,12 @@
 // does arithmetic on money. UI components must never import from here
 // except through lib/api.ts.
 
+import { findBank } from "@/configs/banks";
 import { CATEGORIES, UNCATEGORISED } from "@/configs/categories";
 import type {
   Analysis,
   CategoryTotal,
+  ChatReply,
   Comparison,
   DateRange,
   Explanation,
@@ -26,6 +28,7 @@ import type {
   Scenario,
   ScenarioRequest,
   Transaction,
+  Transcription,
 } from "@/types/api";
 
 export class MockHttpError extends Error {
@@ -125,6 +128,10 @@ const inRange = (t: Transaction, r: DateRange) => t.date >= r.start && t.date <=
 const SAMPLE_ACCOUNT_BANKS: Record<string, string> = {
   "Current account 4821": "guaranty-trust-bank",
   "Debit card 0937": "zenith-bank",
+  "OPay wallet 7710": "paycom",
+  "Moniepoint account 3306": "moniepoint-mfb-ng",
+  "Savings account 5194": "access-bank",
+  "Kuda account 2268": "kuda-bank",
 };
 const FALLBACK_BANKS = [
   "guaranty-trust-bank",
@@ -327,6 +334,13 @@ function defaultRange(db: Db): DateRange | null {
   return r ? monthRange(monthOf(r.end)) : null;
 }
 
+/** A transaction's bank as a slug when known, so filters match any spelling. */
+const bankKey = (t: Transaction) => (t.bank ? (findBank(t.bank)?.slug ?? t.bank) : "");
+
+function availableBanks(db: Db): string[] {
+  return [...new Set(db.txns.map(bankKey).filter(Boolean))].sort();
+}
+
 function availableMonths(db: Db): string[] {
   return [...new Set(db.txns.map((t) => monthOf(t.date)))].sort().reverse();
 }
@@ -375,6 +389,7 @@ function analysis(db: Db, q: Record<string, unknown>): Analysis {
   const base = {
     data_range: dr,
     available_months: availableMonths(db),
+    available_banks: availableBanks(db),
     monthly_totals: monthlyTotals(db),
     needs_review_count: active(db).filter((t) => t.review_state === "needs_review").length,
     reconciliation_candidates: candidates(db),
@@ -595,6 +610,7 @@ function listTransactions(db: Db, q: Record<string, unknown>): Page<Transaction>
       if (cat !== q.category) return false;
     }
     if (q.review_state && t.review_state !== q.review_state) return false;
+    if (typeof q.bank === "string" && q.bank && bankKey(t) !== (findBank(q.bank)?.slug ?? q.bank)) return false;
     if (typeof q.start === "string" && t.date < q.start) return false;
     if (typeof q.end === "string" && t.date > q.end) return false;
     if (text && !t.description.toLowerCase().includes(text)) return false;
@@ -603,6 +619,80 @@ function listTransactions(db: Db, q: Record<string, unknown>): Page<Transaction>
   items = items.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
   return { items: items.slice((page - 1) * pageSize, page * pageSize), total: items.length, page, page_size: pageSize };
 }
+
+// ---------- Chat ----------
+
+/** Same wording as ai/chat.py REFUSAL. */
+const CHAT_REFUSAL = "I can't answer that reliably. Try asking about your totals, categories or planned savings.";
+
+/**
+ * A rule-based stand-in for ai/chat.py: it answers the same few questions from
+ * the same figures the tools expose, so the demo stays grounded offline.
+ */
+function chatReply(db: Db, message: string): ChatReply {
+  const reply = (answer: string, source: ChatReply["source"] = "model"): ChatReply => ({
+    answer,
+    source,
+    tool_calls: source === "model" ? 1 : 0,
+  });
+  const a = analysis(db, {});
+  if (!a.txn_count) {
+    return reply("There are no transactions to look at yet. Import a statement and ask me again.", "refusal");
+  }
+  const q = message.toLowerCase();
+  const period = formatPeriod(a.range.start);
+  const cat = a.categories.find((c) => q.includes(c.category.toLowerCase()));
+
+  if (cat) {
+    const guard = cat.protected ? " It is protected, so plans will not cut it." : "";
+    return reply(
+      `You spent ${naira(cat.total_kobo)} on ${cat.category} in ${period}, across ${cat.txn_count} transaction${cat.txn_count === 1 ? "" : "s"}. That is ${cat.share_pct}% of your spending.${guard}`,
+    );
+  }
+  if (/protect|essential/.test(q)) {
+    const list = a.categories.filter((c) => c.protected).map((c) => c.category);
+    return reply(
+      list.length
+        ? `Protected categories: ${list.join(", ")}. Savings plans leave these untouched.`
+        : "Nothing is protected yet. You can mark essentials like Rent on the Plan page.",
+    );
+  }
+  if (/most|top|biggest|largest|where/.test(q)) {
+    const top = a.categories.slice(0, 3).map((c) => `${c.category} (${naira(c.total_kobo)})`);
+    return reply(`Most of your money in ${period} went to ${top.join(", ")}.`);
+  }
+  if (/income|earn|salary|receiv|credit/.test(q)) {
+    return reply(`Money in for ${period} came to ${naira(a.total_income_kobo)}.`);
+  }
+  if (/left|remain|save|saving/.test(q)) {
+    const left = a.total_income_kobo - a.total_spent_kobo;
+    return reply(
+      left >= 0
+        ? `In ${period} you brought in ${naira(a.total_income_kobo)} and spent ${naira(a.total_spent_kobo)}, leaving ${naira(left)}.`
+        : `In ${period} you spent ${naira(-left)} more than came in.`,
+    );
+  }
+  if (/spen|total|cost|how much/.test(q)) {
+    return reply(`You spent ${naira(a.total_spent_kobo)} in ${period} across ${a.txn_count} transactions.`);
+  }
+  return reply(CHAT_REFUSAL, "refusal");
+}
+
+function formatPeriod(start: string) {
+  return new Date(`${start.slice(0, 7)}-01T00:00:00Z`).toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** Fixture mode cannot run speech-to-text, so a voice note becomes one of these questions. */
+const SAMPLE_TRANSCRIPTS = [
+  "How much did I spend this month?",
+  "Where did most of my money go?",
+  "How much money came in this month?",
+  "Which categories are protected?",
+];
 
 // ---------- Router ----------
 
@@ -742,6 +832,21 @@ export async function handle(method: string, path: string, req: Req): Promise<un
   }
 
   if (route === "GET /v1/me") return me(db);
+
+  if (route === "POST /v1/chat") {
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    if (!message || message.length > 500) fail(422, "Ask something between 1 and 500 characters.");
+    await sleep(500 + Math.random() * 500);
+    return chatReply(db, message);
+  }
+
+  if (route === "POST /v1/chat/transcriptions") {
+    const file = req.form?.get("file");
+    if (!(file instanceof Blob) || !file.size) fail(422, "The voice note was empty.");
+    await sleep(600);
+    const text = SAMPLE_TRANSCRIPTS[Math.floor(Math.random() * SAMPLE_TRANSCRIPTS.length)];
+    return { text } satisfies Transcription;
+  }
 
   if (route === "POST /v1/billing/orders") {
     const key = req.idempotencyKey;

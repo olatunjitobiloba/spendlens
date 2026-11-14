@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 
+import { BankLogo } from "@/components/ui/bank-badge";
 import { Icon } from "@/components/ui/icon";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BANKS, bankLabel, findBank } from "@/configs/banks";
 import { CATEGORIES, UNCATEGORISED } from "@/configs/categories";
 import { cn } from "@/utils/cn";
 import { formatMonth } from "@/utils/format";
@@ -17,21 +19,32 @@ const ALL = "__all__";
 export function TransactionFilters({
   filter,
   category,
+  bank,
   month,
   q,
   months,
+  banks,
   needsReviewCount,
   onChange,
 }: {
   filter: ReviewFilter;
   category: string;
+  bank: string;
   month: string;
   q: string;
   months: string[];
+  /** Banks in the data. Without them, every known bank is offered. */
+  banks?: string[];
   needsReviewCount: number;
   onChange: (patch: Record<string, string | null>) => void;
 }) {
   const [search, setSearch] = useState(q);
+  const bankOptions = (banks?.length ? banks : BANKS.map((b) => b.slug))
+    .map((value) => {
+      const known = findBank(value);
+      return { value: known?.slug ?? value, label: known ? bankLabel(known.name, known.short) : value };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
   const selectClass = "h-9 rounded-full border-line-strong bg-panel px-3.5 text-[13px] dark:bg-panel";
 
   return (
@@ -64,6 +77,23 @@ export function TransactionFilters({
           {[...CATEGORIES, UNCATEGORISED].map((c) => (
             <SelectItem key={c} value={c} className="text-[13px]">
               {c}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={bank || ALL} onValueChange={(v) => onChange({ bank: v === ALL ? null : v })}>
+        <SelectTrigger aria-label="Bank" className={selectClass}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent position="popper" className="max-h-80 rounded-xl">
+          <SelectItem value={ALL} className="text-[13px]">
+            All banks
+          </SelectItem>
+          {bankOptions.map((b) => (
+            <SelectItem key={b.value} value={b.value} className="text-[13px]">
+              <BankLogo bank={b.value} className="size-4.5" />
+              {b.label}
             </SelectItem>
           ))}
         </SelectContent>
