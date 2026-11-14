@@ -4,6 +4,8 @@
 
 import type {
   Analysis,
+  ChatReply,
+  ChatRequest,
   Explanation,
   Forecast,
   GoalInput,
@@ -21,6 +23,7 @@ import type {
   ScenarioRequest,
   Transaction,
   TransactionQuery,
+  Transcription,
 } from "@/types/api";
 
 import { getAccessToken } from "@/lib/supabase/client";
@@ -30,6 +33,7 @@ const ENV_FIXTURES = envFixtureMode;
 
 const DEFAULT_TIMEOUT_MS = 60_000; // free-tier cold starts take 30 to 50 seconds
 export const EXPLANATION_TIMEOUT_MS = 25_000;
+const CHAT_TIMEOUT_MS = 45_000;
 
 // ---------- Mode ----------
 
@@ -227,4 +231,14 @@ export const api = {
   deleteMyData: () => request<void>("DELETE", "/v1/me/data"),
   projectGoal: (input: GoalInput) =>
     request<GoalProjection>("POST", "/v1/goals/project", { body: input }),
+
+  chat: (req: ChatRequest, signal?: AbortSignal) =>
+    request<ChatReply>("POST", "/v1/chat", { body: req, timeoutMs: CHAT_TIMEOUT_MS, signal }),
+  /** A recorded voice note in, its text out. The text is then sent through `chat`. */
+  transcribe: (audio: Blob, signal?: AbortSignal) => {
+    const form = new FormData();
+    const ext = audio.type.includes("mp4") ? "m4a" : audio.type.includes("ogg") ? "ogg" : "webm";
+    form.set("file", audio, `voice-note.${ext}`);
+    return request<Transcription>("POST", "/v1/chat/transcriptions", { form, timeoutMs: CHAT_TIMEOUT_MS, signal });
+  },
 };

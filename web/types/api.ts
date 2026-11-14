@@ -227,3 +227,21 @@ export type GoalProjection = {
   annual_rate_pct: number;
   note: string;
 };
+
+// Chat
+
+export type ChatRole = "user" | "assistant";
+
+/** One prior turn sent back for context. The API keeps the last six. */
+export type ChatTurn = { role: ChatRole; text: string };
+
+export type ChatRequest = { message: string; history: ChatTurn[] };
+
+export type ChatReply = {
+  answer: string;
+  /** "refusal" when the model could not ground an answer in the user's figures. */
+  source: "model" | "refusal";
+  tool_calls: number;
+};
+
+export type Transcription = { text: string };
