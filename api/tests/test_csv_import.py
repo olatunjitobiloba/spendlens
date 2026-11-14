@@ -23,3 +23,14 @@ def test_enrichment_returns_bank_and_duplicate_status_without_removing_rows():
     assert rows[0]["txn_date"] == "2026-01-01"
     assert rows[1]["status"] == "Possible duplicate"
     assert sum(row["amount_kobo"] for row in rows) == 300100
+
+
+def test_coverage_warns_about_week_long_gaps():
+    from datetime import date
+
+    from api.app.csv_import import coverage_warnings
+
+    assert coverage_warnings([date(2026, 1, 1), date(2026, 1, 8)]) == []
+    assert coverage_warnings([date(2026, 1, 1), date(2026, 1, 9)]) == [
+        "No transactions for 7 days in this range (2026-01-02 to 2026-01-08)."
+    ]
