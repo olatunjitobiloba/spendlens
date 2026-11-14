@@ -18,6 +18,7 @@ import type { Transaction } from "@/types/api";
 import { cn } from "@/utils/cn";
 import { monthToRange } from "@/utils/dates";
 import { ErrorNotice } from "../shared/error-notice";
+import { tabList, tabTrigger } from "../shared/tab-trigger";
 import { ReviewSkeleton, RowsSkeleton } from "../skeletons";
 import { DuplicateCandidates } from "./duplicate-candidates";
 import { ReviewStats } from "./review-stats";
@@ -26,9 +27,6 @@ import { TransactionsTable } from "./transactions-table";
 
 const PAGE_SIZE = 20;
 type Tab = "transactions" | "duplicates";
-
-const tabTrigger =
-  "h-9 flex-none gap-2 rounded-full px-4 text-[13px] data-active:bg-panel data-active:shadow-sm dark:data-active:border-line-strong dark:data-active:bg-panel";
 
 function Count({ n, warn }: { n: number; warn?: boolean }) {
   return (
@@ -131,7 +129,7 @@ export function ReviewScreen() {
         onValueChange={(v) => setParams({ tab: v === "duplicates" ? "duplicates" : null }, { keepPage: true })}
         className="gap-3"
       >
-        <TabsList className="h-auto rounded-full border border-line bg-panel-raised/60 p-1 group-data-horizontal/tabs:h-auto">
+        <TabsList className={tabList}>
           <TabsTrigger value="transactions" className={tabTrigger}>
             <Icon icon={LeftToRightListBulletIcon} />
             Transactions
