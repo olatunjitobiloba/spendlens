@@ -216,15 +216,31 @@
   }
 }
 
-/* Stacked step cards: earlier cards shrink a touch as later ones cover them. */
+/*
+ * Stacked step cards: earlier cards shrink a touch as later ones cover them,
+ * and their contents fade out so only a clean edge of each card peeks above
+ * the next one (no half-cut numbers or mockups showing through).
+ */
 .step-card {
   transform-origin: 50% 0;
-  transform: scale(calc(1 - var(--depth, 0) * 0.04));
+  transform: scale(calc(1 - var(--depth, 0) * 0.05));
   transition: transform 80ms linear;
   will-change: transform;
+}
+.step-card > * {
+  opacity: clamp(0, calc(1 - var(--depth, 0) * 1.6), 1);
+  transition: opacity 80ms linear;
+}
+@media (min-width: 768px) {
+  .step-card {
+    box-shadow: 0 -10px 30px -22px rgb(0 0 0 / 0.22);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .step-card {
     transform: none;
+  }
+  .step-card > * {
+    opacity: 1;
   }
 }
