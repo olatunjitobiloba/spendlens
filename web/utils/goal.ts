@@ -1,5 +1,8 @@
 // Goal maths. Pure and in whole kobo, so no floating-point rounding reaches the result.
 
+/** Largest goal a user can set: ₦100,000,000, in kobo. */
+export const MAX_TARGET_KOBO = 100_000_000 * 100;
+
 /**
  * Reads a naira amount typed by the user ("150,000", "₦2500.50") as whole kobo.
  * Returns null for anything that is not a positive amount with at most two decimals.

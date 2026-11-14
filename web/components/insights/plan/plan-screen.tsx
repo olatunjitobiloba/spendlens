@@ -167,7 +167,7 @@ export function PlanScreen() {
         </TabsContent>
 
         <TabsContent value="goal">
-          <GoalCard scenario={shown} stale={stale} target={target} setTarget={setTarget} />
+          <GoalCard scenario={shown} stale={stale} target={target} setTarget={setTarget} onEditCut={() => setTab(null)} />
         </TabsContent>
       </Tabs>
 
