@@ -42,7 +42,7 @@ export function ScenarioPreview() {
             <p className="text-[13px] font-medium text-t3">Spent this month</p>
             <p className="font-mono text-[13px] text-t3">{sampleCategories.length} categories</p>
           </div>
-          <p className="mt-1 text-[30px] font-[600] leading-none tracking-[-0.04em] tabular-nums sm:text-[34px]">
+          <p className="mt-1 text-[30px] font-semibold leading-none tracking-[-0.04em] tabular-nums sm:text-[34px]">
             {fmtWhole(sampleScenario.baseline)}
           </p>
 
@@ -61,7 +61,7 @@ export function ScenarioPreview() {
                 <span className="text-right font-mono text-[12.5px] tabular-nums text-t2">
                   {fmtWhole(c.amount)}
                 </span>
-                <span className="col-span-2 h-1.5 overflow-hidden rounded-full bg-foreground/[0.06]">
+                <span className="col-span-2 h-1.5 overflow-hidden rounded-full bg-foreground/6">
                   <span
                     className={
                       c.protected ? "block h-full rounded-full bg-t4" : "block h-full rounded-full bg-brand"
@@ -97,13 +97,13 @@ export function ScenarioPreview() {
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-t3">Reduction</dt>
-              <dd className="font-mono tabular-nums text-brand">
+              <dd className="font-mono tabular-nums text-destructive">
                 −{fmtWhole(sampleScenario.reduction)}
               </dd>
             </div>
             <div className="flex items-baseline justify-between gap-3 pt-1">
               <dt className="font-medium">Result</dt>
-              <dd className="text-[22px] font-[600] tracking-[-0.03em] tabular-nums">
+              <dd className="text-[22px] font-semibold tracking-[-0.03em] tabular-nums">
                 {fmtWhole(sampleScenario.result)}
               </dd>
             </div>

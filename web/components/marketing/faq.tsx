@@ -13,7 +13,7 @@ export function Faq() {
     <section aria-labelledby="faq-title" id="faq" className="page py-20 sm:py-28">
       <div className="grid gap-10 md:grid-cols-[1fr_1.4fr] md:gap-16">
         <div>
-          <SectionHeading id="faq-title" title="Questions, answered plainly" />
+          <SectionHeading id="faq-title" title="Common questions" />
           <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-t3">
             Something missing?{" "}
             <a

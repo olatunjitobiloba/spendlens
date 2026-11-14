@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckmarkCircle02Icon, Copy01Icon, LeftToRightListBulletIcon } from "@hugeicons/core-free-icons";
+import { CheckCheck, CheckmarkCircle02Icon, Copy01Icon,  LeftToRightListBulletIcon, FileEmpty01Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -175,12 +175,12 @@ export function ReviewScreen() {
             ) : !txns.data ? (
               <RowsSkeleton rows={8} />
             ) : txns.data.items.length === 0 ? (
-              <p className="flex items-center gap-2 py-6 text-[13.5px] text-t3">
-                <Icon icon={CheckmarkCircle02Icon} className="text-positive" />
-                {filter === "needs_review"
-                  ? "Nothing needs review. Every transaction has a category."
-                  : "No transactions match these filters."}
-              </p>
+              <div className="flex items-center justify-center gap-2 py-6 text-[13.5px] text-t3">
+                <div className="grid gap-2 items-ceter justify-center">
+                  <Icon icon={filter == "needs_review" ? CheckCheck : FileEmpty01Icon} className="text-foreground/20 mx-auto size-30" />
+                  <p>{filter == "needs_review" ? "Nothing needs review. Every transaction has a category": "No transactions match these filters."}</p>
+                </div>
+              </div>
             ) : (
               <>
                 <TransactionsTable items={txns.data.items} dimmed={txns.loading} onSaved={onSaved} />

@@ -81,10 +81,10 @@ function CodeMaths() {
           Calculated by code
         </SourceLabel>
         <ul className="space-y-1.5">
-          {rows.map(([k, v]) => (
+          {rows.map(([k, v],i) => (
             <li key={k} className="flex justify-between gap-4">
               <span className="text-t3">{k}</span>
-              <span className="tabular-nums">{v}</span>
+              <span className={cn("tabular-nums", i !=0 && "text-destructive")}>{v}</span>
             </li>
           ))}
           <li className="flex justify-between gap-4 border-t border-line pt-2">
@@ -99,9 +99,9 @@ function CodeMaths() {
         </SourceLabel>
         <p className="text-[14px] leading-relaxed text-t2 italic">
           &ldquo;Your spend would come down to <b>{fmtWhole(sampleScenario.result)}</b> this month. More than half of
-          the saving comes from eating out. Rent and groceries are protected, so they stay as they are&ldquo;
+          the saving comes from eating out. Rent and groceries are protected, so they stay as they are.&rdquo;
         </p>
-        <p className="mt-auto pt-4 text-xs text-t3">Every figure above is quoted from the calculation.</p>
+        <p className="mt-auto pt-4 text-xs text-t3">Every figure in this note comes from the calculation.</p>
       </Inset>
     </div>
   );
@@ -246,39 +246,39 @@ export function WhySpendLens() {
         <Cell
           className="md:col-span-2"
           title="Code does the maths. AI only explains it."
-          body="Totals and savings are calculated and checked before you see them. The explanation can only repeat numbers the calculation produced."
+          body="Totals and savings are calculated and checked before you see them. The AI explanation can only quote numbers from that calculation."
         >
           <CodeMaths />
         </Cell>
         <Cell
           title="Essentials stay off the table"
-          body="Mark rent or groceries as protected and no scenario will ever touch them."
+          body="Mark rent or groceries as protected and no scenario will cut them."
         >
           <Essentials />
         </Cell>
         <Cell
           title="Says when it isn't sure"
-          body="Doubt is written in words, not hidden in a colour."
+          body="When data looks wrong or too thin to trust, SpendLens labels it in plain words."
         >
           <Uncertainty />
         </Cell>
         <Cell
           className="md:col-span-2"
           title="Every finding shows its receipts"
-          body="Tap any total and see the exact transactions behind it. Nothing is a black box."
+          body="Tap any total to see the exact transactions behind it."
         >
           <Receipts />
         </Cell>
         <Cell
           className="md:col-span-2"
-          title="An API first, for banks and fintech apps"
-          body="Your app keeps its own look. SpendLens returns the analysis, protections and scenarios as JSON for you to render."
+          title="Built as an API for banks and fintech apps"
+          body="SpendLens returns the analysis, protections and scenarios as JSON, and your app shows them in its own design."
         >
           <ApiSurface />
         </Cell>
         <Cell
           title="Payments through Kora"
-          body="Pro unlocks only once our server sees the order paid. A browser callback is never enough."
+          body="Pro unlocks when our server confirms the payment with Kora. A success page in the browser doesn't count on its own."
         >
           <KoraPayment />
         </Cell>

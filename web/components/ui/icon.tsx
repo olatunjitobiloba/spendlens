@@ -4,7 +4,6 @@ import { cn } from "@/utils/cn";
 
 export type { IconSvgElement };
 
-/** Decorative icon. Meaning always lives in nearby text. */
 export function Icon({
   icon,
   className,

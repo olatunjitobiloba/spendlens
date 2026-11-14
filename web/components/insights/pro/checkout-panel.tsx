@@ -131,12 +131,6 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
         priceKobo={me.pro_price_kobo}
         days={me.pro_days}
         current="free"
-        action={
-          <Button className="w-full shadow-md shadow-brand/25" onClick={() => setOpen(true)}>
-            <Icon icon={Crown02Icon} />
-            {state.phase === "idle" ? "Upgrade" : "Payment status"}
-          </Button>
-        }
       />
 
       <AlertDialog

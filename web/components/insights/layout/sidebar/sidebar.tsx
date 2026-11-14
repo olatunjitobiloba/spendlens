@@ -12,7 +12,7 @@ import { SIDEBAR_COLLAPSED_KEY } from "@/configs/insights";
 import { useLocalFlag } from "@/hooks/use-local-flag";
 import { cn } from "@/utils/cn";
 import { PlanBadge } from "../plan-badge";
-import { BankSwitcher } from "./bank-switcher";
+import { UserPersonSwitcher } from "./user-person-switcher";
 import { GetStartedCard } from "./get-started-card";
 import { SidebarNav } from "./sidebar-nav";
 
@@ -49,7 +49,7 @@ function SidebarBody({
         <SidebarNav collapsed={collapsed} onNavigate={onNavigate} />
       </div>
       {!collapsed && <GetStartedCard onNavigate={onNavigate} />}
-      <BankSwitcher collapsed={collapsed} />
+      <UserPersonSwitcher collapsed={collapsed} />
     </div>
   );
 }
@@ -61,7 +61,7 @@ export function DesktopSidebar() {
     <aside
       className={cn(
         "sticky top-0 hidden h-dvh shrink-0 border-r border-line bg-background transition-[width] duration-200 lg:block",
-        collapsed ? "w-[72px]" : "w-64",
+        collapsed ? "w-18" : "w-64",
       )}
     >
       <SidebarBody
@@ -77,7 +77,7 @@ export function DesktopSidebar() {
                 aria-expanded={!collapsed}
                 className={iconButton}
               >
-                <Icon icon={SidebarLeftIcon} className="size-[18px]" />
+                <Icon icon={SidebarLeftIcon} className="size-4.5" />
               </button>
             </Hint>
           </div>
@@ -116,7 +116,7 @@ export function MobileSidebar() {
               <div className="flex items-center justify-between gap-2">
                 <Brand collapsed={false} />
                 <Dialog.Close className={iconButton} aria-label="Close menu">
-                  <Icon icon={Cancel01Icon} className="size-[18px]" />
+                  <Icon icon={Cancel01Icon} className="size-4.5" />
                 </Dialog.Close>
               </div>
             }
