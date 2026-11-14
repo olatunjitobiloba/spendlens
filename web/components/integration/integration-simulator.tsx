@@ -3,7 +3,6 @@
 import { useDeferredValue, useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import {
-  ArrowDown01Icon,
   PauseIcon,
   PlayIcon,
   RepeatIcon,
@@ -14,6 +13,16 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { bankLogo } from "@/configs/banks";
 import {
   BANK_APPS,
@@ -23,94 +32,66 @@ import {
 } from "@/configs/bank-apps";
 import { BEATS, SIM_STEPS, firstBeatOf } from "@/configs/integration";
 import { cn } from "@/utils/cn";
+import { tabList, tabTrigger } from "../insights/shared/tab-trigger";
 import { DEVICES, type Device } from "./phone-frame";
 import { SimPhone, useInView, useReducedMotion, useSimPlayer } from "./sim-phone";
 
-function DeviceSwitch({
-  device,
-  onChange,
-}: {
-  device: Device;
-  onChange: (d: Device) => void;
-}) {
+function DeviceSwitch({ device, onChange }: { device: Device; onChange: (d: Device) => void }) {
   const labelId = useId();
   return (
     <div>
       <p id={labelId} className="text-[13px] font-medium text-t2">
         Phone
       </p>
-      <div
-        role="radiogroup"
-        aria-labelledby={labelId}
-        className="mt-2 grid grid-cols-2 gap-1 rounded-xl border border-line bg-panel p-1"
-      >
-        {DEVICES.map((d) => {
-          const active = d.id === device;
-          return (
-            <button
-              key={d.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onChange(d.id)}
-              className={cn(
-                "flex h-9 items-center justify-center gap-1.5 rounded-lg text-[13px] font-medium transition-colors duration-150",
-                active
-                  ? "bg-foreground text-background"
-                  : "text-t3 hover:text-foreground",
-              )}
-            >
-              <Icon icon={SmartPhone01Icon} className="size-4" />
+      {/* Same toggle as Transactions / Possible duplicates on the Review screen. */}
+      <Tabs value={device} onValueChange={(v) => onChange(v as Device)} className="mt-2">
+        <TabsList aria-labelledby={labelId} className={tabList}>
+          {DEVICES.map((d) => (
+            <TabsTrigger key={d.id} value={d.id} className={tabTrigger}>
+              <Icon icon={SmartPhone01Icon} />
               {d.label}
-            </button>
-          );
-        })}
-      </div>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
     </div>
   );
 }
 
-function BankSelect({
-  bank,
-  onChange,
-}: {
-  bank: BankApp;
-  onChange: (slug: string) => void;
-}) {
+function BankSelect({ bank, onChange }: { bank: BankApp; onChange: (slug: string) => void }) {
+  const labelId = useId();
   return (
     <div>
-      <label htmlFor="bank-select" className="text-[13px] font-medium text-t2">
+      <p id={labelId} className="text-[13px] font-medium text-t2">
         Bank app
-      </label>
-      <div className="relative mt-2">
-        <Image
-          src={bankLogo(bank)}
-          alt=""
-          width={22}
-          height={22}
-          className="pointer-events-none absolute top-1/2 left-3 size-[22px] -translate-y-1/2 rounded-md bg-white object-contain ring-1 ring-line"
-        />
-        <select
-          id="bank-select"
-          value={bank.slug}
-          onChange={(e) => onChange(e.target.value)}
-          className="h-11 w-full appearance-none rounded-xl border border-line-strong bg-panel pr-9 pl-11 text-[14px] text-foreground outline-none focus-visible:border-brand"
+      </p>
+      <Select value={bank.slug} onValueChange={onChange}>
+        <SelectTrigger
+          aria-labelledby={labelId}
+          className="mt-2 w-full rounded-full border-line-strong bg-panel pr-3.5 pl-2.5 text-[14px] data-[size=default]:h-[46px] text-foreground dark:bg-panel"
         >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent position="popper" className="max-h-80 rounded-xl">
           {BANK_GROUPS.map((g) => (
-            <optgroup key={g} label={g}>
+            <SelectGroup key={g}>
+              <SelectLabel>{g}</SelectLabel>
               {BANK_APPS.filter((b) => b.group === g).map((b) => (
-                <option key={b.slug} value={b.slug}>
+                <SelectItem key={b.slug} value={b.slug} className="text-[13.5px]">
+                  <Image
+                    src={bankLogo(b)}
+                    alt=""
+                    width={22}
+                    height={22}
+                    className="size-[22px] shrink-0 rounded-md bg-white object-contain ring-1 ring-line"
+                  />
                   {b.name}
-                </option>
+                </SelectItem>
               ))}
-            </optgroup>
+            </SelectGroup>
           ))}
-        </select>
-        <Icon
-          icon={ArrowDown01Icon}
-          className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-t3"
-        />
-      </div>
+        </SelectContent>
+      </Select>
     </div>
   );
 }
