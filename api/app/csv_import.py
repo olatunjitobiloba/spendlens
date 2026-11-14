@@ -6,7 +6,7 @@ import csv
 import hashlib
 import io
 from dataclasses import dataclass
-from datetime import date, time
+from datetime import date, time, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from ai.banks import normalize_bank
@@ -18,6 +18,8 @@ MAX_BYTES = 5 * 1024 * 1024
 MAX_ROWS = 5_000
 REQUIRED_HEADERS = frozenset({"date", "description", "amount", "direction", "bank"})
 OPTIONAL_HEADERS = frozenset({"account_alias", "reference", "currency", "time"})
+SAMPLE_ROWS = 6
+COVERAGE_GAP_DAYS = 7
 
 
 @dataclass(frozen=True)
@@ -35,19 +37,16 @@ class ImportPreview:
     accounts: list[str]
     errors: list[dict[str, str | int]]
     content_hash: str
+    sample_rows: list[dict[str, object]]
+    coverage_warnings: list[str]
 
 
 def parse_preview(content: bytes) -> ImportPreview:
     """Validate a canonical SpendLens CSV without persisting its contents."""
     if len(content) > MAX_BYTES:
         raise ValueError("file exceeds 5 MB limit")
-    try:
-        text = content.decode("utf-8")
-    except UnicodeDecodeError as exc:
-        raise ValueError("file must be UTF-8") from exc
-
-    reader = csv.DictReader(io.StringIO(text, newline=""))
-    headers = {header.strip() for header in reader.fieldnames or [] if header}
+    reader = _reader(content)
+    headers = {header for header in reader.fieldnames or [] if header}
     missing = REQUIRED_HEADERS - headers
     unknown = headers - REQUIRED_HEADERS - OPTIONAL_HEADERS
     if missing:
@@ -69,6 +68,8 @@ def parse_preview(content: bytes) -> ImportPreview:
 
     dates = [row.txn.date for row in valid_rows]
     accounts = sorted({row.txn.account_alias for row in valid_rows})
+    sample = [row.txn for row in valid_rows[:SAMPLE_ROWS]]
+    sample_categories = {result.txn_id: result.category for result in categorize(sample)}
     return ImportPreview(
         row_count=row_count,
         valid_count=len(valid_rows),
@@ -77,7 +78,36 @@ def parse_preview(content: bytes) -> ImportPreview:
         accounts=accounts,
         errors=errors,
         content_hash=hashlib.sha256(_normalized_csv(content)).hexdigest(),
+        sample_rows=[
+            {
+                "date": txn.date.isoformat(),
+                "description": txn.description,
+                "amount_kobo": txn.amount_kobo,
+                "direction": txn.direction,
+                "account": txn.account_alias,
+                "bank": txn.bank,
+                "category": sample_categories.get(txn.id),
+            }
+            for txn in sample
+        ],
+        coverage_warnings=coverage_warnings(dates),
     )
+
+
+def coverage_warnings(dates: list[date]) -> list[str]:
+    """Flag runs of 7+ days with no transactions inside the file's date range."""
+    if not dates:
+        return []
+    have = sorted(set(dates))
+    warnings: list[str] = []
+    for before, after in zip(have, have[1:]):
+        missing = (after - before).days - 1
+        if missing >= COVERAGE_GAP_DAYS:
+            start, end = before + timedelta(days=1), after - timedelta(days=1)
+            warnings.append(
+                f"No transactions for {missing} days in this range ({start.isoformat()} to {end.isoformat()})."
+            )
+    return warnings
 
 
 def parse_and_enrich(content: bytes) -> tuple[ImportPreview, list[dict[str, object]]]:
@@ -92,7 +122,7 @@ def prepare_commit(content: bytes) -> tuple[ImportPreview, list[dict[str, object
     if preview.errors:
         return preview, [], []
 
-    reader = csv.DictReader(io.StringIO(content.decode("utf-8"), newline=""))
+    reader = _reader(content)
     rows = [_parse_row(row, line) for line, row in enumerate(reader, start=2)]
     txns = [row.txn for row in rows]
     categories = categorize(txns)
@@ -178,4 +208,19 @@ def _parse_row(row: dict[str, str | None], line_number: int) -> ImportRow:
 
 def _normalized_csv(content: bytes) -> bytes:
     """Normalize line endings only; rows remain distinct, including duplicates."""
-    return content.decode("utf-8").replace("\r\n", "\n").strip().encode("utf-8")
+    return _decode(content).replace("\r\n", "\n").strip().encode("utf-8")
+
+
+def _decode(content: bytes) -> str:
+    # utf-8-sig drops the byte-order mark Excel writes when saving "CSV UTF-8".
+    try:
+        return content.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise ValueError("file must be UTF-8") from exc
+
+
+def _reader(content: bytes) -> csv.DictReader:
+    reader = csv.DictReader(io.StringIO(_decode(content), newline=""))
+    # Match header names case- and whitespace-insensitively, for rows too.
+    reader.fieldnames = [(name or "").strip().lower() for name in reader.fieldnames or []]
+    return reader
