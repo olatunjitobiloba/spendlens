@@ -88,7 +88,7 @@ export function GoalCard({
         {months !== null && (
           <p className="mt-6 text-[28px] leading-none font-semibold tracking-[-0.02em]">
             <span className="font-mono tabular-nums">{months}</span>{" "}
-            <span className="text-[17px] font-[500] text-t3">{months === 1 ? "month" : "months"}</span>
+            <span className="text-[17px] font-medium text-t3">{months === 1 ? "month" : "months"}</span>
           </p>
         )}
         <p className={cn("max-w-sm text-[14px] leading-relaxed text-t3", months !== null ? "mt-2" : "mt-6")}>
@@ -97,7 +97,7 @@ export function GoalCard({
       </div>
 
       <div className="flex flex-col gap-1.5 border-t border-line px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <label htmlFor={INPUT_ID} className="text-[13px] font-[500] text-t2">
+        <label htmlFor={INPUT_ID} className="text-[13px] font-medium text-t2">
           Target amount
         </label>
         <div className="sm:w-52">
@@ -143,7 +143,7 @@ function TargetRing({ share, muted }: { share: number; muted: boolean }) {
 
   return (
     <svg viewBox="0 0 132 132" aria-hidden="true" className={cn("size-32 transition-opacity", muted && "opacity-50")}>
-      <circle cx="66" cy="66" r={r} fill="none" strokeWidth="6" className="stroke-foreground/[0.06]" />
+      <circle cx="66" cy="66" r={r} fill="none" strokeWidth="6" className="stroke-foreground/6" />
       <circle
         cx="66"
         cy="66"
