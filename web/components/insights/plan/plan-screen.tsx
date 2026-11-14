@@ -166,13 +166,10 @@ export function PlanScreen() {
           </div>
         </TabsContent>
 
-      <div className="mt-5">
-        <GoalCard defaultMonthlySavingKobo={shown?.total_reduction_kobo ?? 0} />
-      </div>
-
-      <div className="mt-5">
-        <SavedScenarios version={savedVersion} />
-      </div>
+        <TabsContent value="goal">
+          <GoalCard scenario={shown} stale={stale} target={target} setTarget={setTarget} onEditCut={() => setTab(null)} />
+        </TabsContent>
+      </Tabs>
 
       <ScenarioResultDialog
         open={open}
