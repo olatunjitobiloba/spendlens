@@ -47,6 +47,7 @@ async def list_transactions(
     start: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
     end: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
     category: str | None = Query(default=None, max_length=80),
+    bank: str | None = Query(default=None, max_length=80),
     review_state: Literal["unreviewed", "reviewed"] | None = None,
     status: str | None = Query(default=None, max_length=40),
     page: int = Query(default=1, ge=1),
@@ -66,6 +67,8 @@ async def list_transactions(
         params["txn_date"] = f"lte.{end}"
     if category:
         params["category"] = f"eq.{category}"
+    if bank:
+        params["bank"] = f"eq.{bank}"
     if review_state:
         params["review_state"] = f"eq.{review_state}"
     if status:

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCheck, CheckmarkCircle02Icon, Copy01Icon,  LeftToRightListBulletIcon, FileEmpty01Icon } from "@hugeicons/core-free-icons";
@@ -47,11 +48,13 @@ export function ReviewScreen() {
   const tab: Tab = params.get("tab") === "duplicates" ? "duplicates" : "transactions";
   const filter: ReviewFilter = params.get("filter") === "needs_review" ? "needs_review" : "all";
   const category = params.get("category") ?? "";
+  const bank = params.get("bank") ?? "";
   const month = params.get("month") ?? "";
   const ids = params.get("ids") ?? "";
   const q = params.get("q") ?? "";
   const page = Math.max(1, Number(params.get("page")) || 1);
 
+  const tabsTop = useRef<HTMLDivElement>(null);
   const analysis = useResource(() => api.analysis(), "review-analysis");
   // Keyed on the list's own inputs, so switching tabs does not refetch it.
   const txns = useResource(
@@ -61,11 +64,12 @@ export function ReviewScreen() {
         page_size: PAGE_SIZE,
         review_state: filter === "needs_review" ? "needs_review" : undefined,
         category: category || undefined,
+        bank: bank || undefined,
         q: q || undefined,
         ids: ids ? ids.split(",") : undefined,
         ...monthToRange(month),
       }),
-    [filter, category, month, ids, q, page].join("|"),
+    [filter, category, bank, month, ids, q, page].join("|"),
   );
 
   function setParams(patch: Record<string, string | null>, { keepPage = false } = {}) {
@@ -105,7 +109,7 @@ export function ReviewScreen() {
   }
 
   const dupes = a.reconciliation_candidates.length;
-  const hasFilters = Boolean(category || month || ids || q || filter !== "all");
+  const hasFilters = Boolean(category || bank || month || ids || q || filter !== "all");
   const totalPages = txns.data ? Math.max(1, Math.ceil(txns.data.total / PAGE_SIZE)) : 1;
 
   return (
@@ -126,9 +130,16 @@ export function ReviewScreen() {
 
       <Tabs
         value={tab}
-        onValueChange={(v) => setParams({ tab: v === "duplicates" ? "duplicates" : null }, { keepPage: true })}
+        onValueChange={(v) => {
+          setParams({ tab: v === "duplicates" ? "duplicates" : null }, { keepPage: true });
+          // Switching from far down the page: start the new tab at its top, not mid-way.
+          if (tabsTop.current && tabsTop.current.getBoundingClientRect().top < 64) tabsTop.current.scrollIntoView();
+        }}
         className="gap-3"
       >
+        <div ref={tabsTop} aria-hidden="true" className="-mb-3 scroll-mt-14 lg:scroll-mt-0" />
+        {/* Stays under the mobile header (3.5rem) or at the top on desktop, so the tabs are always in reach. */}
+        <div className="sticky top-14 z-20 -mx-4 bg-background/85 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:top-0 lg:-mx-8 lg:px-8">
         <TabsList className={tabList}>
           <TabsTrigger value="transactions" className={tabTrigger}>
             <Icon icon={LeftToRightListBulletIcon} />
@@ -141,6 +152,7 @@ export function ReviewScreen() {
             <Count n={dupes} warn />
           </TabsTrigger>
         </TabsList>
+        </div>
 
         <TabsContent value="transactions">
           <Section title="Transactions">
@@ -148,9 +160,11 @@ export function ReviewScreen() {
               key={q}
               filter={filter}
               category={category}
+              bank={bank}
               month={month}
               q={q}
               months={a.available_months}
+              banks={a.available_banks}
               needsReviewCount={a.needs_review_count}
               onChange={setParams}
             />

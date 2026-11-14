@@ -27,6 +27,8 @@ export type TransactionQuery = {
   page?: number;
   page_size?: number;
   category?: string;
+  /** Bank slug, as in configs/banks.ts. */
+  bank?: string;
   review_state?: ReviewState;
   q?: string;
   ids?: string[];
@@ -103,6 +105,8 @@ export type Analysis = {
   range: DateRange;
   data_range: DateRange | null;
   available_months: string[]; // "2026-10"
+  /** Banks that appear in the data, as slugs or names. Optional: older APIs omit it. */
+  available_banks?: string[];
   /** Spend per month across all data, oldest first. */
   monthly_totals: MonthTotal[];
   total_spent_kobo: number;

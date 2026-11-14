@@ -57,7 +57,7 @@ export function SampleDialog({
             One row per transaction, with a header row:
           </p>
           <code className="mt-2 block overflow-x-auto rounded-xl border border-brand/15 bg-brand/[0.05] px-3 py-2.5 font-mono text-[11.5px] text-t2">
-            date,description,amount_kobo,direction,account
+            date,description,amount_kobo,direction,account,bank
           </code>
           <a
             href={SAMPLE_CSV_URL}

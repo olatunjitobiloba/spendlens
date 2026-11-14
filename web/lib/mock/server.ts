@@ -5,6 +5,7 @@
 // does arithmetic on money. UI components must never import from here
 // except through lib/api.ts.
 
+import { findBank } from "@/configs/banks";
 import { CATEGORIES, UNCATEGORISED } from "@/configs/categories";
 import type {
   Analysis,
@@ -127,6 +128,10 @@ const inRange = (t: Transaction, r: DateRange) => t.date >= r.start && t.date <=
 const SAMPLE_ACCOUNT_BANKS: Record<string, string> = {
   "Current account 4821": "guaranty-trust-bank",
   "Debit card 0937": "zenith-bank",
+  "OPay wallet 7710": "paycom",
+  "Moniepoint account 3306": "moniepoint-mfb-ng",
+  "Savings account 5194": "access-bank",
+  "Kuda account 2268": "kuda-bank",
 };
 const FALLBACK_BANKS = [
   "guaranty-trust-bank",
@@ -329,6 +334,13 @@ function defaultRange(db: Db): DateRange | null {
   return r ? monthRange(monthOf(r.end)) : null;
 }
 
+/** A transaction's bank as a slug when known, so filters match any spelling. */
+const bankKey = (t: Transaction) => (t.bank ? (findBank(t.bank)?.slug ?? t.bank) : "");
+
+function availableBanks(db: Db): string[] {
+  return [...new Set(db.txns.map(bankKey).filter(Boolean))].sort();
+}
+
 function availableMonths(db: Db): string[] {
   return [...new Set(db.txns.map((t) => monthOf(t.date)))].sort().reverse();
 }
@@ -377,6 +389,7 @@ function analysis(db: Db, q: Record<string, unknown>): Analysis {
   const base = {
     data_range: dr,
     available_months: availableMonths(db),
+    available_banks: availableBanks(db),
     monthly_totals: monthlyTotals(db),
     needs_review_count: active(db).filter((t) => t.review_state === "needs_review").length,
     reconciliation_candidates: candidates(db),
@@ -597,6 +610,7 @@ function listTransactions(db: Db, q: Record<string, unknown>): Page<Transaction>
       if (cat !== q.category) return false;
     }
     if (q.review_state && t.review_state !== q.review_state) return false;
+    if (typeof q.bank === "string" && q.bank && bankKey(t) !== (findBank(q.bank)?.slug ?? q.bank)) return false;
     if (typeof q.start === "string" && t.date < q.start) return false;
     if (typeof q.end === "string" && t.date > q.end) return false;
     if (text && !t.description.toLowerCase().includes(text)) return false;

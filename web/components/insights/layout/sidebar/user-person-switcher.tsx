@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
   ArrowLeft01Icon,
   Database01Icon,
-  Delete02Icon,
   Logout01Icon,
   Moon02Icon,
   Sun03Icon,
@@ -17,8 +15,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
@@ -26,7 +22,6 @@ import { useFixtureMode } from "@/hooks/use-fixture-mode";
 import { liveApiConfigured } from "@/lib/api";
 import { signOutAndClear, switchMode } from "@/lib/session";
 import { cn } from "@/utils/cn";
-import { DeleteDataDialog } from "../../shared/delete-data-dialog";
 
 /** Neutral fictional host app. Not modelled on any real bank (PRD §2). */
 function PersonAvatar() {
@@ -43,13 +38,11 @@ function PersonAvatar() {
 }
 
 const item = "h-9 gap-2.5 rounded-lg px-2.5 text-[13px]";
-const label = "px-2.5 pt-2 pb-1 text-[11px] font-medium tracking-wide text-t4 uppercase";
 
 /** Data mode, theme and account actions, folded into one menu. */
 export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
   const fixtures = useFixtureMode();
   const { resolvedTheme, setTheme } = useTheme();
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const status = fixtures === null ? "" : fixtures ? "Sample mode" : "Live API";
 
   return (
@@ -80,7 +73,6 @@ export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
           sideOffset={8}
           className="w-64 rounded-xl border border-line-strong p-1 shadow-2xl ring-0"
         >
-          <DropdownMenuLabel className={label}>Data</DropdownMenuLabel>
           {fixtures ? (
             liveApiConfigured && (
               <DropdownMenuItem className={item} onSelect={() => switchMode(false)}>
@@ -94,12 +86,6 @@ export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
               Use sample mode
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem variant="destructive" className={item} onSelect={() => setConfirmDelete(true)}>
-            <Icon icon={Delete02Icon} />
-            Delete my data
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator className="bg-line" />
           <DropdownMenuItem
             className={item}
             onSelect={(e) => {
@@ -126,7 +112,6 @@ export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      <DeleteDataDialog open={confirmDelete} onOpenChange={setConfirmDelete} />
     </>
   );
 }
