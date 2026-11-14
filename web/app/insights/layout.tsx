@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { InsightsShell } from "@/components/insights/layout/insights-shell";
 
 export const metadata: Metadata = {
-  title: { default: "Money Insights", template: "%s · Money Insights" },
+  title: { default: "SpendLens", template: "%s · SpendLens" },
   robots: { index: false, follow: false },
 };
 

@@ -18,7 +18,6 @@ import { Money } from "@/components/ui/money";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import { Status } from "@/components/ui/status";
 import type { ApiError } from "@/lib/api";
 import type { Scenario } from "@/types/api";
 import { formatDate, formatMonth, formatRange } from "@/utils/format";

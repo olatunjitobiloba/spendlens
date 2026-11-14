@@ -774,6 +774,40 @@ export async function handle(method: string, path: string, req: Req): Promise<un
   if (route === "GET /v1/forecast") return forecast(db);
   if (route === "GET /v1/recurring") return recurring(db);
 
+  if (route === "POST /v1/goals/project") {
+    const p = (body ?? {}) as Record<string, unknown>;
+    const goalName = typeof p.goal_name === "string" ? p.goal_name.trim() : "";
+    const target = Number(p.target_kobo) || 0;
+    const saved = Number(p.saved_kobo) || 0;
+    const monthlySaving = Number(p.monthly_saving_kobo) || 0;
+    const rate = typeof p.annual_rate_pct === "number" ? Math.max(0, Math.min(100, p.annual_rate_pct)) : 0;
+
+    if (!goalName || goalName.length > 60) fail(422, "Goal name must be between 1 and 60 characters.");
+    if (target <= 0) fail(422, "Target amount must be greater than zero.");
+    if (saved < 0 || monthlySaving < 0) fail(422, "Amounts cannot be negative.");
+
+    const monthlyRate = rate / 100 / 12;
+    let balance = saved;
+    let months: number | null = balance >= target ? 0 : null;
+    if (months === null) {
+      for (let m = 1; m <= 600; m++) {
+        balance = Math.round(balance * (1 + monthlyRate)) + monthlySaving;
+        if (balance >= target) {
+          months = m;
+          break;
+        }
+      }
+    }
+
+    return {
+      goal_name: goalName,
+      months_to_goal: months,
+      final_balance_kobo: balance,
+      annual_rate_pct: rate,
+      note: "Projection uses the rate you entered. It is an assumption, not a forecast or advice.",
+    };
+  }
+
   if (route === "DELETE /v1/me/data") {
     const keep = { plan: db.plan, orders: db.orders };
     save({ ...emptyDb(), ...keep });

@@ -26,18 +26,20 @@ export function Notice({
   title,
   children,
   action,
+  role,
   className,
 }: {
   tone?: NoticeTone;
   title?: React.ReactNode;
   children?: React.ReactNode;
   action?: React.ReactNode;
+  role?: React.AriaRole;
   className?: string;
 }) {
   return (
     <div
-      role={tone === "danger" ? "alert" : undefined}
-      className={cn("grid items-start text-[13.5px] gap-x-3 gap-y-2 rounded-2xl border px-4 py-3", tones[tone], className)}
+      role={role ?? (tone === "danger" ? "alert" : undefined)}
+      className={cn("flex flex-wrap items-start gap-x-3 gap-y-2 rounded-2xl border px-4 py-3", tones[tone], className)}
     >
       <div className="flex items-center gap-x-1">
         <Icon

@@ -52,3 +52,34 @@ The report rates are calculated per evaluation case:
 - **Check-fail rate:** cases with a model response that fails a known-answer check.
 - **Error rate:** cases that could not produce a usable explanation.
 - **Retry rate:** cases that required one or more additional model calls.
+
+## ML V1 evaluation
+
+Install the pure Python package and its test dependency from the repository root:
+
+```text
+python -m pip install ".[test]"
+python -m ml.eval.run --out reports/eval_v1.md
+```
+
+The fixed offline command scores seeded synthetic development data, fixed
+development examples and a frozen independent challenge set separately. The
+report includes a development-majority baseline, category and candidate-pair
+metrics, exact counts, seed, persona spans, versions and Git worktree provenance.
+Synthetic accuracy does not establish real-world accuracy. No numerical
+regression threshold is frozen in V1.
+
+The evaluator uses repository assets under `tests/ml/fixtures`; it is developer
+and CI tooling, not a production transaction-import endpoint. From another
+working directory, supply `--fixtures /path/to/spendlens/tests/ml/fixtures` and
+an output path. Git provenance describes the working directory at invocation;
+run from the checkout to obtain its commit and dirty state.
+
+See [ML integration guide](docs/ml_v1_handoff.md) and the generated
+[V1 synthetic report](reports/eval_v1.md). The ML V1 workflow installs the package,
+runs offline repository tests and the same evaluation command, then retains the
+report as an artifact. A workflow file does not prove a hosted run succeeded.
+
+Bank names and aliases come from [`ai/banks.py`](ai/banks.py). ML derives
+its accepted institution values from this shared registry plus `other`; the
+installed ML distribution includes the registry without the AI service modules.
