@@ -111,10 +111,6 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "cv11";
   }
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
-  }
   ::selection {
     background: var(--brand);
     color: #fff;
@@ -123,6 +119,58 @@
     outline: 2px solid var(--brand);
     outline-offset: 2px;
   }
+}
+
+/*
+ * Custom cursors: a small arrow and a small pointing hand. Black with a white
+ * edge in light mode, white with a black edge in dark mode, so both stay visible.
+ */
+:root {
+  --cursor-default: url("/cursors/arrow-light.svg") 2 2, auto;
+  --cursor-pointer: url("/cursors/pointer-light.svg") 8 1, pointer;
+}
+.dark {
+  --cursor-default: url("/cursors/arrow-dark.svg") 2 2, auto;
+  --cursor-pointer: url("/cursors/pointer-dark.svg") 8 1, pointer;
+}
+
+/*
+ * Unlayered on purpose: these beat Tailwind's cursor-* utilities (shadcn menu
+ * and select items use cursor-default) without editing each component.
+ */
+html {
+  cursor: var(--cursor-default);
+}
+:where(
+    a[href],
+    button,
+    summary,
+    select,
+    label[for],
+    [role="button"],
+    [role="tab"],
+    [role="option"],
+    [role="menuitem"],
+    [role="menuitemcheckbox"],
+    [role="menuitemradio"],
+    [role="checkbox"],
+    [role="radio"],
+    [role="switch"],
+    [role="combobox"],
+    input:is([type="checkbox"], [type="radio"], [type="range"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="color"]),
+    .cursor-pointer
+  ) {
+  cursor: var(--cursor-pointer);
+}
+:where(
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="color"]),
+    textarea,
+    [contenteditable="true"]
+  ) {
+  cursor: text;
+}
+:where(:disabled, [aria-disabled="true"], [data-disabled]) {
+  cursor: not-allowed;
 }
 
 /* Scrollbar: thin rounded-full thumb on a clear track, tinted per theme. */
@@ -216,15 +264,31 @@
   }
 }
 
-/* Stacked step cards: earlier cards shrink a touch as later ones cover them. */
+/*
+ * Stacked step cards: earlier cards shrink a touch as later ones cover them,
+ * and their contents fade out so only a clean edge of each card peeks above
+ * the next one (no half-cut numbers or mockups showing through).
+ */
 .step-card {
   transform-origin: 50% 0;
-  transform: scale(calc(1 - var(--depth, 0) * 0.04));
+  transform: scale(calc(1 - var(--depth, 0) * 0.05));
   transition: transform 80ms linear;
   will-change: transform;
+}
+.step-card > * {
+  opacity: clamp(0, calc(1 - var(--depth, 0) * 1.6), 1);
+  transition: opacity 80ms linear;
+}
+@media (min-width: 768px) {
+  .step-card {
+    box-shadow: 0 -10px 30px -22px rgb(0 0 0 / 0.22);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .step-card {
     transform: none;
+  }
+  .step-card > * {
+    opacity: 1;
   }
 }

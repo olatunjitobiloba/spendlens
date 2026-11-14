@@ -1,6 +1,7 @@
 import {
   AiChat02Icon,
   Analytics01Icon,
+  BankIcon,
   ChartLineData01Icon,
   Crown02Icon,
   FileImportIcon,
@@ -30,6 +31,10 @@ export const insightsNav: NavGroup[] = [
       { href: "/insights/forecast", label: "Forecast", icon: ChartLineData01Icon, pro: true },
       { href: "/insights/pro", label: "Plans and billing", icon: Crown02Icon },
     ],
+  },
+  {
+    label: "For banks",
+    items: [{ href: "/insights/banks", label: "Bank integration", icon: BankIcon }],
   },
 ];
 

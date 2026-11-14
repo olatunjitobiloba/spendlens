@@ -39,3 +39,14 @@ export const sampleProfiles = {
   customer: { name: "Tolu Adebayo", seed: "tolu-sample", detail: "Partner Bank customer · sample" },
   analyst: { name: "Kemi Okafor", seed: "kemi-sample", detail: "Product lead, Partner Bank · sample" },
 } as const;
+
+// Single-cut example for the bank integration simulator (/banks):
+// Eating out (5_620_000) cut by 20%. Worked out by hand, like the figures above.
+export const sampleEatingOutCut = {
+  category: "Eating out",
+  current: 5_620_000,
+  percent: 20,
+  monthly: 1_124_000,
+  yearly: 13_488_000,
+  result: 40_106_000,
+} as const;
