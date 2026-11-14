@@ -1,3 +1,4 @@
+import { BankPreview } from "@/components/marketing/bank-preview";
 import { ClosingCta } from "@/components/marketing/closing-cta";
 import { Faq } from "@/components/marketing/faq";
 import { Hero } from "@/components/marketing/hero";
@@ -15,6 +16,7 @@ export default function HomePage() {
       <Hero />
       <WhySpendLens />
       <Steps />
+      <BankPreview />
       <Faq />
       <ClosingCta />
     </>

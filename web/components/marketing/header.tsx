@@ -10,13 +10,13 @@ function NavLinks() {
   return (
     <nav
       aria-label="Main"
-      className="inline-flex max-w-full items-center overflow-x-auto sm:gap-0.5 rounded-full border border-line bg-panel p-1 [scrollbar-width:none]"
+      className="inline-flex items-center gap-0.5 rounded-full border border-line bg-panel p-1"
     >
       {mainNav.map((item) => (
         <Link
           key={item.href}
           href={item.href}
-          className="group inline-flex h-8 shrink-0 items-center rounded-full px-2 text-[12px] font-medium whitespace-nowrap sm:px-3.5 sm:text-[13px] text-t3 transition-colors duration-150 hover:text-foreground"
+          className="group inline-flex h-8 items-center rounded-full px-3.5 text-[13px] font-medium text-t3 transition-colors duration-150 hover:text-foreground"
         >
           <span className="relative block h-[1.25em] overflow-hidden leading-[1.25em]">
             <span className="block transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-full">
