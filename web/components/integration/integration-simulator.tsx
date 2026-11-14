@@ -276,7 +276,8 @@ export function IntegrationSimulator() {
           <BankList bank={bank} onChange={selectBank} />
         </aside>
 
-        <div className="grid gap-4 @lg:grid-cols-2 @3xl:col-span-2 @5xl:hidden">
+        {/* Subgrid at @3xl so the bank select lines up with the step list column below it. */}
+        <div className="grid gap-4 @lg:grid-cols-2 @3xl:col-span-2 @3xl:grid-cols-subgrid @3xl:gap-x-10 @5xl:hidden">
           <DeviceSwitch device={device} onChange={setDevice} />
           <BankSelect bank={bank} onChange={selectBank} />
         </div>
