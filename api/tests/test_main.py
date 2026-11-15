@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from api.app.main import app
@@ -24,3 +25,16 @@ def test_goal_projection_is_non_advisory():
     assert response.status_code == 200
     assert response.json()["months_to_goal"] == 2
     assert "not a forecast or advice" in response.json()["note"]
+
+
+@pytest.mark.xfail(reason="Awaiting backend route mounting: GET /v1/analysis in FastAPI", strict=False)
+def test_analysis_route_exists():
+    response = client.get("/v1/analysis")
+    assert response.status_code != 404
+
+
+@pytest.mark.xfail(reason="Awaiting backend route mounting: POST /v1/chat in FastAPI", strict=False)
+def test_chat_route_exists():
+    response = client.post("/v1/chat", json={})
+    assert response.status_code != 404
+
