@@ -21,7 +21,7 @@ export function ScenarioPreview() {
         scenario.
       </figcaption>
 
-      <WindowBar title="Partner Bank · Money Insights" />
+      <WindowBar title="Partner Bank · SpendLens" />
 
       <div className="p-2 sm:p-3">
       <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-3 sm:px-3">

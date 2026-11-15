@@ -31,7 +31,7 @@ export function LoginForm() {
       <Link href="/" aria-label="SpendLens home" className="inline-block rounded-full">
         <Logo />
       </Link>
-      <h1 className="mt-6 text-[20px] font-[650] tracking-[-0.02em]">Sign in to Money Insights</h1>
+      <h1 className="mt-6 text-[20px] font-[650] tracking-[-0.02em]">Sign in to SpendLens</h1>
       <p className="mt-1 text-[13.5px] text-t3">We email you a one-time link. No password, and never your bank login.</p>
 
       {state.status === "sent" ? (
