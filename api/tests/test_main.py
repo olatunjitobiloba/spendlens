@@ -36,3 +36,16 @@ def test_chat_route_exists():
     response = client.post("/v1/chat", json={})
     assert response.status_code != 404
 
+
+def test_settings_allowed_origins_splits_comma_separated():
+    from api.app.config import Settings
+
+    s1 = Settings(None, None, "https://spendlensng.vercel.app, https://spendlens-preview.vercel.app")
+    assert s1.allowed_origins == [
+        "https://spendlensng.vercel.app",
+        "https://spendlens-preview.vercel.app",
+    ]
+
+    s2 = Settings(None, None, None)
+    assert s2.allowed_origins == []
+
