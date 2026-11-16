@@ -15,6 +15,12 @@ class Settings:
     def supabase_ready(self) -> bool:
         return bool(self.supabase_url and self.supabase_anon_key)
 
+    @property
+    def allowed_origins(self) -> list[str]:
+        if not self.allowed_origin:
+            return []
+        return [o.strip() for o in self.allowed_origin.split(",") if o.strip()]
+
 
 @lru_cache
 def get_settings() -> Settings:
