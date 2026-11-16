@@ -236,9 +236,11 @@ function StepList({
                 <span className="mt-1 block text-[13.5px] leading-relaxed text-t3">
                   {s.description}
                 </span>
-                <code className="mt-2 block font-mono text-[12px] text-t4">
-                  {s.endpoint}
-                </code>
+                {"endpoint" in s && s.endpoint ? (
+                  <code className="mt-2 block font-mono text-[12px] text-t4">
+                    {s.endpoint}
+                  </code>
+                ) : null}
               </span>
             </button>
           </li>

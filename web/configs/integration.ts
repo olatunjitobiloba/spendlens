@@ -57,7 +57,6 @@ export const SIM_STEPS = [
   {
     title: "Add an entry point",
     description: "A tile on the home screen opens Spending insights. It sits next to Transfer and Bills, so customers find it without leaving your app.",
-    endpoint: "POST /v1/imports",
   },
   {
     title: "Show where the money went",
