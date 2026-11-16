@@ -51,9 +51,19 @@ def test_settings_allowed_origins_splits_comma_separated():
 
 
 def test_settings_allowed_origin_regex():
+    import re
     from api.app.config import Settings
 
-    regex = r"^https://spendlens-.*-oluwatobilobas-projects-65dcaf29\.vercel\.app$"
+    regex = r"^https://spendlens-[a-z0-9-]+-oluwatobilobas-projects-65dcaf29\.vercel\.app$"
     s = Settings(None, None, None, regex)
     assert s.allowed_origin_regex == regex
+
+    # Test real Vercel preview URL format
+    real_preview = "https://spendlens-git-feat-cors-regex-preview-oluwatobilobas-projects-65dcaf29.vercel.app"
+    assert re.match(regex, real_preview) is not None
+
+    # Test that dot-crossing or hostile domains fail
+    assert re.match(regex, "https://spendlens-x.evil.example") is None
+    assert re.match(regex, "https://spendlens-evil.com-oluwatobilobas-projects-65dcaf29.vercel.app") is None
+    assert re.match(regex, "https://evil.example") is None
 
