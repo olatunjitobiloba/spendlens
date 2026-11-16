@@ -3,8 +3,8 @@ import { cn } from "@/utils/cn";
 export type Device = "samsung" | "iphone";
 
 export const DEVICES: { id: Device; label: string }[] = [
-  { id: "samsung", label: "Samsung S26" },
-  { id: "iphone", label: "iPhone 18" },
+  { id: "samsung", label: "Android" },
+  { id: "iphone", label: "iPhone" },
 ];
 
 function StatusIcons({ color }: { color: string }) {
