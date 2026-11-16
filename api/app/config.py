@@ -10,6 +10,7 @@ class Settings:
     supabase_url: str | None
     supabase_anon_key: str | None
     allowed_origin: str | None
+    allowed_origin_regex: str | None = None
 
     @property
     def supabase_ready(self) -> bool:
@@ -28,4 +29,5 @@ def get_settings() -> Settings:
         supabase_url=getenv("SUPABASE_URL"),
         supabase_anon_key=getenv("SUPABASE_ANON_KEY"),
         allowed_origin=getenv("ALLOWED_ORIGIN"),
+        allowed_origin_regex=getenv("ALLOWED_ORIGIN_REGEX"),
     )

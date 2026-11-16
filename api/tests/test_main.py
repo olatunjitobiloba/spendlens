@@ -49,3 +49,11 @@ def test_settings_allowed_origins_splits_comma_separated():
     s2 = Settings(None, None, None)
     assert s2.allowed_origins == []
 
+
+def test_settings_allowed_origin_regex():
+    from api.app.config import Settings
+
+    regex = r"^https://spendlens-.*-oluwatobilobas-projects-65dcaf29\.vercel\.app$"
+    s = Settings(None, None, None, regex)
+    assert s.allowed_origin_regex == regex
+

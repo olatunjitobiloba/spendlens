@@ -13,14 +13,18 @@ from .transactions import router as transactions_router
 
 app = FastAPI(title="SpendLens API", version="0.1.0")
 settings = get_settings()
+cors_kwargs: dict = {
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
 if settings.allowed_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.allowed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    cors_kwargs["allow_origins"] = settings.allowed_origins
+if settings.allowed_origin_regex:
+    cors_kwargs["allow_origin_regex"] = settings.allowed_origin_regex
+
+if settings.allowed_origins or settings.allowed_origin_regex:
+    app.add_middleware(CORSMiddleware, **cors_kwargs)
 app.include_router(imports_router)
 app.include_router(transactions_router)
 app.include_router(analysis_router)
