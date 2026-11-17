@@ -1,29 +1,26 @@
 """Unit tests for pure speech-to-text transcription engine (ai.transcription)."""
 
-import pytest
+import asyncio
 
 from ai.transcription import MockSpeechTranscriber, get_default_transcriber
 
 
-@pytest.mark.asyncio
-async def test_mock_transcriber_empty_bytes():
+def test_mock_transcriber_empty_bytes():
     transcriber = MockSpeechTranscriber()
-    res = await transcriber.transcribe(b"", "note.webm", "audio/webm")
+    res = asyncio.run(transcriber.transcribe(b"", "note.webm", "audio/webm"))
     assert res == ""
 
 
-@pytest.mark.asyncio
-async def test_mock_transcriber_custom_text():
+def test_mock_transcriber_custom_text():
     transcriber = MockSpeechTranscriber(default_text="Custom query?")
-    res = await transcriber.transcribe(b"some-audio", "note.webm", "audio/webm")
+    res = asyncio.run(transcriber.transcribe(b"some-audio", "note.webm", "audio/webm"))
     assert res == "Custom query?"
 
 
-@pytest.mark.asyncio
-async def test_mock_transcriber_deterministic_sample():
+def test_mock_transcriber_deterministic_sample():
     transcriber = MockSpeechTranscriber()
     # Length % 4 will select one of SAMPLE_TRANSCRIPTS
-    res1 = await transcriber.transcribe(b"1234", "note.webm", "audio/webm")
+    res1 = asyncio.run(transcriber.transcribe(b"1234", "note.webm", "audio/webm"))
     assert isinstance(res1, str)
     assert len(res1) > 0
 
