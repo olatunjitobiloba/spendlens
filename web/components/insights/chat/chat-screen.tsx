@@ -54,7 +54,7 @@ export function ChatScreen() {
     setPending({ kind: "thinking" });
     setPendingFor(convoId);
     try {
-      const reply = await api.chat({ message, history }, ctrl.signal);
+      const reply = await api.chat.send({ message, history }, ctrl.signal);
       if (ctrl.signal.aborted) return; // fixture mode ignores the signal
       chatStore.append(convoId, {
         id: newId(),
@@ -102,7 +102,7 @@ export function ChatScreen() {
     setPending({ kind: "transcribing", seconds: note.seconds });
     setPendingFor(activeId);
     try {
-      const { text } = await api.transcribe(note.blob, ctrl.signal);
+      const { text } = await api.chat.transcribe(note.blob, ctrl.signal);
       if (ctrl.signal.aborted) return;
       controller.current = null;
       const clean = text.trim().slice(0, 500);

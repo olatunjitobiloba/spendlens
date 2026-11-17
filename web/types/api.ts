@@ -30,6 +30,8 @@ export type TransactionQuery = {
   /** Bank slug, as in configs/banks.ts. */
   bank?: string;
   review_state?: ReviewState;
+  /** Transaction status filter from the API (max 40 chars). */
+  status?: string;
   q?: string;
   ids?: string[];
   start?: string;
@@ -58,6 +60,8 @@ export type ImportRecord = {
   date_range: DateRange | null;
   created_at: string;
   coverage_warnings: string[];
+  /** True when the same file was imported before and the earlier import was reused. */
+  reused?: boolean;
 };
 
 // Analysis
@@ -121,18 +125,7 @@ export type Analysis = {
   comparison: Comparison | null;
 };
 
-// Plan
-
-export type Protections = { categories: string[] };
-
-export type ScenarioCut = { category: string; percent: number };
-
-export type ScenarioRequest = {
-  range: DateRange;
-  cuts: ScenarioCut[];
-  save?: boolean;
-  name?: string;
-};
+// Plan (worked out in the browser, lib/plan.ts)
 
 /** Mirrors ai/schemas.py ScenarioResult, plus id and saved metadata. */
 export type Scenario = {
@@ -151,57 +144,7 @@ export type Scenario = {
   created_at: string;
 };
 
-export type Explanation = {
-  text: string;
-  numbers_used: number[];
-  source: "model" | "template";
-};
-
-// Account and billing
-
-export type Me = {
-  plan: "free" | "pro";
-  pro_expires_at: string | null;
-  pro_price_kobo: number;
-  pro_days: number;
-};
-
-export type OrderStatus =
-  | "pending"
-  | "paid"
-  | "underpaid"
-  | "overpaid"
-  | "failed"
-  | "cancelled"
-  | "expired";
-
-export type Order = {
-  id: string;
-  reference: string;
-  /** As the backend hands it to Kora. The backend owns the unit. */
-  amount: number;
-  /** Always kobo, for display. */
-  amount_kobo: number;
-  amount_paid_kobo: number | null;
-  currency: "NGN";
-  notification_url: string;
-  status: OrderStatus;
-};
-
-// Forecast and recurring (v2)
-
-export type ForecastRow = {
-  category: string;
-  point_kobo: number | null;
-  low_kobo: number | null;
-  high_kobo: number | null;
-  method: string;
-  months_of_data: number;
-  abstained: boolean;
-  reason: string | null;
-};
-
-export type Forecast = { month: string; categories: ForecastRow[] };
+// Recurring payments (used by the fixture mock)
 
 export type RecurringCandidate = {
   merchant_key: string;
@@ -239,7 +182,7 @@ export type ChatRole = "user" | "assistant";
 /** One prior turn sent back for context. The API keeps the last six. */
 export type ChatTurn = { role: ChatRole; text: string };
 
-export type ChatRequest = { message: string; history: ChatTurn[] };
+export type ChatRequest = { message: string; history: ChatTurn[]; ctx?: Record<string, unknown> | null };
 
 export type ChatReply = {
   answer: string;
@@ -250,7 +193,8 @@ export type ChatReply = {
 
 export type Transcription = { text: string };
 
-// Habits & Emotional Spend
+// Habits, subscriptions and investments
+
 export type HabitAudit = {
   total_analyzed_txns: number;
   late_night_kobo: number;
@@ -264,7 +208,6 @@ export type HabitAudit = {
   actionable_cuts: string[];
 };
 
-// Subscriptions & Cancellation
 export type SubscriptionItem = {
   merchant: string;
   monthly_kobo: number;
@@ -274,12 +217,11 @@ export type SubscriptionItem = {
   cancellation_email_template: string;
 };
 
-// Investment Opportunities
 export type InvestmentOption = {
   title: string;
   asset_class: string;
   benchmark_annual_rate_pct: number;
-  risk_level: "Very Low" | "Low" | "Moderate" | "High";
+  risk_level: string;
   minimum_monthly_kobo: number;
   horizon_label: string;
   projected_growth_kobo: number;
@@ -289,6 +231,8 @@ export type InvestmentOption = {
   regulatory_body: string;
 };
 
+export type ProjectionInput = { monthly_kobo: number; months?: number; annual_rate_pct?: number };
+
 export type InvestmentProjection = {
   total_principal_kobo: number;
   total_future_value_kobo: number;
@@ -296,4 +240,3 @@ export type InvestmentProjection = {
   annual_rate_pct: number;
   months: number;
 };
-

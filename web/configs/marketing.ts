@@ -83,5 +83,6 @@ export const bankPreview = {
   description:
     "SpendLens sits next to Transfer and Bills as one more tile, in the bank's own colours. Customers check their spending, protect their bills and save a plan without leaving the app.",
   /** Banks the home-page preview rotates through, one per loop. */
-  banks: ["guaranty-trust-bank", "kuda-bank", "zenith-bank", "moniepoint-mfb-ng", "access-bank", "providus-bank"],
+  // The first entry is the bank the home page preview opens on.
+  banks: ["wema-bank", "guaranty-trust-bank", "kuda-bank", "zenith-bank", "moniepoint-mfb-ng", "providus-bank"],
 };

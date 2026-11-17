@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
+import { Toaster } from "@/components/ui/toast";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { aspekta, geistMono } from "@/configs/fonts";
 import { siteConfig } from "@/configs/site";
@@ -55,7 +56,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${aspekta.variable} ${geistMono.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

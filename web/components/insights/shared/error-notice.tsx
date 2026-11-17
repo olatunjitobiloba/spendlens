@@ -9,6 +9,8 @@ import { Notice } from "@/components/ui/notice";
 import { ApiError, isFixtureMode, setFixtureOverride } from "@/lib/api";
 
 const titles: Record<string, string> = {
+  unauthorized: "The live API needs a signed-in user for this",
+  unsupported_file: "That file type isn't supported",
   validation: "That was not accepted",
   not_found: "Not found",
   conflict: "That changed in the meantime",

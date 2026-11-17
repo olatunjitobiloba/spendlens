@@ -5,7 +5,6 @@ import { useTheme } from "next-themes";
 import {
   ArrowLeft01Icon,
   Database01Icon,
-  Logout01Icon,
   Moon02Icon,
   Sun03Icon,
   UnfoldMoreIcon,
@@ -20,7 +19,7 @@ import {
 import { Icon } from "@/components/ui/icon";
 import { useFixtureMode } from "@/hooks/use-fixture-mode";
 import { liveApiConfigured } from "@/lib/api";
-import { signOutAndClear, switchMode } from "@/lib/session";
+import { switchMode } from "@/lib/session";
 import { cn } from "@/utils/cn";
 
 /** Neutral fictional host app. Not modelled on any real bank (PRD §2). */
@@ -104,12 +103,6 @@ export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
               About SpendLens
             </Link>
           </DropdownMenuItem>
-          {fixtures === false && (
-            <DropdownMenuItem className={item} onSelect={() => void signOutAndClear()}>
-              <Icon icon={Logout01Icon} />
-              Sign out
-            </DropdownMenuItem>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </>

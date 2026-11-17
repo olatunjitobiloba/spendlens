@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { ApiError } from "@/lib/api";
+import { asApiError, type ApiError } from "@/lib/api";
+
+export { asApiError };
 
 export type Resource<T> = {
   data: T | undefined;
@@ -13,10 +15,6 @@ export type Resource<T> = {
   reload: () => Promise<void>;
   setData: (data: T) => void;
 };
-
-export function asApiError(e: unknown): ApiError {
-  return e instanceof ApiError ? e : new ApiError("server", "Something went wrong on our side.");
-}
 
 type Settled<T> = { token: string; data?: T; error: ApiError | null };
 

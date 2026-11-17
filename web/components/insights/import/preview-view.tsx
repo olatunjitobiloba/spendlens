@@ -4,10 +4,8 @@ import { Money } from "@/components/ui/money";
 import { Notice } from "@/components/ui/notice";
 import { Section } from "@/components/ui/section";
 import { Status } from "@/components/ui/status";
-import type { ApiError } from "@/lib/api";
 import type { ImportPreview } from "@/types/api";
 import { formatDate, formatRange } from "@/utils/format";
-import { ErrorNotice } from "../shared/error-notice";
 
 function Stats({ preview }: { preview: ImportPreview }) {
   return (
@@ -108,13 +106,11 @@ export function PreviewView({
   onConfirm,
   onBack,
   busy,
-  error,
 }: {
   preview: ImportPreview;
   onConfirm: () => void;
   onBack: () => void;
   busy: boolean;
-  error: ApiError | null;
 }) {
   const n = preview.valid_count;
   return (
@@ -127,7 +123,6 @@ export function PreviewView({
         </Notice>
       ))}
       <FirstRows preview={preview} />
-      {error && <ErrorNotice error={error} onRetry={onConfirm} />}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           Choose a different file

@@ -1,42 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { Crown02Icon, Exchange01Icon } from "@hugeicons/core-free-icons";
+import { Exchange01Icon } from "@hugeicons/core-free-icons";
 
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
 import { Status } from "@/components/ui/status";
-import { useIsPro } from "@/providers/me-provider";
 import type { Comparison } from "@/types/api";
 import { formatRange } from "@/utils/format";
 
 const word = (n: number) => (n > 0 ? "Up" : n < 0 ? "Down" : "Same");
 
-/** Month-over-month comparison (Pro). Every delta comes from the API. */
+/** Month-over-month comparison. Every delta comes from the API. */
 export function ComparisonCard({ comparison }: { comparison: Comparison | null }) {
-  const isPro = useIsPro();
-
-  if (!isPro) {
-    return (
-      <Section title="Compared with last month"  className="flex flex-col">
-        <EmptyState
-          icon={Crown02Icon}
-          title="Part of Pro"
-          className="flex-1 py-8"
-          action={
-            <Button asChild variant="outline" size="sm">
-              <Link href="/insights/pro">Unlock with Pro</Link>
-            </Button>
-          }
-        >
-          Effectively analyze categories.
-        </EmptyState>
-      </Section>
-    );
-  }
-
   if (!comparison) {
     return (
       <Section title="Compared with last month" className="flex flex-col">

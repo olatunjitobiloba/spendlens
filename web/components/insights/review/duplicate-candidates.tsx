@@ -8,11 +8,10 @@ import { Money } from "@/components/ui/money";
 import { Section } from "@/components/ui/section";
 import { Spinner } from "@/components/ui/spinner";
 import { Status } from "@/components/ui/status";
-import { asApiError } from "@/hooks/use-resource";
-import { api, type ApiError } from "@/lib/api";
+import { api, type ReconciliationChoice } from "@/lib/api";
 import type { ReconciliationCandidate, Transaction } from "@/types/api";
 import { formatDate } from "@/utils/format";
-import { ErrorNotice } from "../shared/error-notice";
+import { toastApiError } from "../shared/error-toast";
 
 function TxnSide({ t, label }: { t: Transaction; label: string }) {
   return (
@@ -39,17 +38,15 @@ function TxnSide({ t, label }: { t: Transaction; label: string }) {
 
 /** Side-by-side reconciliation (technical doc §7). */
 export function DuplicateCandidates({ items, onDone }: { items: ReconciliationCandidate[]; onDone: () => void }) {
-  const [busy, setBusy] = useState<{ id: string; decision: "same" | "different" } | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
+  const [busy, setBusy] = useState<{ id: string; decision: ReconciliationChoice } | null>(null);
 
-  async function decide(id: string, decision: "same" | "different") {
+  async function decide(id: string, decision: ReconciliationChoice) {
     setBusy({ id, decision });
-    setError(null);
     try {
-      await api.confirmReconciliation(id, decision);
+      await api.transactions.confirmReconciliation(id, decision);
       onDone();
     } catch (e) {
-      setError(asApiError(e));
+      toastApiError(e, { title: "Your answer wasn't saved", onRetry: () => void decide(id, decision) });
     } finally {
       setBusy(null);
     }
@@ -62,7 +59,6 @@ export function DuplicateCandidates({ items, onDone }: { items: ReconciliationCa
       description="The same payment can show up on two accounts. Tell us which ones match so they are counted once."
       aside={<Status tone="warn">{items.length} to check</Status>}
     >
-      {error && <ErrorNotice error={error} className="mb-3" />}
       {/*
         From sm up each card is sticky, a little lower than the one before, so
         scrolling slides the next pair over the last and they pile into a

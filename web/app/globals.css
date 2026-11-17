@@ -292,3 +292,29 @@ html {
     opacity: 1;
   }
 }
+
+/* Toast time-left hairline (components/ui/toast.tsx). */
+@keyframes toast-drain {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* A short shake on a rejected password (pdf-password-dialog.tsx). */
+@keyframes field-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}

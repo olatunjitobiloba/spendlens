@@ -1,78 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { FloppyDiskIcon, Tick02Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
-import { Notice } from "@/components/ui/notice";
-import { Spinner } from "@/components/ui/spinner";
-import { Status } from "@/components/ui/status";
-import { asApiError } from "@/hooks/use-resource";
-import { api, type ApiError } from "@/lib/api";
-import { useIsPro } from "@/providers/me-provider";
+import { Icon } from "@/components/ui/icon";
+import { showToast } from "@/components/ui/toast";
+import { saveScenario } from "@/lib/plan";
 import type { Scenario } from "@/types/api";
+import { cn } from "@/utils/cn";
 import { formatMonth } from "@/utils/format";
-import { ErrorNotice } from "../shared/error-notice";
 
-/** Saving is Pro. Free sees the scenario but cannot keep it. */
-export function SaveScenario({ scenario, onSaved }: { scenario: Scenario; onSaved: () => void }) {
-  const isPro = useIsPro();
+/**
+ * Saves the scenario in this browser (the API has no scenario routes).
+ * A compact name field plus button, sized for the result dialog's footer.
+ * Confirmation is a toast; the button turns into a quiet "Saved" state.
+ */
+export function SaveScenario({ scenario }: { scenario: Scenario }) {
   const [name, setName] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
   const [saved, setSaved] = useState(false);
+  const fallbackName = `Plan for ${formatMonth(scenario.range.start.slice(0, 7))}`;
 
-  if (!isPro) {
-    return (
-      <p className="flex flex-wrap items-center gap-2 text-[13px] text-t3">
-        <Link href="/insights/pro" className="font-medium text-primary underline-offset-4 hover:underline">
-          Unlock Pro
-        </Link>
-      </p>
-    );
-  }
-  if (saved) return <Notice tone="positive" title="Scenario saved" />;
-
-  async function save(e: React.FormEvent) {
+  function save(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await api.createScenario({
-        range: scenario.range,
-        cuts: scenario.categories.filter((c) => c.percent > 0).map((c) => ({ category: c.category, percent: c.percent })),
-        save: true,
-        name,
-      });
-      setSaved(true);
-      onSaved();
-    } catch (err) {
-      setError(asApiError(err));
-    } finally {
-      setBusy(false);
-    }
+    const clean = name.trim() || fallbackName;
+    saveScenario(scenario, clean);
+    setSaved(true);
+    showToast({ tone: "positive", title: "Scenario saved", description: `“${clean}” is in Saved scenarios on the Plan page.` });
   }
 
   return (
-    <form className="flex flex-wrap items-end gap-2" onSubmit={save}>
-      <div className="min-w-[12rem] flex-1">
-        <label htmlFor="scenario-name" className="text-[12.5px] text-t3">
-          Name this scenario
-        </label>
-        <input
-          id="scenario-name"
-          value={name}
-          maxLength={60}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={`Plan for ${formatMonth(scenario.range.start.slice(0, 7))}`}
-          className="mt-1 h-9 w-full rounded-xl border border-line-strong bg-panel px-3 text-[13px]"
-        />
-      </div>
-      <Button type="submit" variant="outline" disabled={busy}>
-        {busy && <Spinner />}
-        {busy ? "Saving…" : "Save scenario"}
+    <form className="flex min-w-0 flex-1 items-center gap-2" onSubmit={save}>
+      <label htmlFor="scenario-name" className="sr-only">
+        Name this scenario
+      </label>
+      <input
+        id="scenario-name"
+        value={name}
+        maxLength={60}
+        disabled={saved}
+        onChange={(e) => setName(e.target.value)}
+        placeholder={fallbackName}
+        className="h-9 min-w-0 flex-1 rounded-full border border-line-strong bg-panel px-3.5 text-[13px] placeholder:text-t4 focus-visible:border-brand focus-visible:outline-none disabled:opacity-60 sm:max-w-56"
+      />
+      <Button type="submit" variant="outline" disabled={saved} className={cn(saved && "text-brand disabled:opacity-100")}>
+        <Icon icon={saved ? Tick02Icon : FloppyDiskIcon} />
+        {saved ? "Saved" : "Save"}
       </Button>
-      {error && <ErrorNotice error={error} className="w-full" />}
     </form>
   );
 }

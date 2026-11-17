@@ -6,11 +6,10 @@ import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { useResource } from "@/hooks/use-resource";
 import { api } from "@/lib/api";
-import { useIsPro } from "@/providers/me-provider";
+import { useProtections, withProtections } from "@/lib/plan";
 import { monthToRange } from "@/utils/dates";
 import { formatMonth, formatRange } from "@/utils/format";
 import { ErrorNotice } from "../shared/error-notice";
@@ -25,18 +24,18 @@ import { StatTiles } from "./stat-tiles";
 
 export function OverviewScreen() {
   const params = useSearchParams();
-  const isPro = useIsPro();
   const month = params.get("month");
+  const protections = useProtections();
   const range = monthToRange(month);
   const analysis = useResource(
-    () => api.analysis({ ...range, compare: isPro && range ? "previous" : undefined }),
-    `${month}|${isPro}`,
+    () => api.analysis.get({ ...range, compare: range ? "previous" : undefined }),
+    `${month}`,
   );
   // Without a month in the URL the API picks the latest; ask again for the comparison.
   const latest = analysis.data?.range.start.slice(0, 7) ?? "";
-  const needsCompare = isPro && !range && Boolean(latest);
+  const needsCompare = !range && Boolean(latest);
   const compared = useResource(
-    () => api.analysis({ ...monthToRange(latest), compare: "previous" }),
+    () => api.analysis.get({ ...monthToRange(latest), compare: "previous" }),
     `cmp|${latest}|${needsCompare}`,
     needsCompare,
   );
@@ -46,16 +45,11 @@ export function OverviewScreen() {
 
   const raw = analysis.data;
   // No imports yet: the same dashboard, every card in its empty state.
-  const a = raw.imports.length === 0 && raw.txn_count === 0 ? null : raw;
+  const a = raw.imports.length === 0 && raw.txn_count === 0 ? null : withProtections(raw, protections);
   const current = month ?? latest;
 
   return (
     <>
-      {!a && params.get("deleted") === "1" && (
-        <Notice tone="positive" className="mb-4" title="Your data was deleted">
-          Every import and everything worked out from it has been removed.
-        </Notice>
-      )}
       <PageHeader
         title="Overview"
         description={

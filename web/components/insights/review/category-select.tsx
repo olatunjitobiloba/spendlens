@@ -5,8 +5,8 @@ import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { CATEGORIES, UNCATEGORISED } from "@/configs/categories";
-import { asApiError } from "@/hooks/use-resource";
-import { api } from "@/lib/api";
+import { FieldError } from "@/components/ui/field-error";
+import { api, asApiError } from "@/lib/api";
 import type { Transaction } from "@/types/api";
 import { cn } from "@/utils/cn";
 
@@ -21,9 +21,10 @@ export function CategorySelect({ t, onSaved }: { t: Transaction; onSaved: (t: Tr
     setSaving(true);
     setError(null);
     try {
-      onSaved(await api.updateTransaction(t.id, { category }));
+      onSaved(await api.transactions.update(t.id, { category }));
     } catch (err) {
-      setError(asApiError(err).message);
+      const e = asApiError(err);
+      setError(e.field("category") ?? e.message);
     } finally {
       setSaving(false);
     }
@@ -35,6 +36,7 @@ export function CategorySelect({ t, onSaved }: { t: Transaction; onSaved: (t: Tr
         <SelectTrigger
           aria-label={`Category for ${t.description}`}
           aria-invalid={Boolean(error)}
+          aria-describedby={error ? `cat-err-${t.id}` : undefined}
           className={cn(
             "h-8 w-full max-w-[11rem] rounded-full bg-panel px-3 text-[13px] dark:bg-panel",
             t.category ? "border-line-strong" : "border-warn/60",
@@ -51,11 +53,9 @@ export function CategorySelect({ t, onSaved }: { t: Transaction; onSaved: (t: Tr
           ))}
         </SelectContent>
       </Select>
-      {error && (
-        <p role="alert" className="mt-1 text-[12px] text-destructive">
-          Not saved: {error}
-        </p>
-      )}
+      <FieldError id={`cat-err-${t.id}`} className="text-[12px]">
+        {error && `Not saved: ${error}`}
+      </FieldError>
     </div>
   );
 }

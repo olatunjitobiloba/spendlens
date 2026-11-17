@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 import { Icon } from "@/components/ui/icon";
@@ -7,10 +8,46 @@ import { Money } from "@/components/ui/money";
 import type { Scenario } from "@/types/api";
 import { cn } from "@/utils/cn";
 import { fmtWhole } from "@/utils/format";
-import { MAX_TARGET_KOBO, monthsToGoal, parseNairaToKobo } from "@/utils/goal";
+import { api, asApiError } from "@/lib/api";
+import { MAX_TARGET_KOBO, parseNairaToKobo } from "@/utils/goal";
 
 const INPUT_ID = "goal-target";
 const TITLE_ID = "goal-title";
+const DEBOUNCE_MS = 350;
+
+type Projection = { key: string; months: number | null; error: string | null };
+
+/**
+ * Months to the target from POST /v1/goals/project, asked once typing pauses.
+ * Returns undefined while the answer for the current inputs is on its way.
+ */
+function useGoalProjection(targetKobo: number | null, monthlyKobo: number, enabled: boolean) {
+  const key = `${targetKobo}|${monthlyKobo}`;
+  const [result, setResult] = useState<Projection | null>(null);
+
+  useEffect(() => {
+    if (!enabled || targetKobo === null) return;
+    let live = true;
+    const timer = window.setTimeout(() => {
+      api.goals
+        .project({ goal_name: "Goal", target_kobo: targetKobo, saved_kobo: 0, monthly_saving_kobo: monthlyKobo })
+        .then((p) => live && setResult({ key, months: p.months_to_goal, error: null }))
+        .catch((e) => {
+          if (!live) return;
+          const err = asApiError(e);
+          setResult({ key, months: null, error: err.field("target_kobo") ?? err.message });
+        });
+    }, DEBOUNCE_MS);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [key, enabled, targetKobo, monthlyKobo]);
+
+  if (!enabled || targetKobo === null) return { months: null, error: null, pending: false };
+  if (result?.key !== key) return { months: null, error: null, pending: true };
+  return { months: result.months, error: result.error, pending: false };
+}
 
 /**
  * Turns the calculated cut into a goal timeline: the scenario's monthly saving
@@ -35,7 +72,8 @@ export function GoalCard({
   const bad = target.trim() !== "" && targetKobo === null;
   const monthly = scenario?.total_reduction_kobo ?? 0;
   const ready = !!scenario && !stale && monthly > 0;
-  const months = ready && targetKobo !== null ? monthsToGoal(targetKobo, monthly) : null;
+  const projection = useGoalProjection(targetKobo, monthly, ready);
+  const months = projection.months;
   // The ring shows how much of the target one month of the cut covers.
   const share = months ? 1 / months : 0;
 
@@ -45,7 +83,11 @@ export function GoalCard({
       ? "Your cuts changed. Recalculate to update the goal."
       : monthly <= 0
         ? "This scenario saves nothing yet. Add a cut to start moving."
-        : months === null
+        : projection.pending
+          ? "Working out your timeline…"
+          : projection.error
+            ? `Couldn't project this goal: ${projection.error}`
+            : months === null
           ? "Enter a target below to see when your cut gets you there."
           : months === 1
             ? "One month of this cut covers it. Nice."
