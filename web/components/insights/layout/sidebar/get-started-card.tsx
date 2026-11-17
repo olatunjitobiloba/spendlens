@@ -42,7 +42,7 @@ export function GetStartedCard({ onNavigate }: { onNavigate?: () => void }) {
     <section aria-labelledby="get-started-title" className="rounded-2xl border border-line bg-panel p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 id="get-started-title" className="text-[14px] font-[600]">
+          <h2 id="get-started-title" className="text-[14px] font-semibold">
             {next ? "Get started" : "You're all set"}
           </h2>
           <p className="mt-0.5 text-[12.5px] text-t3">
@@ -54,7 +54,7 @@ export function GetStartedCard({ onNavigate }: { onNavigate?: () => void }) {
             type="button"
             onClick={() => setDismissed(true)}
             aria-label="Hide the get started checklist"
-            className="-mt-1 -mr-1 inline-flex size-7 items-center justify-center rounded-lg text-t3 hover:bg-foreground/[0.06] hover:text-foreground"
+            className="-mt-1 -mr-1 inline-flex size-7 items-center justify-center rounded-lg text-t3 hover:bg-foreground/6 hover:text-foreground"
           >
             <Icon icon={Cancel01Icon} className="size-3.5" />
           </button>
@@ -67,10 +67,10 @@ export function GetStartedCard({ onNavigate }: { onNavigate?: () => void }) {
         aria-valuemin={0}
         aria-valuemax={getStartedSteps.length}
         aria-valuenow={count}
-        className="mt-3 h-1.5 overflow-hidden rounded-full bg-foreground/[0.08]"
+        className="mt-3 h-1.5 overflow-hidden rounded-full bg-foreground/8"
       >
         <div
-          className="h-full rounded-full bg-positive transition-[width] duration-300"
+          className="h-full rounded-full bg-brand transition-[width] duration-300"
           style={{ width: `${(count / getStartedSteps.length) * 100}%` }}
         />
       </div>

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
-import { SAMPLE_CSV_URL } from "@/lib/sample";
+import { SAMPLE_CSV_HEADER, downloadSampleCsv } from "@/lib/sample";
 
 /** "No file handy?" as a popup: run the sample statement, or see the file format. */
 export function SampleDialog({
@@ -36,7 +36,7 @@ export function SampleDialog({
           <DialogHeader className="mt-4 gap-1.5">
             <DialogTitle className="text-[19px] font-[650] tracking-[-0.02em]">No file handy?</DialogTitle>
             <DialogDescription className="text-[13.5px] leading-relaxed text-t3">
-              Use three months of synthetic transactions. It goes through the same checks as a real file.
+              Use three months of synthetic transactions from Nigerian banks. It goes through the same checks as a real file.
             </DialogDescription>
           </DialogHeader>
           <Button size="lg" className="mt-5 w-full shadow-md shadow-brand/25" onClick={onUseSample} disabled={busy}>
@@ -57,16 +57,16 @@ export function SampleDialog({
             One row per transaction, with a header row:
           </p>
           <code className="mt-2 block overflow-x-auto rounded-xl border border-brand/15 bg-brand/[0.05] px-3 py-2.5 font-mono text-[11.5px] text-t2">
-            date,description,amount_kobo,direction,account,bank
+            {SAMPLE_CSV_HEADER}
           </code>
-          <a
-            href={SAMPLE_CSV_URL}
-            download
+          <button
+            type="button"
+            onClick={downloadSampleCsv}
             className="mt-4 inline-flex items-center gap-1.5 rounded-full text-[13px] font-medium text-brand underline-offset-4 hover:underline"
           >
             <Icon icon={Download04Icon} />
             Download the sample CSV
-          </a>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
