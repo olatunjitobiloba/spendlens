@@ -249,3 +249,51 @@ export type ChatReply = {
 };
 
 export type Transcription = { text: string };
+
+// Habits & Emotional Spend
+export type HabitAudit = {
+  total_analyzed_txns: number;
+  late_night_kobo: number;
+  late_night_count: number;
+  weekend_kobo: number;
+  weekend_count: number;
+  weekend_surge_percentage: number;
+  micro_drain_count: number;
+  micro_drain_kobo: number;
+  warnings: string[];
+  actionable_cuts: string[];
+};
+
+// Subscriptions & Cancellation
+export type SubscriptionItem = {
+  merchant: string;
+  monthly_kobo: number;
+  annual_kobo: number;
+  frequency_days: number;
+  cancellation_url: string | null;
+  cancellation_email_template: string;
+};
+
+// Investment Opportunities
+export type InvestmentOption = {
+  title: string;
+  asset_class: string;
+  benchmark_annual_rate_pct: number;
+  risk_level: "Very Low" | "Low" | "Moderate" | "High";
+  minimum_monthly_kobo: number;
+  horizon_label: string;
+  projected_growth_kobo: number;
+  total_invested_kobo: number;
+  net_gain_kobo: number;
+  description: string;
+  regulatory_body: string;
+};
+
+export type InvestmentProjection = {
+  total_principal_kobo: number;
+  total_future_value_kobo: number;
+  gain_kobo: number;
+  annual_rate_pct: number;
+  months: number;
+};
+
