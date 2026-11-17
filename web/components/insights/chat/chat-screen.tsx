@@ -7,6 +7,7 @@ import { Cancel01Icon, PencilEdit02Icon, SidebarLeftIcon } from "@hugeicons/core
 import { Hint } from "@/components/ui/hint";
 import { Icon } from "@/components/ui/icon";
 import { chatStore, newId, useChats, type ChatMessage, type Conversation } from "@/hooks/use-chats";
+import { useSpeechPlayer } from "@/hooks/use-speech-player";
 import type { VoiceNote } from "@/hooks/use-voice-recorder";
 import { ApiError, api } from "@/lib/api";
 import type { ChatTurn } from "@/types/api";
@@ -38,13 +39,15 @@ export function ChatScreen() {
   const [pendingFor, setPendingFor] = useState<string | null>(null);
   const [error, setError] = useState<(ThreadError & { convoId: string | null }) | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [spokenText, setSpokenText] = useState<string | null>(null);
   const controller = useRef<AbortController | null>(null);
   const retry = useRef<(() => void) | null>(null);
+  const speech = useSpeechPlayer();
 
   const active: Conversation | null = conversations.find((c) => c.id === activeId) ?? null;
   const busy = pending !== null;
 
-  async function ask(convoId: string, message: string, history: ChatTurn[]) {
+  async function ask(convoId: string, message: string, history: ChatTurn[], autoSpeak = false) {
     const ctrl = new AbortController();
     controller.current = ctrl;
     setError(null);
@@ -60,9 +63,13 @@ export function ChatScreen() {
         refusal: reply.source === "refusal",
         createdAt: Date.now(),
       });
+      if (autoSpeak && speech.supported) {
+        setSpokenText(reply.answer);
+        speech.speak(reply.answer);
+      }
     } catch (e) {
       if (ctrl.signal.aborted) return;
-      retry.current = () => void ask(convoId, message, history);
+      retry.current = () => void ask(convoId, message, history, autoSpeak);
       setError({ convoId, message: errorText(e), canRetry: true });
     } finally {
       if (controller.current === ctrl) {
@@ -85,7 +92,7 @@ export function ChatScreen() {
       convoId = chatStore.create(message).id;
       setActiveId(convoId);
     }
-    void ask(convoId, text, history);
+    void ask(convoId, text, history, voiceSeconds != null);
   }
 
   async function sendVoice(note: VoiceNote) {
@@ -206,6 +213,16 @@ export function ChatScreen() {
               pending={showPending}
               error={showError}
               onRetry={() => retry.current?.()}
+              onSpeak={(text) => {
+                if (speech.speaking && spokenText === text) {
+                  speech.stop();
+                  setSpokenText(null);
+                } else {
+                  setSpokenText(text);
+                  speech.speak(text);
+                }
+              }}
+              speakingText={speech.speaking ? spokenText : null}
             />
           )}
         </div>

@@ -8,7 +8,10 @@ from ai.goals import GoalInput, GoalProjection, project_goal
 from .analysis import router as analysis_router
 from .chat import router as chat_router
 from .config import get_settings
+from .habits import router as habits_router
 from .imports import router as imports_router
+from .investments import router as investments_router
+from .subscriptions import router as subscriptions_router
 from .transactions import router as transactions_router
 from .transcriptions import router as transcriptions_router
 
@@ -31,6 +34,9 @@ app.include_router(transactions_router)
 app.include_router(analysis_router)
 app.include_router(chat_router)
 app.include_router(transcriptions_router)
+app.include_router(habits_router)
+app.include_router(subscriptions_router)
+app.include_router(investments_router)
 
 
 @app.get("/health")
