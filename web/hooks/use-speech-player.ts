@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 function cleanSpeechText(raw: string): string {
   return raw
@@ -12,14 +12,17 @@ function cleanSpeechText(raw: string): string {
     .trim();
 }
 
+const emptySubscribe = () => () => {};
+const checkSupported = () => typeof window !== "undefined" && "speechSynthesis" in window;
+const serverSupported = () => false;
+
 export function useSpeechPlayer() {
   const [speaking, setSpeaking] = useState(false);
-  const [supported, setSupported] = useState(false);
+  const supported = useSyncExternalStore(emptySubscribe, checkSupported, serverSupported);
   const synthRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      setSupported(true);
       synthRef.current = window.speechSynthesis;
     }
   }, []);
