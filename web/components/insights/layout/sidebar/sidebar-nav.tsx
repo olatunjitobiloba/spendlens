@@ -16,6 +16,7 @@ function NavLink({ item, active, collapsed, onNavigate }: { item: NavItem; activ
     <Link
       href={item.href}
       onClick={onNavigate}
+      data-tour={`page:${item.href}`}
       aria-current={active ? "page" : undefined}
       className={cn(
         "flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[13.5px] font-medium transition-colors",

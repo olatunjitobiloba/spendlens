@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, HelpCircleIcon } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/hint";
 import { Icon } from "@/components/ui/icon";
 import { PageHeader } from "@/components/ui/page-header";
 import { useResource } from "@/hooks/use-resource";
@@ -19,6 +20,7 @@ import { Attention } from "./attention";
 import { CategoryBreakdown } from "./category-breakdown";
 import { ComparisonCard } from "./comparison-card";
 import { CutCandidates } from "./cut-candidates";
+import { DashboardTour, startTour } from "./dashboard-tour";
 import { MonthlyTrend } from "./monthly-trend";
 import { StatTiles } from "./stat-tiles";
 
@@ -58,33 +60,51 @@ export function OverviewScreen() {
             : "Import a statement to see where your money goes. Nothing is saved until you confirm."
         }
         aside={
-          a ? (
-            <MonthSelect months={a.available_months} month={current} />
-          ) : (
-            <Button asChild>
-              <Link href="/insights/import?sample=1">
-                Try with sample data
-                <Icon icon={ArrowRight01Icon} />
-              </Link>
-            </Button>
-          )
+          <div data-tour="header" className="flex flex-wrap items-center gap-2">
+            <Hint label="Take a tour">
+              <Button variant="outline" size="icon" onClick={startTour} aria-label="Take a tour of the dashboard">
+                <Icon icon={HelpCircleIcon} />
+              </Button>
+            </Hint>
+            {a ? (
+              <MonthSelect months={a.available_months} month={current} />
+            ) : (
+              <Button asChild>
+                <Link href="/insights/import?sample=1">
+                  Try with sample data
+                  <Icon icon={ArrowRight01Icon} />
+                </Link>
+              </Button>
+            )}
+          </div>
         }
       />
 
       <div className="space-y-3">
-        <StatTiles analysis={a} />
+        <div data-tour="stats">
+          <StatTiles analysis={a} />
+        </div>
         <div className="grid gap-3 lg:grid-cols-[1.65fr_1fr]">
-          <MonthlyTrend analysis={a} month={current} />
-          <CutCandidates analysis={a} month={current} />
+          {/* Single-child grids so each card still fills its row. */}
+          <div data-tour="trend" className="grid">
+            <MonthlyTrend analysis={a} month={current} />
+          </div>
+          <div data-tour="cuts" className="grid">
+            <CutCandidates analysis={a} month={current} />
+          </div>
         </div>
         <div className="grid items-start gap-3 lg:grid-cols-[1.65fr_1fr]">
-          <CategoryBreakdown analysis={a} month={current} />
+          <div data-tour="categories">
+            <CategoryBreakdown analysis={a} month={current} />
+          </div>
           <div className="grid gap-3">
             <Attention analysis={a} month={current} />
             <ComparisonCard comparison={a ? (a.comparison ?? compared.data?.comparison ?? null) : null} />
           </div>
         </div>
       </div>
+
+      <DashboardTour />
     </>
   );
 }

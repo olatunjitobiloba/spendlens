@@ -52,4 +52,5 @@ export const SIDEBAR_COLLAPSED_KEY = `${STORAGE_PREFIX}sidebar-collapsed`;
 export const GET_STARTED_DISMISSED_KEY = `${STORAGE_PREFIX}get-started-dismissed`;
 export const TESTED_CUT_KEY = `${STORAGE_PREFIX}tested-cut`;
 export const SET_PROTECTIONS_KEY = `${STORAGE_PREFIX}set-protections`;
+export const TOUR_DONE_KEY = `${STORAGE_PREFIX}tour-done`;
 export const CHATS_KEY = `${STORAGE_PREFIX}chats:v1`;

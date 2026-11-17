@@ -44,16 +44,12 @@ export function BankPreview() {
     <section aria-labelledby="banks-title" id="banks" className="page py-20 sm:py-28">
       <div
         ref={rootRef}
-        className="grid overflow-hidden rounded-[var(--radius-card)] border border-line-strong bg-panel md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]"
+        className="grid overflow-hidden rounded-card border border-line-strong bg-panel md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]"
       >
         <div className="flex flex-col p-7 sm:p-10">
           <SectionHeading id="banks-title" title={bankPreview.title} description={bankPreview.description} />
 
           <div className="mt-8">
-            <p className="text-[13px] text-t3">
-              Showing <span className="font-medium text-foreground">{bank.name}</span> on{" "}
-              {device === "iphone" ? "iPhone 18" : "Samsung S26"}
-            </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {banks.map((b, i) => {
                 const active = b.slug === bank.slug;
@@ -107,7 +103,7 @@ export function BankPreview() {
             An animated phone showing SpendLens inside the {bank.name} app. Current step: {SIM_STEPS[step].title}.
           </figcaption>
           {/* Scaled to 82%; the outer box reserves the scaled size so the card keeps its height. */}
-          <div aria-hidden="true" className="flex h-[556px] w-[277px] justify-center">
+          <div aria-hidden="true" className="flex h-139 w-69.5 justify-center">
             <div className="origin-top scale-[0.82]">
               <SimPhone device={device} bank={bank} beat={beat} />
             </div>
