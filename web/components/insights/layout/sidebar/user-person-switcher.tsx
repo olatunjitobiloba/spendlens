@@ -42,7 +42,7 @@ const item = "h-9 gap-2.5 rounded-lg px-2.5 text-[13px]";
 export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
   const fixtures = useFixtureMode();
   const { resolvedTheme, setTheme } = useTheme();
-  const status = fixtures === null ? "" : fixtures ? "Sample mode" : "Live API";
+  const status = fixtures === null ? "" : fixtures ? "Sample mode" : "Live";
 
   return (
     <>
@@ -76,7 +76,7 @@ export function UserPersonSwitcher({ collapsed }: { collapsed: boolean }) {
             liveApiConfigured && (
               <DropdownMenuItem className={item} onSelect={() => switchMode(false)}>
                 <Icon icon={Database01Icon} />
-                Use live API
+                Use live
               </DropdownMenuItem>
             )
           ) : (

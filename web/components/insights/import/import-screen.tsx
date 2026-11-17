@@ -184,7 +184,12 @@ export function ImportScreen() {
 
       {step === "choose" && (
         <div className="space-y-3">
-          <FilePicker onFile={check} onTrySample={() => setSampleOpen(true)} busy={busy && !locked} />
+          <FilePicker
+            onFile={check}
+            onTrySample={() => setSampleOpen(true)}
+            onUseSample={() => void checkSample()}
+            busy={busy && !locked}
+          />
           <SampleDialog open={sampleOpen} onOpenChange={setSampleOpen} onUseSample={checkSample} busy={busy} />
         </div>
       )}
