@@ -77,28 +77,49 @@ class APIWhisperTranscriber:
             return str(result.get("text", "")).strip()
 
 
+class FallbackTranscriber:
+    """Wraps a primary transcriber with an offline fallback for resilience."""
+
+    def __init__(self, primary: SpeechTranscriber, fallback: SpeechTranscriber) -> None:
+        self.primary = primary
+        self.fallback = fallback
+
+    async def transcribe(self, audio_bytes: bytes, filename: str, content_type: str) -> str:
+        try:
+            text = await self.primary.transcribe(audio_bytes, filename, content_type)
+            if text and text.strip():
+                return text.strip()
+        except Exception:
+            pass
+        return await self.fallback.transcribe(audio_bytes, filename, content_type)
+
+
 def get_default_transcriber() -> SpeechTranscriber:
     """Factory selecting the best available transcriber from environment variables.
 
-    1. Groq Whisper (ultra-fast, free tier available).
-    2. OpenAI Whisper.
+    1. Groq Whisper (ultra-fast, free tier available) with fallback.
+    2. OpenAI Whisper with fallback.
     3. MockSpeechTranscriber fallback if no API keys are configured.
     """
+    mock = MockSpeechTranscriber()
+
     groq_key = os.getenv("GROQ_API_KEY")
     if groq_key:
-        return APIWhisperTranscriber(
+        primary = APIWhisperTranscriber(
             base_url="https://api.groq.com/openai/v1",
             api_key=groq_key,
             model="whisper-large-v3",
         )
+        return FallbackTranscriber(primary=primary, fallback=mock)
 
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
-        return APIWhisperTranscriber(
+        primary = APIWhisperTranscriber(
             base_url="https://api.openai.com/v1",
             api_key=openai_key,
             model="whisper-1",
         )
+        return FallbackTranscriber(primary=primary, fallback=mock)
 
     # Deterministic fallback for local development, CI, and test environments
-    return MockSpeechTranscriber()
+    return mock

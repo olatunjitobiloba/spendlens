@@ -2,7 +2,7 @@
 
 import asyncio
 
-from ai.transcription import MockSpeechTranscriber, get_default_transcriber
+from ai.transcription import FallbackTranscriber, MockSpeechTranscriber, get_default_transcriber
 
 
 def test_mock_transcriber_empty_bytes():
@@ -31,3 +31,15 @@ def test_get_default_transcriber_fallback(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     transcriber = get_default_transcriber()
     assert isinstance(transcriber, MockSpeechTranscriber)
+
+
+def test_fallback_transcriber_recovers_from_error():
+    class BrokenTranscriber:
+        async def transcribe(self, audio_bytes: bytes, filename: str, content_type: str) -> str:
+            raise RuntimeError("API failure")
+
+    mock = MockSpeechTranscriber(default_text="Fallback text")
+    resilient = FallbackTranscriber(primary=BrokenTranscriber(), fallback=mock)
+    res = asyncio.run(resilient.transcribe(b"audio", "note.webm", "audio/webm"))
+    assert res == "Fallback text"
+
