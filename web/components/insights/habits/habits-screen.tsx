@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Alert02Icon,
   ArrowRight01Icon,
+  Calendar03Icon,
+  ChartIncreaseIcon,
   Coins01Icon,
   Copy01Icon,
   InformationCircleIcon,
   LinkSquare02Icon,
   Moon02Icon,
+  RepeatIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 
@@ -22,6 +26,7 @@ import { Money } from "@/components/ui/money";
 import { PageHeader } from "@/components/ui/page-header";
 import { Section } from "@/components/ui/section";
 import { Status } from "@/components/ui/status";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { showToast } from "@/components/ui/toast";
 import { useResource } from "@/hooks/use-resource";
 import { api } from "@/lib/api";
@@ -31,6 +36,7 @@ import { cn } from "@/utils/cn";
 import { fmtWhole } from "@/utils/format";
 import { MAX_TARGET_KOBO, parseNairaToKobo } from "@/utils/goal";
 import { ErrorNotice } from "../shared/error-notice";
+import { tabList, tabTrigger } from "../shared/tab-trigger";
 import { RowsSkeleton, SectionSkeleton } from "../skeletons";
 
 const plural = (n: number, word: string) => `${n.toLocaleString("en-NG")} ${word}${n === 1 ? "" : "s"}`;
@@ -651,18 +657,55 @@ function Investments() {
   );
 }
 
+const TABS = ["habits", "subscriptions", "grow"] as const;
+type Tab = (typeof TABS)[number];
+
 export function HabitsScreen() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const raw = params.get("tab");
+  const tab: Tab = TABS.includes(raw as Tab) ? (raw as Tab) : "habits";
+
+  // The tab lives in the URL so it survives a reload and can be linked to.
+  function setTab(value: string) {
+    const next = new URLSearchParams(params.toString());
+    if (value === "habits") next.delete("tab");
+    else next.set("tab", value);
+    const q = next.toString();
+    router.replace(q ? `?${q}` : "?", { scroll: false });
+  }
+
   return (
     <>
       <PageHeader
         title="Habits and subscriptions"
         description="When you spend, what keeps charging you, and where the money you save could go."
       />
-      <div className="space-y-3">
-        <Habits />
-        <Subscriptions />
-        <Investments />
-      </div>
+      <Tabs value={tab} onValueChange={setTab} className="gap-3">
+        <TabsList className={tabList}>
+          <TabsTrigger value="habits" className={tabTrigger}>
+            <Icon icon={Calendar03Icon} />
+            Habits
+          </TabsTrigger>
+          <TabsTrigger value="subscriptions" className={tabTrigger}>
+            <Icon icon={RepeatIcon} />
+            Subscriptions
+          </TabsTrigger>
+          <TabsTrigger value="grow" className={tabTrigger}>
+            <Icon icon={ChartIncreaseIcon} />
+            Grow savings
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="habits">
+          <Habits />
+        </TabsContent>
+        <TabsContent value="subscriptions">
+          <Subscriptions />
+        </TabsContent>
+        <TabsContent value="grow">
+          <Investments />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
