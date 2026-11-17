@@ -24,7 +24,7 @@ export function GetStartedCard({ onNavigate }: { onNavigate?: () => void }) {
   const [protectedSet] = useLocalFlag(SET_PROTECTIONS_KEY);
   const [testedCut] = useLocalFlag(TESTED_CUT_KEY);
   // Refetch on each navigation so the checklist follows what the user just did.
-  const analysis = useResource(() => api.analysis(), `get-started|${pathname}`, !dismissed);
+  const analysis = useResource(() => api.analysis.get(), `get-started|${pathname}`, !dismissed);
 
   if (dismissed || !analysis.data) return null;
   const a = analysis.data;

@@ -20,7 +20,7 @@ export function ExplanationPanel({ scenarioId }: { scenarioId: string }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    api
+    api.plan
       .explainScenario(scenarioId, controller.signal)
       .then((data) => setState({ status: "done", data }))
       .catch(() => {

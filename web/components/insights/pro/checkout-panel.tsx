@@ -60,7 +60,7 @@ export function CheckoutPanel({ me, onPaid }: { me: Me; onPaid: () => void }) {
     setError(null);
     setClosedByUser(false);
     try {
-      const created = await api.createOrder(keyRef.current);
+      const created = await api.account.createOrder(keyRef.current);
       setOrder(created);
       if (fixtures) {
         setShowSimulator(true);

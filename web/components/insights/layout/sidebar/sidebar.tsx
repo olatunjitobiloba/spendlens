@@ -14,6 +14,7 @@ import { cn } from "@/utils/cn";
 import { PlanBadge } from "../plan-badge";
 import { UserPersonSwitcher } from "./user-person-switcher";
 import { GetStartedCard } from "./get-started-card";
+import { ModeSwitch } from "./mode-switch";
 import { SidebarNav } from "./sidebar-nav";
 
 const iconButton =
@@ -49,6 +50,7 @@ function SidebarBody({
         <SidebarNav collapsed={collapsed} onNavigate={onNavigate} />
       </div>
       {!collapsed && <GetStartedCard onNavigate={onNavigate} />}
+      <ModeSwitch collapsed={collapsed} />
       <UserPersonSwitcher collapsed={collapsed} />
     </div>
   );

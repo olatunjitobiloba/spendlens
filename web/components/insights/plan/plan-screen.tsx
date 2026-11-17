@@ -38,7 +38,7 @@ export function PlanScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const month = params.get("month");
-  const analysis = useResource(() => api.analysis({ ...monthToRange(month) }), `plan|${month}`);
+  const analysis = useResource(() => api.analysis.get({ ...monthToRange(month) }), `plan|${month}`);
   const [cuts, setCuts] = useState<Record<string, string>>({});
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [lastCuts, setLastCuts] = useState("");
@@ -75,7 +75,7 @@ export function PlanScreen() {
       .filter((c) => c.percent > 0);
     try {
       const [result] = await Promise.all([
-        api.createScenario({ range: a.range, cuts: list }),
+        api.plan.createScenario({ range: a.range, cuts: list }),
         isFixtureMode() ? wait(SAMPLE_MIN_WAIT_MS) : null,
       ]);
       setScenario(result);

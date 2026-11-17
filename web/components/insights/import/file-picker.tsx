@@ -7,15 +7,13 @@ import {
   FileEmpty01Icon,
   FileImportIcon,
   Loading03Icon,
-  QuestionFreeIcons,
-  SparklesIcon,
+  Pdf02Icon,
   SquareLock02Icon,
   WeightScale01Icon,
 } from "@hugeicons/core-free-icons";
 
 import { Icon, type IconSvgElement } from "@/components/ui/icon";
 import { cn } from "@/utils/cn";
-import QuestionIcon from "@hugeicons/core-free-icons/QuestionIcon";
 
 function Fact({ icon, children }: { icon: IconSvgElement; children: React.ReactNode }) {
   return (
@@ -63,7 +61,7 @@ export function FilePicker({
           <Icon icon={Csv02Icon} className="size-6" />
         </span>
         <span className="absolute top-2 right-1 inline-flex size-12 rotate-12 items-center justify-center rounded-2xl border border-brand/20 bg-panel text-brand shadow-sm">
-          <Icon icon={FileImportIcon} className="size-6" />
+          <Icon icon={Pdf02Icon} className="size-6" />
         </span>
         <span
           className={cn(
@@ -79,10 +77,10 @@ export function FilePicker({
       </div>
 
       <p className="text-[17px] font-[650] tracking-[-0.02em]" aria-live="polite">
-        {busy ? "Checking your file…" : drag ? "Drop it here" : "Drop a CSV here, or choose one"}
+        {busy ? "Checking your file…" : drag ? "Drop it here" : "Drop a statement here, or choose one"}
       </p>
       <ul className="mt-3 flex flex-wrap justify-center gap-1.5">
-        <Fact icon={Csv02Icon}>CSV only</Fact>
+        <Fact icon={Csv02Icon}>CSV or PDF</Fact>
         <Fact icon={WeightScale01Icon}>Up to 5 MB</Fact>
         <Fact icon={SquareLock02Icon}>Nothing saved until you confirm</Fact>
       </ul>
@@ -94,10 +92,10 @@ export function FilePicker({
         )}
       >
         <Icon icon={FileImportIcon} />
-        Choose CSV file
+        Choose a file
         <input
           type="file"
-          accept=".csv,text/csv"
+          accept=".csv,text/csv,.pdf,application/pdf"
           disabled={busy}
           className="sr-only"
           onChange={(e) => {

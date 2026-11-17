@@ -9,7 +9,7 @@ import { formatDate, formatRange } from "@/utils/format";
 
 export function SavedScenarios({ version }: { version: number }) {
   const isPro = useIsPro();
-  const saved = useResource(() => api.savedScenarios(), `saved|${version}`, isPro);
+  const saved = useResource(() => api.plan.savedScenarios(), `saved|${version}`, isPro);
   if (!isPro || !saved.data?.length) return null;
   return (
     <Section title="Saved scenarios">

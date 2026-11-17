@@ -55,11 +55,11 @@ export function ReviewScreen() {
   const page = Math.max(1, Number(params.get("page")) || 1);
 
   const tabsTop = useRef<HTMLDivElement>(null);
-  const analysis = useResource(() => api.analysis(), "review-analysis");
+  const analysis = useResource(() => api.analysis.get(), "review-analysis");
   // Keyed on the list's own inputs, so switching tabs does not refetch it.
   const txns = useResource(
     () =>
-      api.transactions({
+      api.transactions.list({
         page,
         page_size: PAGE_SIZE,
         review_state: filter === "needs_review" ? "needs_review" : undefined,

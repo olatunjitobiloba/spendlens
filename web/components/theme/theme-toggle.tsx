@@ -12,7 +12,8 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(next)}
-      aria-label={`Switch to ${next} mode`}
+      // Static label: the theme is unknown on the server, so a theme-based label breaks hydration.
+      aria-label="Toggle light and dark mode"
       className="inline-flex size-9 items-center justify-center rounded-full border border-line bg-panel text-t3 transition-colors duration-150 hover:border-line-strong hover:text-foreground"
     >
       {/* Both icons render; CSS picks one so server and client markup match. */}

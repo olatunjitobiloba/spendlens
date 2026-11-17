@@ -36,7 +36,7 @@ export function useOrderPolling({ intervalMs = 3000, timeoutMs = 120_000 } = {})
       const tick = async () => {
         if (id !== run.current) return;
         try {
-          const latest = await api.order(order.id);
+          const latest = await api.account.order(order.id);
           if (id !== run.current) return;
           if (TERMINAL.includes(latest.status)) return setState({ phase: "settled", order: latest });
           if (Date.now() - startedAt >= timeoutMs) return setState({ phase: "timed_out", order: latest });

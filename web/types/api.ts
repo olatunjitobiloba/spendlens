@@ -30,6 +30,8 @@ export type TransactionQuery = {
   /** Bank slug, as in configs/banks.ts. */
   bank?: string;
   review_state?: ReviewState;
+  /** Transaction status filter from the API (max 40 chars). */
+  status?: string;
   q?: string;
   ids?: string[];
   start?: string;
@@ -58,6 +60,8 @@ export type ImportRecord = {
   date_range: DateRange | null;
   created_at: string;
   coverage_warnings: string[];
+  /** True when the same file was imported before and the earlier import was reused. */
+  reused?: boolean;
 };
 
 // Analysis
@@ -239,7 +243,7 @@ export type ChatRole = "user" | "assistant";
 /** One prior turn sent back for context. The API keeps the last six. */
 export type ChatTurn = { role: ChatRole; text: string };
 
-export type ChatRequest = { message: string; history: ChatTurn[] };
+export type ChatRequest = { message: string; history: ChatTurn[]; ctx?: Record<string, unknown> | null };
 
 export type ChatReply = {
   answer: string;
@@ -249,3 +253,51 @@ export type ChatReply = {
 };
 
 export type Transcription = { text: string };
+
+// Habits, subscriptions and investments
+
+export type HabitAudit = {
+  total_analyzed_txns: number;
+  late_night_kobo: number;
+  late_night_count: number;
+  weekend_kobo: number;
+  weekend_count: number;
+  weekend_surge_percentage: number;
+  micro_drain_count: number;
+  micro_drain_kobo: number;
+  warnings: string[];
+  actionable_cuts: string[];
+};
+
+export type SubscriptionItem = {
+  merchant: string;
+  monthly_kobo: number;
+  annual_kobo: number;
+  frequency_days: number;
+  cancellation_url: string | null;
+  cancellation_email_template: string;
+};
+
+export type InvestmentOption = {
+  title: string;
+  asset_class: string;
+  benchmark_annual_rate_pct: number;
+  risk_level: string;
+  minimum_monthly_kobo: number;
+  horizon_label: string;
+  projected_growth_kobo: number;
+  total_invested_kobo: number;
+  net_gain_kobo: number;
+  description: string;
+  regulatory_body: string;
+};
+
+export type ProjectionInput = { monthly_kobo: number; months?: number; annual_rate_pct?: number };
+
+export type InvestmentProjection = {
+  total_principal_kobo: number;
+  total_future_value_kobo: number;
+  gain_kobo: number;
+  annual_rate_pct: number;
+  months: number;
+};

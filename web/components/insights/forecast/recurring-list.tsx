@@ -17,7 +17,7 @@ const likelihood = (c: number) => (c >= 0.8 ? "Likely recurring" : "Possibly rec
 
 /** Recurring-payment candidates. Nothing is cancelled automatically. */
 export function RecurringList() {
-  const recurring = useResource(() => api.recurring(), "recurring");
+  const recurring = useResource(() => api.plan.recurring(), "recurring");
 
   return (
     <Section

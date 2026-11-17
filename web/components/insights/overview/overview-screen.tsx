@@ -29,14 +29,14 @@ export function OverviewScreen() {
   const month = params.get("month");
   const range = monthToRange(month);
   const analysis = useResource(
-    () => api.analysis({ ...range, compare: isPro && range ? "previous" : undefined }),
+    () => api.analysis.get({ ...range, compare: isPro && range ? "previous" : undefined }),
     `${month}|${isPro}`,
   );
   // Without a month in the URL the API picks the latest; ask again for the comparison.
   const latest = analysis.data?.range.start.slice(0, 7) ?? "";
   const needsCompare = isPro && !range && Boolean(latest);
   const compared = useResource(
-    () => api.analysis({ ...monthToRange(latest), compare: "previous" }),
+    () => api.analysis.get({ ...monthToRange(latest), compare: "previous" }),
     `cmp|${latest}|${needsCompare}`,
     needsCompare,
   );

@@ -20,7 +20,7 @@ export function ServerWakeBanner() {
     const timer = window.setTimeout(() => setSlow(true), WAKE_NOTICE_DELAY_MS);
 
     api
-      .health(controller.signal)
+      .health.check(controller.signal)
       .then(() => {
         if (!controller.signal.aborted) setSlow(false);
       })

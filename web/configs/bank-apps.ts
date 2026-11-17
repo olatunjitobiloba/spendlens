@@ -85,7 +85,7 @@ export const BANK_APPS: BankApp[] = (() => {
 
 export const BANK_GROUPS: BankGroup[] = GROUP_STARTS.map(([, g]) => g);
 
-export const DEFAULT_BANK = "guaranty-trust-bank";
+export const DEFAULT_BANK = "wema-bank";
 
 function channel(hex: string, i: number) {
   return parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);

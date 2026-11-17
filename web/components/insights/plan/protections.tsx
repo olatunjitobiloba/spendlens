@@ -10,28 +10,25 @@ import { Section } from "@/components/ui/section";
 import { UNCATEGORISED } from "@/configs/categories";
 import { SET_PROTECTIONS_KEY } from "@/configs/insights";
 import { setLocalFlag } from "@/hooks/use-local-flag";
-import { asApiError } from "@/hooks/use-resource";
-import { api, type ApiError } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { Analysis } from "@/types/api";
-import { ErrorNotice } from "../shared/error-notice";
+import { toastApiError } from "../shared/error-toast";
 
 /** Essentials toggles, saved with PUT /v1/protections (technical doc §8). */
 export function Protections({ analysis, onChanged }: { analysis: Analysis; onChanged: () => Promise<void> }) {
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
   const cats = analysis.categories.filter((c) => c.category !== UNCATEGORISED);
 
   async function toggle(category: string, on: boolean) {
     const current = cats.filter((c) => c.protected).map((c) => c.category);
     const next = on ? [...current, category] : current.filter((c) => c !== category);
     setBusy(category);
-    setError(null);
     try {
-      await api.setProtections(next);
+      await api.plan.setProtections(next);
       setLocalFlag(SET_PROTECTIONS_KEY, true);
       await onChanged();
     } catch (e) {
-      setError(asApiError(e));
+      toastApiError(e, { title: `${category} wasn't ${on ? "protected" : "unprotected"}`, onRetry: () => void toggle(category, on) });
     } finally {
       setBusy(null);
     }
@@ -39,7 +36,6 @@ export function Protections({ analysis, onChanged }: { analysis: Analysis; onCha
 
   return (
     <Section title="Protect essentials" description="Protected categories are never cut. Rent and bills are a good start.">
-      {error && <ErrorNotice error={error} className="mb-3" />}
       <ul className="divide-y divide-line">
         {cats.map((c) => {
           const id = `protect-${c.category.replace(/\W+/g, "-")}`;

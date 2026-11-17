@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Csv02Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import { Csv02Icon, Delete02Icon, Pdf02Icon } from "@hugeicons/core-free-icons";
 
 import {
   AlertDialog,
@@ -17,18 +17,17 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Section } from "@/components/ui/section";
 import { Spinner } from "@/components/ui/spinner";
-import { asApiError, useResource } from "@/hooks/use-resource";
-import { api, type ApiError } from "@/lib/api";
+import { useResource } from "@/hooks/use-resource";
+import { api } from "@/lib/api";
 import type { ImportRecord } from "@/types/api";
 import { formatRange } from "@/utils/format";
-import { ErrorNotice } from "../shared/error-notice";
+import { toastApiError } from "../shared/error-toast";
 import { RowsSkeleton } from "../skeletons";
 
 export function PastImports() {
-  const analysis = useResource(() => api.analysis(), "imports");
+  const analysis = useResource(() => api.analysis.get(), "imports");
   const [pending, setPending] = useState<ImportRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
 
   if (!analysis.data) {
     return analysis.loading ? (
@@ -43,13 +42,12 @@ export function PastImports() {
   async function remove() {
     if (!pending) return;
     setDeleting(true);
-    setError(null);
     try {
-      await api.deleteImport(pending.id);
+      await api.imports.remove(pending.id);
       await analysis.reload();
       setPending(null);
     } catch (e) {
-      setError(asApiError(e));
+      toastApiError(e, { title: `Couldn't delete ${pending.filename}`, onRetry: () => void remove() });
     } finally {
       setDeleting(false);
     }
@@ -62,7 +60,7 @@ export function PastImports() {
           <li key={imp.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-[13.5px]">
             <span className="flex min-w-0 items-center gap-3">
               <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
-                <Icon icon={Csv02Icon} className="size-[18px]" />
+                <Icon icon={imp.filename.toLowerCase().endsWith(".pdf") ? Pdf02Icon : Csv02Icon} className="size-[18px]" />
               </span>
               <span className="min-w-0">
                 <span className="block truncate font-medium">{imp.filename}</span>
@@ -74,10 +72,7 @@ export function PastImports() {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => {
-                setError(null);
-                setPending(imp);
-              }}
+              onClick={() => setPending(imp)}
             >
               <Icon icon={Delete02Icon} />
               Delete<span className="sr-only"> {imp.filename}</span>
@@ -98,7 +93,6 @@ export function PastImports() {
               undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {error && <ErrorNotice error={error} />}
           <AlertDialogFooter className="rounded-b-[1.25rem] border-line bg-panel-raised/50">
             <AlertDialogCancel disabled={deleting}>Keep it</AlertDialogCancel>
             {/* A plain button, so the dialog stays open until the delete finishes. */}

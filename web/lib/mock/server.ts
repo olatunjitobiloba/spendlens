@@ -707,6 +707,13 @@ async function readCsv(form?: FormData): Promise<{ name: string; text: string }>
   const file = form?.get("file");
   if (!(file instanceof Blob)) fail(422, "Attach a CSV file.");
   const f = file as File;
+  if (f.name.toLowerCase().endsWith(".pdf")) {
+    // Mirrors the live contract for locked statements, then stops: sample mode reads CSV only.
+    const locked = (await f.text()).includes("/Encrypt");
+    const password = form?.get("password");
+    if (locked && !password) fail(422, { code: "pdf_password_required", message: "This PDF is password protected." });
+    fail(415, "Sample mode reads CSV files only. Switch the data source to Live API in the sidebar to import a PDF.");
+  }
   return { name: f.name || "upload.csv", text: await f.text() };
 }
 
@@ -796,8 +803,9 @@ export async function handle(method: string, path: string, req: Req): Promise<un
 
   if (route === "POST /v1/reconciliation/confirm") {
     const id = String(body.candidate_id ?? "");
-    const decision = body.decision;
-    if (decision !== "same" && decision !== "different") fail(422, "Decision must be same or different.");
+    const state = body.state;
+    if (state !== "confirmed" && state !== "rejected") fail(422, "State must be confirmed or rejected.");
+    const decision = state === "confirmed" ? "same" : "different";
     const c = candidates(db).find((x) => x.id === id);
     if (!c) fail(404, "That candidate was already reviewed.");
     db.decisions[id] = decision as "same" | "different";

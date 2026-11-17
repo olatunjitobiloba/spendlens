@@ -17,7 +17,7 @@ import { ForecastCard } from "./forecast-card";
 import { RecurringList } from "./recurring-list";
 
 function ForecastGrid() {
-  const forecast = useResource(() => api.forecast(), "forecast");
+  const forecast = useResource(() => api.plan.forecast(), "forecast");
   if (forecast.error) return <ErrorNotice error={forecast.error} onRetry={forecast.reload} />;
   if (!forecast.data) return <ForecastGridSkeleton />;
   const f = forecast.data;

@@ -10,7 +10,7 @@ const MeContext = createContext<Resource<Me> | null>(null);
 
 /** Plan and Pro status, shared by every screen in the module. */
 export function MeProvider({ children }: { children: React.ReactNode }) {
-  const me = useResource(() => api.me(), "me");
+  const me = useResource(() => api.account.me(), "me");
   return <MeContext.Provider value={me}>{children}</MeContext.Provider>;
 }
 

@@ -3,60 +3,87 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
-import { asApiError } from "@/hooks/use-resource";
-import { api, newIdempotencyKey, type ApiError } from "@/lib/api";
+import { showToast } from "@/components/ui/toast";
+import { api, asApiError, newIdempotencyKey, type StatementUpload } from "@/lib/api";
 import { loadSampleFile } from "@/lib/sample";
 import type { ImportPreview, ImportRecord } from "@/types/api";
-import { ErrorNotice } from "../shared/error-notice";
+import { isEncryptedPdf, isPdf } from "@/utils/pdf";
+import { toastApiError } from "../shared/error-toast";
 import { DoneView } from "./done-view";
 import { FilePicker } from "./file-picker";
 import { PastImports } from "./past-imports";
+import { PdfPasswordDialog } from "./pdf-password-dialog";
 import { PreviewView } from "./preview-view";
 import { SampleDialog } from "./sample-dialog";
 import { Stepper, type ImportStep } from "./stepper";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
-/** Client checks only: extension and size. The API validates every row. */
+/** Client checks only: type and size. The API validates every row. */
 function clientCheck(f: File): string | null {
-  if (!f.name.toLowerCase().endsWith(".csv"))
-    return `"${f.name}" is not a CSV file. Export your statement as .csv and try again.`;
+  if (!f.name.toLowerCase().endsWith(".csv") && !isPdf(f))
+    return `"${f.name}" is not a CSV or PDF. Export your statement as either and try again.`;
   if (f.size > MAX_BYTES) return `"${f.name}" is larger than 5 MB. Split it into smaller date ranges and import each one.`;
   return null;
 }
 
+type Locked = { file: File; error: string | null; attempt: number };
+
 export function ImportScreen() {
   const params = useSearchParams();
   const [step, setStep] = useState<ImportStep>("choose");
-  const [file, setFile] = useState<File | null>(null);
+  const [upload, setUpload] = useState<StatementUpload | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [record, setRecord] = useState<ImportRecord | null>(null);
-  const [clientError, setClientError] = useState<string | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
+  const [locked, setLocked] = useState<Locked | null>(null);
   const [busy, setBusy] = useState(false);
   const [sampleOpen, setSampleOpen] = useState(false);
   // One key per confirm action; a retry of the same confirm reuses it.
   const keyRef = useRef<string | null>(null);
   const autoSample = useRef(false);
 
-  async function check(f: File) {
-    setError(null);
-    const problem = clientCheck(f);
-    setClientError(problem);
-    if (problem) return;
+  /** Upload for a preview. Password errors reopen the dialog; the rest toast. */
+  async function runPreview(next: StatementUpload) {
     setBusy(true);
-    setFile(f);
     keyRef.current = null;
     try {
-      setPreview(await api.previewImport(f));
+      setPreview(await api.imports.preview(next));
+      setUpload(next);
+      setLocked(null);
       setStep("check");
     } catch (e) {
-      setError(asApiError(e));
+      const error = asApiError(e);
+      if (error.kind === "password_required" || error.kind === "password_invalid") {
+        setLocked((prev) => ({
+          file: next.file,
+          // The first ask is not an error; a rejected password is.
+          error: next.password ? error.message : null,
+          attempt: next.password ? (prev?.attempt ?? 0) + 1 : 0,
+        }));
+      } else {
+        toastApiError(error, {
+          title: `Couldn't read ${next.file.name}`,
+          onRetry: () => void runPreview(next),
+        });
+      }
     } finally {
       setBusy(false);
     }
+  }
+
+  async function check(f: File) {
+    const problem = clientCheck(f);
+    if (problem) {
+      showToast({ tone: "danger", title: "That file can't be used", description: problem });
+      return;
+    }
+    // Ask for the password up front instead of after a failed upload.
+    if (isPdf(f) && (await isEncryptedPdf(f).catch(() => false))) {
+      setLocked({ file: f, error: null, attempt: 0 });
+      return;
+    }
+    await runPreview({ file: f });
   }
 
   async function checkSample() {
@@ -65,22 +92,34 @@ export function ImportScreen() {
       await check(await loadSampleFile());
     } catch {
       setBusy(false);
-      setClientError("The sample file could not be loaded. Reload the page and try again.");
+      showToast({
+        tone: "danger",
+        title: "Sample file didn't load",
+        description: "Reload the page and try again.",
+      });
     } finally {
       setSampleOpen(false);
     }
   }
 
   async function confirm() {
-    if (!file) return;
+    if (!upload) return;
     keyRef.current ??= newIdempotencyKey();
     setBusy(true);
-    setError(null);
     try {
-      setRecord(await api.commitImport(file, keyRef.current));
+      const saved = await api.imports.commit(upload, keyRef.current);
+      setRecord(saved);
       setStep("done");
+      // The password has done its job; drop it from memory.
+      setUpload(null);
+      if (saved.reused)
+        showToast({
+          tone: "info",
+          title: "Already imported",
+          description: `${saved.filename} matches an earlier import, so nothing was added twice.`,
+        });
     } catch (e) {
-      setError(asApiError(e));
+      toastApiError(e, { title: "Import failed", onRetry: () => void confirm() });
     } finally {
       setBusy(false);
     }
@@ -89,8 +128,7 @@ export function ImportScreen() {
   function reset() {
     setStep("choose");
     setPreview(null);
-    setFile(null);
-    setError(null);
+    setUpload(null);
   }
 
   // "Try with sample data" from other screens lands here with ?sample=1.
@@ -106,30 +144,33 @@ export function ImportScreen() {
     <>
       <PageHeader
         title="Import transactions"
-        description="Upload a CSV export. SpendLens checks every row first and shows you what it found before saving anything."
+        description="Upload a CSV export or a PDF bank statement. SpendLens checks every row first and shows you what it found before saving anything."
       />
       <Stepper step={step} />
 
       {step === "choose" && (
         <div className="space-y-3">
-          <FilePicker onFile={check} onTrySample={() => setSampleOpen(true)} busy={busy} />
-          {clientError && (
-            <Notice tone="danger" title="That file can't be used">
-              {clientError}
-            </Notice>
-          )}
-          {error && <ErrorNotice error={error} onRetry={file ? () => check(file) : undefined} />}
+          <FilePicker onFile={check} onTrySample={() => setSampleOpen(true)} busy={busy && !locked} />
           <SampleDialog open={sampleOpen} onOpenChange={setSampleOpen} onUseSample={checkSample} busy={busy} />
         </div>
       )}
 
       {step === "check" && preview && (
-        <PreviewView preview={preview} busy={busy} error={error} onConfirm={confirm} onBack={reset} />
+        <PreviewView preview={preview} busy={busy} onConfirm={confirm} onBack={reset} />
       )}
 
       {step === "done" && record && <DoneView record={record} />}
 
       {step !== "check" && <PastImports key={record?.id ?? "none"} />}
+
+      <PdfPasswordDialog
+        file={locked?.file ?? null}
+        busy={busy}
+        error={locked?.error ?? null}
+        attempt={locked?.attempt ?? 0}
+        onSubmit={(password) => locked && void runPreview({ file: locked.file, password })}
+        onCancel={() => setLocked(null)}
+      />
     </>
   );
 }
