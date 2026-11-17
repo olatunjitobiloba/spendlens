@@ -280,7 +280,8 @@ as $$
     ) revisions
   )
   select jsonb_build_object(
-    'data_revision', encode(digest((select value from revision_source), 'sha256'), 'hex'),
+    'data_revision',
+    encode(extensions.digest((select value from revision_source), 'sha256'), 'hex'),
     'range', jsonb_build_object('start', p_start, 'end', p_end),
     'baseline_kobo', coalesce((select sum(amount_kobo)::bigint from eligible), 0),
     'categories', coalesce((select jsonb_agg(jsonb_build_object('category', category, 'total_kobo', total_kobo) order by total_kobo desc) from category_rows), '[]'::jsonb),

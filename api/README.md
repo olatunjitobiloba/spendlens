@@ -15,7 +15,14 @@ uvicorn api.app.main:app --reload
 
 ## Supabase setup
 
-Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`, then run [`migrations/001_initial.sql`](migrations/001_initial.sql) in the Supabase SQL editor. The API loads this root `.env` locally; Render supplies the same values as environment variables. The migration enables RLS and creates `commit_import`, a user-JWT-scoped RPC that atomically creates an import, its transactions, and duplicate candidates. The API never accepts a user ID from the client.
+Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`, then apply [`migrations/001_initial.sql`](migrations/001_initial.sql) followed by [`migrations/002_rls_rpc_hardening.sql`](migrations/002_rls_rpc_hardening.sql) in the Supabase SQL editor (or migration runner). The API loads this root `.env` locally; Render supplies the same values as environment variables. The migrations enable RLS and create `commit_import`, a user-JWT-scoped RPC that atomically creates an import, its transactions, and duplicate candidates. The API never accepts a user ID from the client.
+
+After applying them, run the real-project RLS regression check. It creates and removes two temporary Supabase auth users:
+
+```powershell
+$env:RUN_SUPABASE_INTEGRATION = '1'
+pytest api/tests/test_supabase_rls_integration.py -q
+```
 
 Analysis and scenarios are calculated by Supabase RPCs with integer-kobo arithmetic. Pending duplicate candidates remain in totals; confirmed duplicate or internal-transfer links are excluded.
 
