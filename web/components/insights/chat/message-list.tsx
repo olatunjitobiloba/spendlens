@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { AiChat02Icon, ArrowRight01Icon, Mic01Icon } from "@hugeicons/core-free-icons";
+import { AiChat02Icon, ArrowRight01Icon, Mic01Icon, VolumeHighIcon, VolumeMute01Icon } from "@hugeicons/core-free-icons";
 
 import { Icon } from "@/components/ui/icon";
 import { Spinner } from "@/components/ui/spinner";
@@ -36,7 +36,15 @@ function VoiceTag({ seconds }: { seconds: number }) {
   );
 }
 
-function Message({ message }: { message: ChatMessage }) {
+function Message({
+  message,
+  onSpeak,
+  isSpeaking,
+}: {
+  message: ChatMessage;
+  onSpeak?: (text: string) => void;
+  isSpeaking?: boolean;
+}) {
   if (message.role === "user") {
     return (
       <li className="flex justify-end">
@@ -48,16 +56,29 @@ function Message({ message }: { message: ChatMessage }) {
     );
   }
   return (
-    <li className="flex gap-3">
+    <li className="group flex gap-3">
       <Avatar />
-      <p
-        className={cn(
-          "min-w-0 flex-1 pt-1 text-[14px] leading-relaxed whitespace-pre-wrap",
-          message.refusal ? "text-t3" : "text-t2",
+      <div className="min-w-0 flex-1">
+        <p
+          className={cn(
+            "pt-1 text-[14px] leading-relaxed whitespace-pre-wrap",
+            message.refusal ? "text-t3" : "text-t2",
+          )}
+        >
+          {message.text}
+        </p>
+        {onSpeak && (
+          <button
+            type="button"
+            onClick={() => onSpeak(message.text)}
+            className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11.5px] font-medium text-t3 hover:bg-foreground/[0.04] hover:text-foreground transition-colors"
+            aria-label={isSpeaking ? "Stop speaking" : "Listen to answer"}
+          >
+            <Icon icon={isSpeaking ? VolumeMute01Icon : VolumeHighIcon} className="size-3 text-brand" />
+            <span>{isSpeaking ? "Stop" : "Listen"}</span>
+          </button>
         )}
-      >
-        {message.text}
-      </p>
+      </div>
     </li>
   );
 }
@@ -115,11 +136,15 @@ export function MessageList({
   pending,
   error,
   onRetry,
+  onSpeak,
+  speakingText,
 }: {
   messages: ChatMessage[];
   pending: Pending;
   error: ThreadError;
   onRetry: () => void;
+  onSpeak?: (text: string) => void;
+  speakingText?: string | null;
 }) {
   const end = useRef<HTMLDivElement>(null);
   const count = messages.length;
@@ -132,7 +157,12 @@ export function MessageList({
     <div className="mx-auto w-full max-w-2xl px-4 pt-6 pb-4 sm:px-6">
       <ol className="space-y-6" aria-live="polite" aria-relevant="additions">
         {messages.map((m) => (
-          <Message key={m.id} message={m} />
+          <Message
+            key={m.id}
+            message={m}
+            onSpeak={onSpeak}
+            isSpeaking={speakingText === m.text}
+          />
         ))}
         {pending?.kind === "transcribing" && (
           <li className="flex justify-end">
