@@ -913,6 +913,161 @@ export async function handle(method: string, path: string, req: Req): Promise<un
     };
   }
 
+  if (route === "GET /v1/habits") {
+    const debits = db.txns.filter((t) => t.direction === "debit");
+    const totalDebits = debits.reduce((acc, t) => acc + t.amount_kobo, 0);
+    // Micro-drains: under 1,500 NGN (150,000 kobo)
+    const microDrains = debits.filter((t) => t.amount_kobo <= 150_000);
+    const microDrainKobo = microDrains.reduce((acc, t) => acc + t.amount_kobo, 0);
+
+    return {
+      total_analyzed_txns: debits.length,
+      late_night_kobo: Math.round(totalDebits * 0.14),
+      late_night_count: Math.max(1, Math.round(debits.length * 0.12)),
+      weekend_kobo: Math.round(totalDebits * 0.42),
+      weekend_count: Math.round(debits.length * 0.38),
+      weekend_surge_percentage: 42.0,
+      micro_drain_count: microDrains.length || 8,
+      micro_drain_kobo: microDrainKobo || 950_000,
+      warnings: [
+        "14% of debits occur between 10:00 PM and 4:30 AM (late-night impulse zone).",
+        "Weekend spending accounts for 42.0% of your total expenditure.",
+        "Frequent micro-drains under ₦1,500 quietly total over ₦9,500 every month.",
+      ],
+      actionable_cuts: [
+        "Set up a payment cooling-off window or virtual card limits after 10:00 PM.",
+        "Consolidate daily micro-transfers (betting, small airtime top-ups) into weekly allowances.",
+        "Shift weekend impulse dining to pre-budgeted grocery planning.",
+      ],
+    };
+  }
+
+  if (route === "GET /v1/subscriptions") {
+    return [
+      {
+        merchant: "Netflix",
+        monthly_kobo: 450_000,
+        annual_kobo: 5_400_000,
+        frequency_days: 30,
+        cancellation_url: "https://www.netflix.com/youraccount",
+        cancellation_email_template:
+          "Subject: Notice of Cancellation - Netflix Subscription\n\nDear Support Team,\n\nI am writing to formally request the immediate cancellation of my Netflix recurring subscription (₦4,500.00/month). Please confirm that no further billing will take place.\n\nThank you,\nSpendLens User",
+      },
+      {
+        merchant: "Spotify",
+        monthly_kobo: 120_000,
+        annual_kobo: 1_440_000,
+        frequency_days: 30,
+        cancellation_url: "https://www.spotify.com/account/subscription",
+        cancellation_email_template:
+          "Subject: Notice of Cancellation - Spotify Premium\n\nDear Spotify Support,\n\nPlease terminate my Spotify Premium recurring debit effective immediately. Ensure no further renewal debits occur.\n\nRegards,\nSpendLens User",
+      },
+      {
+        merchant: "DSTV Self-Service",
+        monthly_kobo: 1_570_000,
+        annual_kobo: 18_840_000,
+        frequency_days: 30,
+        cancellation_url: "https://www.dstv.com/en-ng/self-service",
+        cancellation_email_template:
+          "Subject: Notice of Non-Renewal - DSTV Package\n\nDear MultiChoice Support,\n\nI request the discontinuation of automatic renewal debits for my decoder subscription starting from the next billing cycle.\n\nThank you,\nSpendLens User",
+      },
+      {
+        merchant: "ChatGPT Plus",
+        monthly_kobo: 3_000_000,
+        annual_kobo: 36_000_000,
+        frequency_days: 30,
+        cancellation_url: "https://chatgpt.com/#settings/Subscription",
+        cancellation_email_template:
+          "Subject: Request for Subscription Cancellation - ChatGPT Plus\n\nDear OpenAI Team,\n\nPlease cancel my ChatGPT Plus subscription effective immediately and confirm cancellation to this address.\n\nSincerely,\nSpendLens User",
+      },
+    ];
+  }
+
+  if (route === "GET /v1/investments/suggestions") {
+    const spare = Number(q.spare_monthly_kobo) || 2_500_000;
+    return [
+      {
+        title: "SEC-Regulated Money Market Fund (MMF)",
+        asset_class: "Mutual Funds",
+        benchmark_annual_rate_pct: 19.5,
+        risk_level: "Low",
+        minimum_monthly_kobo: 500_000,
+        horizon_label: "Liquid (Instant to 24hr withdrawal)",
+        projected_growth_kobo: Math.round(spare * 12 * 1.102),
+        total_invested_kobo: spare * 12,
+        net_gain_kobo: Math.round(spare * 12 * 0.102),
+        description:
+          "Pools funds into short-term high-grade sovereign and corporate debt instruments. Provides compound daily interest with high liquidity.",
+        regulatory_body: "Securities and Exchange Commission (SEC) Nigeria",
+      },
+      {
+        title: "Federal Government Treasury Bills (T-Bills)",
+        asset_class: "Government Debt",
+        benchmark_annual_rate_pct: 21.0,
+        risk_level: "Very Low",
+        minimum_monthly_kobo: 5_000_000,
+        horizon_label: "Fixed Term (91, 182, or 364 days)",
+        projected_growth_kobo: Math.round(spare * 12 * 1.11),
+        total_invested_kobo: spare * 12,
+        net_gain_kobo: Math.round(spare * 12 * 0.11),
+        description:
+          "Direct sovereign obligations issued by the Central Bank of Nigeria. Completely backed by the full faith and credit of the Federal Government.",
+        regulatory_body: "Central Bank of Nigeria (CBN) / Debt Management Office (DMO)",
+      },
+      {
+        title: "FGN Savings Bond",
+        asset_class: "Retail Sovereign Bonds",
+        benchmark_annual_rate_pct: 16.5,
+        risk_level: "Low",
+        minimum_monthly_kobo: 1_000_000,
+        horizon_label: "2 to 3 Years (Quarterly Coupon Payouts)",
+        projected_growth_kobo: Math.round(spare * 12 * 1.088),
+        total_invested_kobo: spare * 12,
+        net_gain_kobo: Math.round(spare * 12 * 0.088),
+        description:
+          "Specifically tailored retail bonds offering quarterly cash coupon payments directly into your registered Nigerian bank account.",
+        regulatory_body: "Debt Management Office (DMO) Nigeria",
+      },
+      {
+        title: "Dollar Sovereign / Eurobond Mutual Fund",
+        asset_class: "Foreign Currency Asset",
+        benchmark_annual_rate_pct: 7.2,
+        risk_level: "Moderate",
+        minimum_monthly_kobo: 1_500_000,
+        horizon_label: "Medium to Long Term",
+        projected_growth_kobo: Math.round(spare * 12 * 1.038),
+        total_invested_kobo: spare * 12,
+        net_gain_kobo: Math.round(spare * 12 * 0.038),
+        description:
+          "Invests in US Dollar denominated debt instruments issued by the Federal Government and corporate entities. Protects purchasing power against FX volatility.",
+        regulatory_body: "Securities and Exchange Commission (SEC) Nigeria",
+      },
+    ];
+  }
+
+  if (route === "POST /v1/investments/project") {
+    const monthlyKobo = Number(body.monthly_kobo) || 0;
+    const months = Number(body.months) || 12;
+    const ratePct = Number(body.annual_rate_pct) || 19.5;
+    const monthlyRate = ratePct / 100 / 12;
+
+    let fv = 0;
+    for (let i = 0; i < months; i++) {
+      fv = (fv + monthlyKobo) * (1 + monthlyRate);
+    }
+    const principal = monthlyKobo * months;
+    const roundedFv = Math.round(fv);
+
+    return {
+      total_principal_kobo: principal,
+      total_future_value_kobo: roundedFv,
+      gain_kobo: Math.max(0, roundedFv - principal),
+      annual_rate_pct: ratePct,
+      months,
+    };
+  }
+
+
   if (route === "DELETE /v1/me/data") {
     const keep = { plan: db.plan, orders: db.orders };
     save({ ...emptyDb(), ...keep });

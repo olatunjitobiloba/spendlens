@@ -24,6 +24,10 @@ import type {
   Transaction,
   TransactionQuery,
   Transcription,
+  HabitAudit,
+  SubscriptionItem,
+  InvestmentOption,
+  InvestmentProjection,
 } from "@/types/api";
 
 import { getAccessToken } from "@/lib/supabase/client";
@@ -241,4 +245,16 @@ export const api = {
     form.set("file", audio, `voice-note.${ext}`);
     return request<Transcription>("POST", "/v1/chat/transcriptions", { form, timeoutMs: CHAT_TIMEOUT_MS, signal });
   },
+
+  habits: (signal?: AbortSignal) =>
+    request<HabitAudit>("GET", "/v1/habits", { signal }),
+
+  subscriptions: (signal?: AbortSignal) =>
+    request<SubscriptionItem[]>("GET", "/v1/subscriptions", { signal }),
+
+  investmentSuggestions: (q?: { spare_monthly_kobo?: number; goal?: string }, signal?: AbortSignal) =>
+    request<InvestmentOption[]>("GET", "/v1/investments/suggestions", { query: q, signal }),
+
+  projectInvestment: (body: { monthly_kobo: number; months: number; annual_rate_pct?: number }, signal?: AbortSignal) =>
+    request<InvestmentProjection>("POST", "/v1/investments/project", { body, signal }),
 };
