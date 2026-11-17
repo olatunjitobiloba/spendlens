@@ -1,7 +1,9 @@
 // A synthetic Nigerian bank statement, generated in the browser on demand.
 // Nothing is fetched, so it works the same in dev and production.
 
+/** The columns a file needs, as shown to people. `time` is optional and the sample adds it. */
 export const SAMPLE_CSV_HEADER = "date,description,amount,direction,account_alias,bank";
+const GENERATED_HEADER = "date,time,description,amount,direction,account_alias,bank";
 export const SAMPLE_FILENAME = "spendlens-sample-transactions.csv";
 
 type Account = { alias: string; bank: string };
@@ -59,13 +61,24 @@ const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "
 type Row = { date: string; description: string; amount: number; direction: "debit" | "credit"; account: Account };
 
 const pick = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)];
-/** Naira amounts rounded to a believable step: ₦50 under ₦10k, ₦100 above. */
+/**
+ * Naira amounts rounded to a believable step: ₦10 under ₦2k (fares and top-ups
+ * vary, so they never look like a subscription), ₦50 under ₦10k, ₦100 above.
+ */
 function amount(min: number, max: number) {
   const raw = min + Math.random() * (max - min);
-  const step = raw < 10000 ? 50 : 100;
+  const step = raw < 2000 ? 10 : raw < 10000 ? 50 : 100;
   return Math.max(step, Math.round(raw / step) * step);
 }
 const iso = (d: Date) => d.toISOString().slice(0, 10);
+const pad = (n: number) => String(n).padStart(2, "0");
+/** Most payments in the day; some food and rides late at night, so night-time habits show up. */
+const NIGHT_OWL = /CHOWHUB|SUYA|RIDEGO|BEAN AND BREW/;
+function timeFor(description: string) {
+  const late = NIGHT_OWL.test(description) && Math.random() < 0.25;
+  const hour = late ? pick([22, 23, 0, 1]) : 7 + Math.floor(Math.random() * 14);
+  return `${pad(hour)}:${pad(Math.floor(Math.random() * 60))}`;
+}
 const csvCell = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
 /**
@@ -108,9 +121,17 @@ export function generateSampleCsv(today = new Date()): string {
   }
 
   const lines = rows.map((r) =>
-    [r.date, csvCell(r.description), r.amount.toFixed(2), r.direction, csvCell(r.account.alias), r.account.bank].join(","),
+    [
+      r.date,
+      timeFor(r.description),
+      csvCell(r.description),
+      r.amount.toFixed(2),
+      r.direction,
+      csvCell(r.account.alias),
+      r.account.bank,
+    ].join(","),
   );
-  return [SAMPLE_CSV_HEADER, ...lines].join("\n") + "\n";
+  return [GENERATED_HEADER, ...lines].join("\n") + "\n";
 }
 
 /** A freshly generated sample statement as a File, ready for the import endpoints. */

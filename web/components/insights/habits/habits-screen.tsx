@@ -4,36 +4,160 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   Alert02Icon,
-  Analytics01Icon,
-  Calendar03Icon,
+  ArrowRight01Icon,
   Coins01Icon,
   Copy01Icon,
   LinkSquare02Icon,
   Moon02Icon,
-  PiggyBankIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FieldError } from "@/components/ui/field-error";
-import { Icon } from "@/components/ui/icon";
+import { Icon, type IconSvgElement } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { PageHeader } from "@/components/ui/page-header";
 import { Section } from "@/components/ui/section";
-import { StatTile } from "@/components/ui/stat-tile";
+import { Status } from "@/components/ui/status";
 import { showToast } from "@/components/ui/toast";
 import { useResource } from "@/hooks/use-resource";
 import { api } from "@/lib/api";
 import { useSavedScenarios } from "@/lib/plan";
-import type { SubscriptionItem } from "@/types/api";
+import type { HabitAudit, InvestmentOption, SubscriptionItem } from "@/types/api";
 import { cn } from "@/utils/cn";
 import { fmtWhole } from "@/utils/format";
 import { MAX_TARGET_KOBO, parseNairaToKobo } from "@/utils/goal";
 import { ErrorNotice } from "../shared/error-notice";
 import { RowsSkeleton, SectionSkeleton } from "../skeletons";
 
+const plural = (n: number, word: string) => `${n.toLocaleString("en-NG")} ${word}${n === 1 ? "" : "s"}`;
+
 // ---------- Habits: GET /v1/habits ----------
+
+/** Fri, Sat and Sun are 3 of 7 days: the share an even week would give them. */
+const EVEN_WEEKEND_PCT = (3 / 7) * 100;
+
+/** Weekend vs. weekday as one bar, with a tick where an even week would sit. */
+function WeekRhythm({ h }: { h: HabitAudit }) {
+  const weekend = Math.max(0, Math.min(100, h.weekend_surge_percentage));
+  const heavy = weekend > EVEN_WEEKEND_PCT + 5;
+  return (
+    <div>
+      <p className="text-[12.5px] text-t3">Friday to Sunday</p>
+      <p className="mt-1.5 flex items-baseline gap-2">
+        <span className="text-[32px] leading-none font-[650] tracking-[-0.03em] tabular-nums">{Math.round(weekend)}%</span>
+        <span className="text-[13px] text-t3">of what you spend</span>
+      </p>
+
+      <div className="relative mt-6">
+        <span aria-hidden="true" className="flex h-3 overflow-hidden rounded-full bg-foreground/6">
+          <span className="h-full rounded-l-full bg-brand" style={{ width: `${weekend}%` }} />
+        </span>
+        {/* Where an evenly spread week would land. */}
+        <span
+          aria-hidden="true"
+          className="absolute -top-1.5 h-6 w-px bg-foreground/40"
+          style={{ left: `${EVEN_WEEKEND_PCT}%` }}
+        />
+        <span
+          className="absolute top-6 -translate-x-1/2 text-[11px] whitespace-nowrap text-t4"
+          style={{ left: `${EVEN_WEEKEND_PCT}%` }}
+        >
+          Even week · 43%
+        </span>
+      </div>
+
+      <dl className="mt-10 grid grid-cols-2 gap-3 text-[12.5px]">
+        <div>
+          <dt className="flex items-center gap-1.5 text-t3">
+            <span className="size-2 rounded-full bg-brand" />
+            Fri – Sun
+          </dt>
+          <dd className="mt-1 text-[14px] font-semibold">
+            <Money kobo={h.weekend_kobo} className="font-sans" />
+          </dd>
+          <dd className="text-t4">{plural(h.weekend_count, "payment")}</dd>
+        </div>
+        <div>
+          <dt className="flex items-center gap-1.5 text-t3">
+            <span className="size-2 rounded-full bg-foreground/15" />
+            Mon – Thu
+          </dt>
+          <dd className="mt-1 text-[14px] font-semibold">{Math.round(100 - weekend)}%</dd>
+          <dd className="text-t4">{plural(h.total_analyzed_txns - h.weekend_count, "payment")}</dd>
+        </div>
+      </dl>
+      <p className="mt-4 text-[12.5px] text-t3">
+        {heavy
+          ? "Your weekends carry more than their share of the week."
+          : "Your spending is spread fairly evenly across the week."}
+      </p>
+    </div>
+  );
+}
+
+/** A small habit figure with its icon tile, used down the right of the rhythm panel. */
+function HabitFigure({
+  icon,
+  label,
+  kobo,
+  caption,
+}: {
+  icon: IconSvgElement;
+  label: string;
+  kobo: number;
+  caption: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
+      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+        <Icon icon={icon} className="size-4.5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[12.5px] text-t3">{label}</p>
+        <p className={cn("mt-0.5 text-[17px] font-semibold tracking-[-0.02em]", !kobo && "text-t4")}>
+          <Money kobo={kobo} className="font-sans" />
+        </p>
+        <p className="text-[12px] text-t4">{caption}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Each warning paired with the cut the API suggests for it. */
+function Findings({ h }: { h: HabitAudit }) {
+  if (h.warnings.length === 0) {
+    return (
+      <div className="flex items-center gap-3 rounded-2xl bg-panel-raised/50 px-4 py-3.5">
+        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
+          <Icon icon={Tick02Icon} className="size-4" />
+        </span>
+        <p className="text-[13.5px] text-t2">Nothing unusual stands out. Keep an eye on this page after your next import.</p>
+      </div>
+    );
+  }
+  return (
+    <ol className="grid gap-3 md:grid-cols-2">
+      {h.warnings.map((w, i) => (
+        <li key={w} className="flex flex-col rounded-2xl border border-line bg-panel-raised/40 p-4">
+          <p className="flex gap-2.5 text-[13.5px] leading-relaxed text-t2">
+            <Icon icon={Alert02Icon} className="mt-0.5 shrink-0 text-warn" />
+            {w}
+          </p>
+          {h.actionable_cuts[i] && (
+            <p className="mt-3 flex gap-2.5 border-t border-line pt-3 text-[13px] leading-relaxed text-t3">
+              <Icon icon={ArrowRight01Icon} className="mt-0.5 shrink-0 text-brand" />
+              <span>
+                <span className="font-medium text-foreground">Try this:</span> {h.actionable_cuts[i]}
+              </span>
+            </p>
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 function Habits() {
   const habits = useResource(() => api.insights.habits(), "habits");
@@ -57,59 +181,35 @@ function Habits() {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile
-          label="Weekend spending"
-          icon={Calendar03Icon}
-          value={<Money kobo={h.weekend_kobo} className="font-sans" />}
-          caption={`${h.weekend_surge_percentage}% of spending · Fri to Sun`}
-        />
-        <StatTile
-          label="Late at night"
-          icon={Moon02Icon}
-          value={<Money kobo={h.late_night_kobo} className="font-sans" />}
-          caption={`${h.late_night_count} payment${h.late_night_count === 1 ? "" : "s"}, 10 PM to 4:30 AM`}
-        />
-        <StatTile
-          label="Small drains"
-          icon={Coins01Icon}
-          value={<Money kobo={h.micro_drain_kobo} className="font-sans" />}
-          caption={`${h.micro_drain_count} debits of ₦2,500 or less`}
-        />
-        <StatTile
-          label="Looked at"
-          icon={Analytics01Icon}
-          value={h.total_analyzed_txns.toLocaleString("en-NG")}
-          caption="Debit transactions"
-        />
+    <Section
+      title="When you spend"
+      description={`Patterns across ${plural(h.total_analyzed_txns, "debit")}.`}
+    >
+      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr] lg:gap-8">
+        <WeekRhythm h={h} />
+        <div className="divide-y divide-line border-t border-line pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+          <HabitFigure
+            icon={Coins01Icon}
+            label="Small drains"
+            kobo={h.micro_drain_kobo}
+            caption={`${plural(h.micro_drain_count, "debit")} of ₦2,500 or less`}
+          />
+          <HabitFigure
+            icon={Moon02Icon}
+            label="Late at night"
+            kobo={h.late_night_kobo}
+            caption={
+              h.late_night_count
+                ? `${plural(h.late_night_count, "payment")}, 10 PM to 4:30 AM`
+                : "None between 10 PM and 4:30 AM"
+            }
+          />
+        </div>
       </div>
 
-      <Section title="What stands out">
-        {h.warnings.length === 0 ? (
-          <p className="text-[13.5px] text-t3">Nothing unusual. Your spending is spread evenly across the week.</p>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            <ul className="space-y-2.5">
-              {h.warnings.map((w) => (
-                <li key={w} className="flex gap-2.5 text-[13.5px] leading-relaxed text-t2">
-                  <Icon icon={Alert02Icon} className="mt-0.5 text-warn" />
-                  {w}
-                </li>
-              ))}
-            </ul>
-            <ul className="space-y-2.5">
-              {h.actionable_cuts.map((c) => (
-                <li key={c} className="flex gap-2.5 text-[13.5px] leading-relaxed text-t2">
-                  <Icon icon={Tick02Icon} className="mt-0.5 text-positive" />
-                  {c}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </Section>
-    </div>
+      <h3 className="mt-7 mb-3 text-[13px] font-semibold">What stands out</h3>
+      <Findings h={h} />
+    </Section>
   );
 }
 
@@ -133,6 +233,15 @@ function every(days: number) {
   return `Every ${days} days`;
 }
 
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
 async function copyEmail(s: SubscriptionItem) {
   try {
     await navigator.clipboard.writeText(s.cancellation_email_template);
@@ -142,64 +251,83 @@ async function copyEmail(s: SubscriptionItem) {
   }
 }
 
+function SubscriptionRow({ s }: { s: SubscriptionItem }) {
+  const url = safeCancelUrl(s.cancellation_url);
+  return (
+    <li className="flex flex-wrap items-center gap-x-4 gap-y-3 py-3.5 first:pt-0 last:pb-0">
+      <span
+        aria-hidden="true"
+        className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-line bg-panel-raised text-[13px] font-[650] text-t2"
+      >
+        {initials(s.merchant)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[14px] font-medium">{s.merchant}</span>
+        <span className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-t4">
+          <Status tone="neutral" className="h-5 px-2 text-[11px]">
+            {every(s.frequency_days)}
+          </Status>
+          <span>
+            <Money kobo={s.annual_kobo} className="font-sans" /> a year
+          </span>
+        </span>
+      </span>
+      <span className="text-right">
+        <Money kobo={s.monthly_kobo} className="block font-sans text-[15px] font-semibold" />
+        <span className="text-[11.5px] text-t4">a month</span>
+      </span>
+      <span className="flex w-full gap-1.5 sm:w-auto">
+        {url && (
+          <Button asChild size="sm" variant="outline">
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              <Icon icon={LinkSquare02Icon} />
+              Cancel online
+            </a>
+          </Button>
+        )}
+        <Button size="sm" variant="outline" onClick={() => void copyEmail(s)}>
+          <Icon icon={Copy01Icon} />
+          Cancellation email
+        </Button>
+      </span>
+    </li>
+  );
+}
+
 function Subscriptions() {
   const subs = useResource(() => api.insights.subscriptions(), "subscriptions");
-  const body = subs.error ? (
-    <ErrorNotice error={subs.error} onRetry={subs.reload} />
-  ) : !subs.data ? (
-    <RowsSkeleton rows={3} />
-  ) : subs.data.length === 0 ? (
-    <p className="text-[13.5px] text-t3">No repeat charges found. They show up after three or more matching payments.</p>
-  ) : (
-    <ul className="divide-y divide-line">
-      {subs.data.map((s) => {
-        const url = safeCancelUrl(s.cancellation_url);
-        return (
-          <li key={`${s.merchant}-${s.frequency_days}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13.5px] font-medium">{s.merchant}</span>
-              <span className="text-[12.5px] text-t3">
-                {every(s.frequency_days)} · <Money kobo={s.annual_kobo} className="font-sans" /> a year
-              </span>
-            </span>
-            <span className="text-right text-[14px] font-[600]">
-              <Money kobo={s.monthly_kobo} className="font-sans" />
-              <span className="block text-[11.5px] font-normal text-t4">a month</span>
-            </span>
-            <span className="flex gap-1.5">
-              {url && (
-                <Button asChild size="sm" variant="outline">
-                  <a href={url} target="_blank" rel="noopener noreferrer">
-                    <Icon icon={LinkSquare02Icon} />
-                    Cancel online
-                  </a>
-                </Button>
-              )}
-              <Button size="sm" variant="ghost" onClick={() => void copyEmail(s)}>
-                <Icon icon={Copy01Icon} />
-                Copy email
-              </Button>
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  const list = subs.data ?? [];
+  const monthly = list.reduce((sum, s) => sum + s.monthly_kobo, 0);
+  const yearly = list.reduce((sum, s) => sum + s.annual_kobo, 0);
 
-  const total = subs.data?.reduce((sum, s) => sum + s.monthly_kobo, 0) ?? 0;
   return (
-    <Section
-      title="Subscriptions"
-      description="Charges that repeat on a steady schedule, with a quick way out."
-      aside={
-        subs.data && subs.data.length > 0 ? (
-          <span className="text-[13px] text-t3">
-            <Money kobo={total} className="font-sans font-[600] text-foreground" /> a month
-          </span>
-        ) : undefined
-      }
-    >
-      {body}
+    <Section title="Subscriptions" description="Charges that repeat on a steady schedule, with a quick way out.">
+      {subs.error ? (
+        <ErrorNotice error={subs.error} onRetry={subs.reload} />
+      ) : !subs.data ? (
+        <RowsSkeleton rows={3} />
+      ) : list.length === 0 ? (
+        <p className="text-[13.5px] text-t3">No repeat charges found. They show up after three or more matching payments.</p>
+      ) : (
+        <div className="grid  lg:gap-8">
+          <div className="rounded-2xl border border-line bg-panel-raised/40 p-4 self-start">
+            <p className="text-[12.5px] text-t3">Together they cost</p>
+            <p className="mt-1.5 text-[26px] leading-none font-[650] tracking-[-0.03em] tabular-nums">
+              <Money kobo={yearly} className="font-sans" />
+            </p>
+            <p className="mt-1 text-[12.5px] text-t3">a year</p>
+            <p className="mt-4 border-t border-line pt-3 text-[12.5px] text-t3">
+              <Money kobo={monthly} className="font-sans font-medium text-foreground" /> a month across{" "}
+              {plural(list.length, "subscription")}.
+            </p>
+          </div>
+          <ul className="divide-y divide-line">
+            {list.map((s) => (
+              <SubscriptionRow key={`${s.merchant}-${s.frequency_days}`} s={s} />
+            ))}
+          </ul>
+        </div>
+      )}
     </Section>
   );
 }
@@ -210,12 +338,214 @@ const HORIZONS = [6, 12, 24, 36] as const;
 const DEFAULT_SPARE_KOBO = 2_000_000; // ₦20,000
 const INPUT_ID = "spare-amount";
 
+/** "Money Market Mutual Fund (MMF)" → "MMF"; titles without a short form stay as they are. */
+const shortName = (title: string) => title.match(/\(([^)]+)\)\s*$/)?.[1] ?? title;
+
+const compactNaira = (kobo: number) =>
+  `₦${new Intl.NumberFormat("en-NG", { notation: "compact", maximumFractionDigits: 1 }).format(kobo / 100)}`;
+
+/**
+ * Monthly deposits compounding at the benchmark rate, month by month. Only
+ * draws the curve between the API's start and end values; the figures shown in
+ * words are the API's own.
+ */
+function curve(o: InvestmentOption, months: number): number[] {
+  const monthly = months > 0 ? o.total_invested_kobo / months : 0;
+  const r = o.benchmark_annual_rate_pct / 100 / 12;
+  const out = [0];
+  let v = 0;
+  for (let i = 0; i < months; i++) {
+    v = (v + monthly) * (1 + r);
+    out.push(v);
+  }
+  return out;
+}
+
+/**
+ * The best option against the same money kept as cash. The options sit too
+ * close to tell apart on one chart, so the cards carry each one's figures and
+ * the chart shows the one thing that matters: the gap growth opens up.
+ */
+function GrowthChart({ best, months }: { best: InvestmentOption; months: number }) {
+  const grown = curve(best, months);
+  const cash = grown.map((_, i) => best.total_invested_kobo * (i / months));
+  const top = Math.max(1, grown[grown.length - 1]);
+  const W = 100;
+  const H = 100;
+  const x = (i: number) => (i / months) * W;
+  const y = (v: number) => H - (v / top) * H;
+  const line = (s: number[]) => s.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(2)},${y(v).toFixed(2)}`).join(" ");
+  // Area between the growth line and the cash line: the money growth adds.
+  const gap = `${line(grown)} ${[...cash]
+    .map((v, i) => [i, v] as const)
+    .reverse()
+    .map(([i, v]) => `L${x(i).toFixed(2)},${y(v).toFixed(2)}`)
+    .join(" ")} Z`;
+  const grid = [0.25, 0.5, 0.75, 1];
+  const endCash = (y(cash[cash.length - 1]) / H) * 100;
+
+  return (
+    <figure className="rounded-2xl border border-line bg-panel-raised/40 p-4 sm:p-5">
+      <figcaption className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div>
+          <p className="text-[12.5px] text-t3">
+            In {months} months with {shortName(best.title)}
+          </p>
+          <p className="mt-1.5 flex flex-wrap items-baseline gap-x-2">
+            <Money kobo={best.projected_growth_kobo} className="font-sans text-[26px] leading-none font-[650] tracking-[-0.03em]" />
+            <span className="text-[13px] font-medium text-brand">
+              +<Money kobo={best.net_gain_kobo} className="font-sans" /> more than cash
+            </span>
+          </p>
+        </div>
+        <ul className="flex gap-4 text-[12px] text-t3">
+          <li className="inline-flex items-center gap-1.5">
+            <span className="h-0.5 w-4 rounded-full bg-brand" />
+            {shortName(best.title)} at {best.benchmark_annual_rate_pct}%
+          </li>
+          <li className="inline-flex items-center gap-1.5">
+            <span className="w-4 border-t-[1.5px] border-dashed border-t4" />
+            Kept as cash
+          </li>
+        </ul>
+      </figcaption>
+
+      <div className="relative mt-6 pl-12">
+        {/* Y axis labels in HTML so text stays crisp at any width. */}
+        <div className="relative h-44 sm:h-52">
+          {grid.map((g) => (
+            <span
+              key={g}
+              className="absolute -left-12 w-10 -translate-y-1/2 text-right text-[10.5px] text-t4 tabular-nums"
+              style={{ top: `${(1 - g) * 100}%` }}
+            >
+              {compactNaira(top * g)}
+            </span>
+          ))}
+          {grid.map((g) => (
+            <span
+              key={g}
+              aria-hidden="true"
+              className="absolute inset-x-0 border-t border-dashed border-line"
+              style={{ top: `${(1 - g) * 100}%` }}
+            />
+          ))}
+          <span aria-hidden="true" className="absolute inset-x-0 bottom-0 border-t border-line-strong" />
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio="none"
+            className="absolute inset-0 h-full w-full overflow-visible"
+            role="img"
+            aria-label={`${best.title} could grow to the amount shown after ${months} months, against the same money kept as cash`}
+          >
+            <defs>
+              <linearGradient id="growth-fill" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="var(--brand)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d={`${line(grown)} L${W},${H} L0,${H} Z`} fill="url(#growth-fill)" />
+            <path d={gap} fill="var(--brand)" fillOpacity="0.28" />
+            <path
+              d={line(cash)}
+              fill="none"
+              stroke="var(--t4)"
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+              vectorEffect="non-scaling-stroke"
+            />
+            <path
+              d={line(grown)}
+              fill="none"
+              stroke="var(--brand)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+          {/* End markers, in HTML so they stay round. */}
+          <span
+            aria-hidden="true"
+            className="absolute top-0 right-0 size-3 translate-x-1/2 -translate-y-1/2 rounded-full bg-brand ring-[3px] ring-panel"
+          />
+          <span
+            aria-hidden="true"
+            className="absolute right-0 size-2 translate-x-1/2 -translate-y-1/2 rounded-full bg-t4 ring-2 ring-panel"
+            style={{ top: `${endCash}%` }}
+          />
+        </div>
+        <div className="mt-2 flex justify-between text-[10.5px] text-t4">
+          <span>Now</span>
+          <span>{Math.round(months / 2)} months</span>
+          <span>{months} months</span>
+        </div>
+      </div>
+    </figure>
+  );
+}
+
+function OptionCard({ o, best }: { o: InvestmentOption; best: boolean }) {
+  const invested = o.projected_growth_kobo > 0 ? (o.total_invested_kobo / o.projected_growth_kobo) * 100 : 100;
+  return (
+    <li className="flex flex-col rounded-2xl border border-line bg-panel p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[14px] font-semibold">{o.title}</p>
+          <p className="mt-0.5 text-[12.5px] text-t3">
+            {o.asset_class} · {o.risk_level} risk
+          </p>
+        </div>
+        <span className="flex shrink-0 flex-col items-end gap-1">
+          <Status tone="brand">{o.benchmark_annual_rate_pct}% a year</Status>
+          {best && <span className="text-[11px] font-medium text-t4">Grows the most</span>}
+        </span>
+      </div>
+
+      <div className="mt-4">
+        <p className="text-[12.5px] text-t3">Could grow to</p>
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-2">
+          <Money kobo={o.projected_growth_kobo} className="font-sans text-[22px] font-[650] tracking-[-0.03em]" />
+          <span className="text-[12.5px] font-medium text-brand">
+            +<Money kobo={o.net_gain_kobo} className="font-sans" />
+          </span>
+        </p>
+        <span aria-hidden="true" className="mt-3 flex h-2 overflow-hidden rounded-full bg-foreground/6">
+          <span className="h-full bg-foreground/20" style={{ width: `${invested}%` }} />
+          <span className={cn("h-full rounded-r-full bg-brand", !best && "bg-brand/60")} style={{ width: `${100 - invested}%` }} />
+        </span>
+        <p className="mt-1.5 flex justify-between text-[11.5px] text-t4">
+          <span>
+            You put in <Money kobo={o.total_invested_kobo} className="font-sans" />
+          </span>
+          <span>Growth</span>
+        </p>
+      </div>
+
+      <p className="mt-4 text-[13px] leading-relaxed text-t3">{o.description}</p>
+
+      <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-line pt-3 text-[12px]">
+        <div>
+          <dt className="text-t4">Horizon</dt>
+          <dd className="mt-0.5 text-t2">{o.horizon_label}</dd>
+        </div>
+        <div>
+          <dt className="text-t4">Regulated by</dt>
+          <dd className="mt-0.5 text-t2">{o.regulatory_body}</dd>
+        </div>
+      </dl>
+      <p className="mt-2 text-[11.5px] text-t4">
+        From <Money kobo={o.minimum_monthly_kobo} className="font-sans" /> a month
+      </p>
+    </li>
+  );
+}
+
 function Investments() {
   const saved = useSavedScenarios();
   // Start from the most recent saved plan's monthly saving, if there is one.
   const start = saved[0]?.total_reduction_kobo || DEFAULT_SPARE_KOBO;
   const [amount, setAmount] = useState(String(start / 100));
-  const [horizon, setHorizon] = useState<number>(12);
   const [query, setQuery] = useState({ spare: start, horizon: 12 });
   const [inputError, setInputError] = useState<string | null>(null);
 
@@ -225,6 +555,8 @@ function Investments() {
   );
   const apiField = options.error?.field("monthly_spare_kobo") ?? options.error?.field("horizon_months");
   const fieldMessage = inputError ?? apiField ?? null;
+  // Highest projected value first, so the chart's strongest line is the best case.
+  const sorted = [...(options.data ?? [])].sort((a, b) => b.projected_growth_kobo - a.projected_growth_kobo);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -232,7 +564,7 @@ function Investments() {
     if (kobo === null) return setInputError("Use an amount like 20000 or 20,000.50.");
     if (kobo > MAX_TARGET_KOBO) return setInputError(`The most you can enter is ${fmtWhole(MAX_TARGET_KOBO)}.`);
     setInputError(null);
-    setQuery({ spare: kobo, horizon });
+    setQuery((q) => ({ ...q, spare: kobo }));
   }
 
   return (
@@ -240,13 +572,13 @@ function Investments() {
       title="Grow what you save"
       description="Regulated Nigerian options for the money a cut frees up. Benchmarks, not promises, and not financial advice."
     >
-      <form onSubmit={submit} className="flex flex-wrap items-start gap-3" noValidate>
-        <div className="w-full sm:w-52">
+      <form onSubmit={submit} className="flex flex-wrap items-end gap-3" noValidate>
+        <div className="w-full sm:w-56">
           <label htmlFor={INPUT_ID} className="text-[12.5px] text-t3">
-            Each month
+            Put aside each month
           </label>
-          <span className="relative mt-1 block">
-            <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[13px] text-t3">
+          <span className="relative mt-1 flex">
+            <span aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[13px] text-t3">
               ₦
             </span>
             <input
@@ -259,26 +591,26 @@ function Investments() {
                 setAmount(e.target.value);
                 setInputError(null);
               }}
+              onBlur={(e) => e.currentTarget.form?.requestSubmit()}
               className={cn(
-                "h-9 w-full rounded-xl border bg-panel pr-3 pl-7 text-[13px] tabular-nums",
+                "h-9 w-full rounded-full border bg-panel pr-3 pl-7 text-[13px] tabular-nums focus-visible:border-brand focus-visible:outline-none",
                 fieldMessage ? "border-destructive" : "border-line-strong",
               )}
             />
           </span>
-          <FieldError id={`${INPUT_ID}-err`}>{fieldMessage}</FieldError>
         </div>
         <fieldset>
           <legend className="text-[12.5px] text-t3">For</legend>
-          <div className="mt-1 flex gap-1 rounded-lg border border-line bg-panel-raised/60 p-1">
+          <div className="mt-1 flex gap-1 rounded-full border border-line bg-panel-raised/60 p-1">
             {HORIZONS.map((m) => (
               <button
                 key={m}
                 type="button"
-                aria-pressed={horizon === m}
-                onClick={() => setHorizon(m)}
+                aria-pressed={query.horizon === m}
+                onClick={() => setQuery((q) => ({ ...q, horizon: m }))}
                 className={cn(
-                  "h-7 rounded-md px-2.5 text-[12.5px] font-medium transition-colors",
-                  horizon === m ? "border border-line-strong bg-panel text-foreground shadow-sm" : "text-t3 hover:text-foreground",
+                  "h-7 rounded-full px-3 text-[12.5px] font-medium transition-colors",
+                  query.horizon === m ? "bg-panel text-foreground shadow-sm ring-1 ring-line-strong" : "text-t3 hover:text-foreground",
                 )}
               >
                 {m} months
@@ -286,61 +618,30 @@ function Investments() {
             ))}
           </div>
         </fieldset>
-        <Button type="submit" variant="outline" className="mt-[22px]">
-          <Icon icon={PiggyBankIcon} />
-          Show options
+        {/* Enter or leaving the field applies the amount; this keeps a visible way to do it. */}
+        <Button type="submit" variant="outline">
+          Update
         </Button>
       </form>
+      <FieldError id={`${INPUT_ID}-err`}>{fieldMessage}</FieldError>
 
       <div className="mt-5">
         {options.error ? (
           // A rejected amount is already shown under the input.
           apiField ? null : <ErrorNotice error={options.error} onRetry={options.reload} />
         ) : !options.data || options.loading ? (
-          <RowsSkeleton rows={3} />
+          <RowsSkeleton rows={4} />
+        ) : sorted.length === 0 ? (
+          <p className="text-[13.5px] text-t3">No options fit that horizon. Try a longer one.</p>
         ) : (
-          <ul className="grid gap-3 md:grid-cols-2">
-            {options.data.map((o) => (
-              <li key={o.title} className="flex flex-col rounded-2xl border border-line p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-[600]">{o.title}</p>
-                    <p className="text-[12.5px] text-t3">
-                      {o.asset_class} · {o.risk_level} risk
-                    </p>
-                  </div>
-                  <p className="shrink-0 text-right text-[17px] font-[650] tabular-nums">
-                    {o.benchmark_annual_rate_pct}%
-                    <span className="block text-[11px] font-normal text-t4">a year</span>
-                  </p>
-                </div>
-                <p className="mt-3 text-[13px] leading-relaxed text-t2">{o.description}</p>
-                <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-3 text-[12.5px]">
-                  <div>
-                    <dt className="text-t4">You put in</dt>
-                    <dd className="font-medium">
-                      <Money kobo={o.total_invested_kobo} className="font-sans" />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-t4">Could grow to</dt>
-                    <dd className="font-medium">
-                      <Money kobo={o.projected_growth_kobo} className="font-sans" />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-t4">Gain</dt>
-                    <dd className="font-medium text-positive">
-                      <Money kobo={o.net_gain_kobo} className="font-sans" />
-                    </dd>
-                  </div>
-                </dl>
-                <p className="mt-3 text-[11.5px] text-t4">
-                  {o.horizon_label} · from <Money kobo={o.minimum_monthly_kobo} className="font-sans" /> · {o.regulatory_body}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-3">
+            <GrowthChart best={sorted[0]} months={query.horizon} />
+            <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {sorted.map((o, i) => (
+                <OptionCard key={o.title} o={o} best={i === 0} />
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </Section>

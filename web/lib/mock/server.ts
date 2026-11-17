@@ -225,16 +225,21 @@ function parseCsv(text: string): { rows: ParsedRow[]; errors: RowError[]; total:
   return { rows, errors, total };
 }
 
+// First match wins, so specific merchants sit above broad words like MARKET or TRF.
+// Covers the generated sample (lib/sample.ts) and common wording on real
+// Nigerian bank exports (GTBank, Zenith, Access, UBA, OPay, Kuda, Moniepoint).
 const RULES: [RegExp, string][] = [
-  [/RENT|PROPERTIES/, "Rent"],
-  [/FRESHMART|GREENBASKET|MARKET/, "Food and groceries"],
-  [/CHOWHUB|KITCHEN|SUYA|CAFE/, "Eating out"],
-  [/RIDEGO|BRT|DANFO/, "Transport"],
-  [/POWERGRID|WATER/, "Utilities"],
-  [/STREAMCO|GYMHUB|CLOUDBOX/, "Subscriptions"],
-  [/AIRTIME|DATA BUNDLE/, "Data and airtime"],
-  [/PHARMACY|CLINIC/, "Health"],
-  [/STYLEHAUS|GADGETBAY|BOOKNOOK/, "Shopping"],
+  [/\bRENT\b|PROPERTIES|LANDLORD|SERVICE CHARGE/, "Rent"],
+  [/STREAMCO|GYMHUB|CLOUDBOX|SPOTIFY|NETFLIX|SHOWMAX|DSTV|GOTV|STARTIMES|APPLE\.COM|GOOGLE ?PLAY|YOUTUBE|ICLOUD|PRIME VIDEO|SUBSCRIPTION/, "Subscriptions"],
+  [/AIRTIME|DATA BUNDLE|\bVTU\b|\bMTN\b|\bGLO\b|AIRTEL|9MOBILE/, "Data and airtime"],
+  [/POWERGRID|ELECTRICITY|IKEDC|EKEDC|AEDC|PHED|IBEDC|KEDCO|PREPAID TOKEN|WATER BOARD|\bLAWMA\b|WASTE/, "Utilities"],
+  [/PHARMACY|CLINIC|HOSPITAL|MEDICAL|\bLAB\b|HMO|MEDIPLUS|HEALTHPLUS/, "Health"],
+  [/TUITION|SCHOOL|UNIVERSITY|\bWAEC\b|\bJAMB\b|COURSE|UDEMY/, "Education"],
+  [/RIDEGO|\bBRT\b|DANFO|BUS FARE|TRANSPORT|BOLT|UBER|INDRIVE|\bTAXI\b|FUEL|PETROL|FILLING STATION|TOTALENERGIES|\bNNPC\b|\bMRS\b|\bOANDO\b|\bLCC\b|TOLL/, "Transport"],
+  [/CHOWHUB|KITCHEN|SUYA|CAFE|RESTAURANT|EATERY|CHICKEN REPUBLIC|\bKFC\b|DOMINO|MR BIGGS|TANTALIZERS|SWEET SENSATION|COLD STONE|GLOVO|CHOWDECK|RICE AND STEW|BUKA/, "Eating out"],
+  [/FRESHMART|GREENBASKET|SHOPRITE|SPAR\b|JUSTRITE|PRINCE EBEANO|MARKET|SUPERMARKET|GROCER|FOOD STORE|FOOD ITEMS/, "Food and groceries"],
+  [/STYLEHAUS|GADGETBAY|BOOKNOOK|JUMIA|KONGA|SLOT\b|CLOTHING|FASHION|BOUTIQUE|CINEMA|FILMHOUSE|GENESIS/, "Shopping"],
+  [/PIGGYVEST|COWRYWISE|RISEVEST|SAVINGS|TRANSFER TO|\bTRF\b|\bTRANSFER\b|NIP\/|\bNIP\b|\bFIP\b|WALLET/, "Transfers"],
 ];
 
 function categorise(description: string, direction: string): string | null {
