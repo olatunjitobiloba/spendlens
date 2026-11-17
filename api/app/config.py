@@ -3,6 +3,11 @@
 from dataclasses import dataclass
 from functools import lru_cache
 from os import getenv
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
 @dataclass(frozen=True)

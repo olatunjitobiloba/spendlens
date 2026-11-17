@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel
+from uuid import UUID
 
 from .auth import CurrentUser, get_current_user
 from .config import Settings, get_settings
@@ -49,3 +50,15 @@ async def commit_import(
     except DatabaseError as exc:
         raise HTTPException(status_code=502, detail="Could not save import") from exc
     return ImportCommit.model_validate(result)
+
+
+@router.delete("/{import_id}")
+async def delete_import(
+    import_id: UUID,
+    user: CurrentUser = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> dict:
+    try:
+        return await SupabaseGateway(settings, user.token).rpc("delete_import", {"p_import_id": str(import_id)})
+    except DatabaseError as exc:
+        raise HTTPException(status_code=404, detail="Import not found") from exc

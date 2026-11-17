@@ -6,7 +6,7 @@ client = TestClient(app)
 
 
 def test_health():
-    assert client.get("/health").json() == {"status": "ok"}
+    assert client.get("/health").json() == {"status": "ok", "database": "not_configured"}
 
 
 def test_goal_projection_is_non_advisory():

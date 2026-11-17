@@ -15,8 +15,10 @@ uvicorn api.app.main:app --reload
 
 ## Supabase setup
 
-Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`, then run [`migrations/001_initial.sql`](migrations/001_initial.sql) in the Supabase SQL editor. The migration enables RLS and creates `commit_import`, a user-JWT-scoped RPC that atomically creates an import, its transactions, and duplicate candidates. The API never accepts a user ID from the client.
+Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `.env`, then run [`migrations/001_initial.sql`](migrations/001_initial.sql) in the Supabase SQL editor. The API loads this root `.env` locally; Render supplies the same values as environment variables. The migration enables RLS and creates `commit_import`, a user-JWT-scoped RPC that atomically creates an import, its transactions, and duplicate candidates. The API never accepts a user ID from the client.
 
 Analysis and scenarios are calculated by Supabase RPCs with integer-kobo arithmetic. Pending duplicate candidates remain in totals; confirmed duplicate or internal-transfer links are excluded.
+
+`DELETE /v1/imports/{id}` removes an import and its derived links. `DELETE /v1/me/data` removes financial data and retains billing records; it writes an audit event without transaction content.
 
 All rate limiting will be explicitly documented as demo-level when authenticated routes are added; no sensitive transaction fields are logged.

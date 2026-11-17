@@ -67,3 +67,17 @@ class SupabaseServiceGateway(SupabaseGateway):
             raise DatabaseError("Supabase service role is not configured")
         super().__init__(settings, settings.supabase_service_role_key)
         self._headers["apikey"] = settings.supabase_service_role_key
+
+
+async def database_health(settings: Settings) -> bool:
+    if not settings.supabase_ready:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=3) as client:
+            response = await client.get(
+                f"{settings.supabase_url.rstrip('/')}/rest/v1/",
+                headers={"apikey": settings.supabase_anon_key or ""},
+            )
+        return response.status_code < 500
+    except httpx.HTTPError:
+        return False

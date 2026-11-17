@@ -33,4 +33,4 @@ def test_commit_uses_one_rpc_with_enriched_rows_and_duplicate_candidates(monkeyp
     assert captured["function"] == "commit_import"
     assert len(captured["payload"]["p_transactions"]) == 2
     assert captured["payload"]["p_transactions"][1]["status"] == "Possible duplicate"
-    assert captured["payload"]["p_duplicate_candidates"][0]["txn_source_rows"] == [2, 3]
+    assert captured["payload"]["p_duplicate_candidates"][0]["txn_source_rows"] == [3]

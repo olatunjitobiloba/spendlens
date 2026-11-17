@@ -250,6 +250,9 @@ as $$
     where t.user_id = auth.uid()
       and t.txn_date between p_start and p_end
       and t.direction = 'debit'
+      and coalesce(t.category, 'Uncategorized') not in (
+        select category from public.protections where user_id = auth.uid()
+      )
       and not exists (
         select 1 from public.reconciliation_links link
         where link.user_id = auth.uid()
@@ -358,6 +361,13 @@ begin
       select coalesce(jsonb_agg(id), '[]'::jsonb) from (
         select t.id from public.transactions t
         where t.user_id = auth.uid() and t.txn_date between p_start and p_end and t.direction = 'debit'
+          and coalesce(t.category, 'Uncategorized') not in (
+            select category from public.protections where user_id = auth.uid()
+          )
+          and not exists (
+            select 1 from public.reconciliation_links link
+            where link.user_id = auth.uid() and link.state = 'confirmed' and t.id = any(link.txn_ids)
+          )
           and coalesce(t.category, 'Uncategorized') in (
             select category from jsonb_to_recordset(p_reductions) as reduction(category text, percent integer)
           )
@@ -427,3 +437,30 @@ grant execute on function public.create_billing_order(text, bigint, text) to aut
 grant execute on function public.get_billing_order(uuid) to authenticated;
 grant usage on schema public to service_role;
 grant execute on function public.process_kora_event(text, text, text, bigint, text, text, text) to service_role;
+
+create or replace function public.delete_import(p_import_id uuid)
+returns jsonb language plpgsql security invoker set search_path = public as $$
+declare ids uuid[];
+begin
+  select array_agg(id) into ids from public.transactions where import_id = p_import_id and user_id = auth.uid();
+  if ids is null then raise exception 'import not found'; end if;
+  delete from public.reconciliation_links where user_id = auth.uid() and txn_ids && ids;
+  delete from public.scenarios where user_id = auth.uid()
+    and (result->'evidence_txn_ids') ?| (select array_agg(id::text) from unnest(ids) id);
+  delete from public.imports where id = p_import_id and user_id = auth.uid();
+  return jsonb_build_object('deleted', true);
+end; $$;
+
+create or replace function public.delete_my_data()
+returns jsonb language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.reconciliation_links where user_id = auth.uid();
+  delete from public.protections where user_id = auth.uid();
+  delete from public.scenarios where user_id = auth.uid();
+  delete from public.accounts where user_id = auth.uid();
+  insert into public.audit_events (user_id, action, entity) values (auth.uid(), 'delete_data', 'financial_data');
+  return jsonb_build_object('deleted', true);
+end; $$;
+
+grant execute on function public.delete_import(uuid) to authenticated;
+grant execute on function public.delete_my_data() to authenticated;

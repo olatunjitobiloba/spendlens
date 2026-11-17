@@ -7,7 +7,7 @@ import hashlib
 import io
 from dataclasses import dataclass
 from datetime import date, time
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation
 
 from ai.banks import normalize_bank
 from ai.duplicates import find_duplicates, statuses
@@ -120,7 +120,7 @@ def prepare_commit(content: bytes) -> tuple[ImportPreview, list[dict[str, object
     candidates = [
         {
             "kind": candidate["kind"],
-            "txn_source_rows": [int(transaction_id) for transaction_id in candidate["txn_ids"]],
+            "txn_source_rows": [int(transaction_id) for transaction_id in candidate["txn_ids"][1:]],
         }
         for candidate in duplicates
     ]
@@ -156,7 +156,9 @@ def _parse_row(row: dict[str, str | None], line_number: int) -> ImportRow:
         raise ValueError("amount must be a decimal number") from exc
     if not amount.is_finite() or amount <= 0:
         raise ValueError("amount must be greater than zero")
-    amount_kobo = int((amount * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    if amount.as_tuple().exponent < -2:
+        raise ValueError("amount must have at most two decimal places")
+    amount_kobo = int(amount * 100)
     account_alias = field("account_alias", "Primary")
     bank = normalize_bank(field("bank"))
 

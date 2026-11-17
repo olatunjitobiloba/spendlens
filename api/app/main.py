@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from ai.goals import GoalInput, GoalProjection, project_goal
@@ -11,6 +11,8 @@ from .imports import router as imports_router
 from .transactions import router as transactions_router
 from .analysis import router as analysis_router
 from .billing import router as billing_router
+from .db import database_health
+from .privacy import router as privacy_router
 
 app = FastAPI(title="SpendLens API", version="0.1.0")
 settings = get_settings()
@@ -26,11 +28,16 @@ app.include_router(imports_router)
 app.include_router(transactions_router)
 app.include_router(analysis_router)
 app.include_router(billing_router)
+app.include_router(privacy_router)
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health(settings=Depends(get_settings)) -> dict[str, str]:
+    if not settings.supabase_ready:
+        return {"status": "ok", "database": "not_configured"}
+    if not await database_health(settings):
+        raise HTTPException(status_code=503, detail="database unavailable")
+    return {"status": "ok", "database": "ok"}
 
 
 @app.post("/v1/imports/preview", response_model=ImportPreview)
