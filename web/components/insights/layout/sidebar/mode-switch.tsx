@@ -53,7 +53,7 @@ export function ModeSwitch({ collapsed }: { collapsed: boolean }) {
   if (fixtures === null) return <div aria-hidden="true" className={collapsed ? "h-9" : "h-[86px]"} />;
 
   if (collapsed) {
-    const next = fixtures ? "live API" : "sample data";
+    const next = fixtures ? "live" : "sample data";
     const label = fixtures
       ? blocker
         ? `Sample data. ${blocker}`
@@ -87,7 +87,7 @@ export function ModeSwitch({ collapsed }: { collapsed: boolean }) {
           active={!fixtures}
           disabled={fixtures && Boolean(blocker)}
           icon={CloudServerIcon}
-          label="Live API"
+          label="Live"
           onClick={() => switchMode(false)}
         />
       </div>

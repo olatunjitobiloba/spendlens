@@ -8,12 +8,17 @@ import {
   FileImportIcon,
   Loading03Icon,
   Pdf02Icon,
+  SparklesIcon,
   SquareLock02Icon,
   WeightScale01Icon,
 } from "@hugeicons/core-free-icons";
 
 import { Icon, type IconSvgElement } from "@/components/ui/icon";
+import { useFixtureMode } from "@/hooks/use-fixture-mode";
 import { cn } from "@/utils/cn";
+
+const primaryButton =
+  "mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-sm font-medium text-white shadow-md shadow-brand/25 transition-colors hover:bg-[#006ad3]";
 
 function Fact({ icon, children }: { icon: IconSvgElement; children: React.ReactNode }) {
   return (
@@ -24,17 +29,23 @@ function Fact({ icon, children }: { icon: IconSvgElement; children: React.ReactN
   );
 }
 
-/** Drop zone plus a real file input, so it works by keyboard too. */
+/**
+ * Drop zone plus a real file input, so it works by keyboard too.
+ * In sample mode the main button imports the sample statement directly.
+ */
 export function FilePicker({
   onFile,
   onTrySample,
+  onUseSample,
   busy,
 }: {
   onFile: (f: File) => void;
   onTrySample: () => void;
+  onUseSample: () => void;
   busy: boolean;
 }) {
   const [drag, setDrag] = useState(false);
+  const sampleMode = useFixtureMode() === true;
   return (
     <div
       onDragOver={(e) => {
@@ -77,7 +88,13 @@ export function FilePicker({
       </div>
 
       <p className="text-[17px] font-[650] tracking-[-0.02em]" aria-live="polite">
-        {busy ? "Checking your file…" : drag ? "Drop it here" : "Drop a statement here, or choose one"}
+        {busy
+          ? "Checking your file…"
+          : drag
+            ? "Drop it here"
+            : sampleMode
+              ? "Drop a statement here, or try the sample"
+              : "Drop a statement here, or choose one"}
       </p>
       <ul className="mt-3 flex flex-wrap justify-center gap-1.5">
         <Fact icon={Csv02Icon}>CSV or PDF</Fact>
@@ -85,41 +102,56 @@ export function FilePicker({
         <Fact icon={SquareLock02Icon}>Nothing saved until you confirm</Fact>
       </ul>
 
-      <label
-        className={cn(
-          "mt-6 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-brand px-5 text-sm font-medium text-white shadow-md shadow-brand/25 transition-colors hover:bg-[#006ad3] has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
-          busy && "pointer-events-none opacity-60",
-        )}
-      >
-        <Icon icon={FileImportIcon} />
-        Choose a file
-        <input
-          type="file"
-          accept=".csv,text/csv,.pdf,application/pdf"
+      {sampleMode ? (
+        <button
+          type="button"
+          onClick={onUseSample}
           disabled={busy}
-          className="sr-only"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onFile(f);
-            e.target.value = "";
-          }}
-        />
-      </label>
+          className={cn(primaryButton, "focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-60")}
+        >
+          <Icon icon={SparklesIcon} />
+          Try with sample
+        </button>
+      ) : (
+        <>
+          <label
+            className={cn(
+              primaryButton,
+              "cursor-pointer has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
+              busy && "pointer-events-none opacity-60",
+            )}
+          >
+            <Icon icon={FileImportIcon} />
+            Choose a file
+            <input
+              type="file"
+              accept=".csv,text/csv,.pdf,application/pdf"
+              disabled={busy}
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onFile(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
 
-      <div className="mt-8 flex w-full max-w-sm items-center gap-3 text-[12px] text-t4">
-        <span className="h-px flex-1 bg-brand/15" />
-        or
-        <span className="h-px flex-1 bg-brand/15" />
-      </div>
-      <button
-        type="button"
-        onClick={onTrySample}
-        disabled={busy}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-brand hover:bg-brand/[0.08] disabled:opacity-50"
-      >
-        <Icon icon={FileEmpty01Icon} className="size-3.5" />
-        No file handy? Try with sample data
-      </button>
+          <div className="mt-8 flex w-full max-w-sm items-center gap-3 text-[12px] text-t4">
+            <span className="h-px flex-1 bg-brand/15" />
+            or
+            <span className="h-px flex-1 bg-brand/15" />
+          </div>
+          <button
+            type="button"
+            onClick={onTrySample}
+            disabled={busy}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-brand hover:bg-brand/[0.08] disabled:opacity-50"
+          >
+            <Icon icon={FileEmpty01Icon} className="size-3.5" />
+            No file handy? Try with sample data
+          </button>
+        </>
+      )}
     </div>
   );
 }
