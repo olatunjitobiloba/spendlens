@@ -7,6 +7,7 @@ import {
   ArrowRight01Icon,
   Coins01Icon,
   Copy01Icon,
+  InformationCircleIcon,
   LinkSquare02Icon,
   Moon02Icon,
   Tick02Icon,
@@ -15,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FieldError } from "@/components/ui/field-error";
+import { Hint } from "@/components/ui/hint";
 import { Icon, type IconSvgElement } from "@/components/ui/icon";
 import { Money } from "@/components/ui/money";
 import { PageHeader } from "@/components/ui/page-header";
@@ -485,58 +487,59 @@ function GrowthChart({ best, months }: { best: InvestmentOption; months: number 
   );
 }
 
+/** "Nigerian Treasury Bills (T-Bills)" → "Nigerian Treasury Bills". */
+const plainName = (title: string) => title.replace(/\s*\([^)]*\)\s*$/, "");
+
+/**
+ * One option, kept to what decides it: rate, risk, what it could grow to.
+ * The long description and regulator sit behind the info button.
+ */
 function OptionCard({ o, best }: { o: InvestmentOption; best: boolean }) {
   const invested = o.projected_growth_kobo > 0 ? (o.total_invested_kobo / o.projected_growth_kobo) * 100 : 100;
   return (
-    <li className="flex flex-col rounded-2xl border border-line bg-panel p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[14px] font-semibold">{o.title}</p>
-          <p className="mt-0.5 text-[12.5px] text-t3">
-            {o.asset_class} · {o.risk_level} risk
-          </p>
-        </div>
-        <span className="flex shrink-0 flex-col items-end gap-1">
-          <Status tone="brand">{o.benchmark_annual_rate_pct}% a year</Status>
-          {best && <span className="text-[11px] font-medium text-t4">Grows the most</span>}
-        </span>
+    <li
+      className={cn(
+        "flex flex-col rounded-2xl border bg-panel p-5",
+        best ? "border-brand/40 shadow-[0_0_0_3px_color-mix(in_oklab,var(--brand)_8%,transparent)]" : "border-line",
+      )}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <Status tone={best ? "brand" : "neutral"}>{o.benchmark_annual_rate_pct}% a year</Status>
+        <Hint
+          label={
+            <span className="block max-w-64 leading-relaxed font-normal">
+              {o.description}
+              <span className="mt-1.5 block opacity-70">Regulated by {o.regulatory_body}</span>
+            </span>
+          }
+        >
+          <button
+            type="button"
+            aria-label={`About ${plainName(o.title)}`}
+            className="inline-flex size-7 items-center justify-center rounded-full text-t4 hover:bg-foreground/6 hover:text-foreground"
+          >
+            <Icon icon={InformationCircleIcon} className="size-4" />
+          </button>
+        </Hint>
       </div>
 
-      <div className="mt-4">
-        <p className="text-[12.5px] text-t3">Could grow to</p>
-        <p className="mt-1 flex flex-wrap items-baseline gap-x-2">
-          <Money kobo={o.projected_growth_kobo} className="font-sans text-[22px] font-[650] tracking-[-0.03em]" />
-          <span className="text-[12.5px] font-medium text-brand">
-            +<Money kobo={o.net_gain_kobo} className="font-sans" />
-          </span>
-        </p>
-        <span aria-hidden="true" className="mt-3 flex h-2 overflow-hidden rounded-full bg-foreground/6">
+      <p className="mt-4 text-[14.5px] leading-snug font-semibold tracking-[-0.01em]">{plainName(o.title)}</p>
+      <p className="mt-1 text-[12.5px] text-t3">{o.risk_level} risk</p>
+
+      <div className="mt-auto pt-6">
+        <p className="text-[12px] text-t4">Could grow to</p>
+        <Money
+          kobo={o.projected_growth_kobo}
+          className="mt-1 block font-sans text-[22px] leading-none font-[650] tracking-[-0.03em]"
+        />
+        <span aria-hidden="true" className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-foreground/6">
           <span className="h-full bg-foreground/20" style={{ width: `${invested}%` }} />
-          <span className={cn("h-full rounded-r-full bg-brand", !best && "bg-brand/60")} style={{ width: `${100 - invested}%` }} />
+          <span className="h-full rounded-r-full bg-brand" style={{ width: `${100 - invested}%` }} />
         </span>
-        <p className="mt-1.5 flex justify-between text-[11.5px] text-t4">
-          <span>
-            You put in <Money kobo={o.total_invested_kobo} className="font-sans" />
-          </span>
-          <span>Growth</span>
+        <p className="mt-2 text-[12px] font-medium text-brand">
+          +<Money kobo={o.net_gain_kobo} className="font-sans" /> growth
         </p>
       </div>
-
-      <p className="mt-4 text-[13px] leading-relaxed text-t3">{o.description}</p>
-
-      <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-line pt-3 text-[12px]">
-        <div>
-          <dt className="text-t4">Horizon</dt>
-          <dd className="mt-0.5 text-t2">{o.horizon_label}</dd>
-        </div>
-        <div>
-          <dt className="text-t4">Regulated by</dt>
-          <dd className="mt-0.5 text-t2">{o.regulatory_body}</dd>
-        </div>
-      </dl>
-      <p className="mt-2 text-[11.5px] text-t4">
-        From <Money kobo={o.minimum_monthly_kobo} className="font-sans" /> a month
-      </p>
     </li>
   );
 }
@@ -636,7 +639,7 @@ function Investments() {
         ) : (
           <div className="space-y-3">
             <GrowthChart best={sorted[0]} months={query.horizon} />
-            <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {sorted.map((o, i) => (
                 <OptionCard key={o.title} o={o} best={i === 0} />
               ))}
