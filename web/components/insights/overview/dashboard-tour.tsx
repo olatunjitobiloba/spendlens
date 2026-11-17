@@ -12,13 +12,12 @@ import { useLocalFlag } from "@/hooks/use-local-flag";
 /** Mark an element as a tour target with `data-tour={id}`. */
 export type TourStep = { id: string; title: string; body: string };
 
-/** At most six steps. Steps whose target is missing or hidden (e.g. the sidebar on mobile) are left out. */
+/**
+ * The dashboard first, then each page in the sidebar up to (not including) Bank integration.
+ * Sidebar links carry `data-tour="page:<href>"`. Steps whose target is missing or hidden
+ * (e.g. the sidebar on mobile) are left out.
+ */
 export const OVERVIEW_TOUR: TourStep[] = [
-  {
-    id: "nav",
-    title: "Find your way around",
-    body: "Import statements, review flagged transactions, plan savings, spot habits or ask the AI chat — all from here.",
-  },
   {
     id: "header",
     title: "Pick a month",
@@ -44,7 +43,37 @@ export const OVERVIEW_TOUR: TourStep[] = [
     title: "Where it goes",
     body: "Every category ranked by spend, protected ones in grey. Select one to see the transactions behind it.",
   },
-].slice(0, 6);
+  {
+    id: "page:/insights/import",
+    title: "Import",
+    body: "Upload a CSV export or a PDF bank statement. SpendLens checks every row and shows you what it found before saving anything.",
+  },
+  {
+    id: "page:/insights/review",
+    title: "Review",
+    body: "Correct anything that looks wrong, like possible duplicates or uncategorised payments. Totals update from your answers.",
+  },
+  {
+    id: "page:/insights/plan",
+    title: "Plan",
+    body: "Protect what you can't change, then test a cut on the rest to see what you'd save. Nothing is cancelled or moved.",
+  },
+  {
+    id: "page:/insights/habits",
+    title: "Habits",
+    body: "When you tend to spend, what keeps charging you, and where the money you save could go.",
+  },
+  {
+    id: "page:/insights/chat",
+    title: "AI chat",
+    body: "Ask questions about your spending in plain words and get answers from your own transactions.",
+  },
+  {
+    id: "page:/insights/pro",
+    title: "SpendLens Pro",
+    body: "Free gives you the summary and scenarios. Pro adds the tools for keeping a plan going.",
+  },
+];
 
 /** Closed for this visit only; it comes back next session unless skipped. */
 const CANCELLED_KEY = "spendlens:tour-cancelled";

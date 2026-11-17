@@ -45,7 +45,7 @@ function SidebarBody({
   return (
     <div className="flex h-full flex-col gap-5 p-3">
       {header}
-      <div data-tour="nav" className="-mx-1 flex-1 overflow-y-auto px-1 py-3">
+      <div className="-mx-1 flex-1 overflow-y-auto px-1 py-3">
         <SidebarNav collapsed={collapsed} onNavigate={onNavigate} />
       </div>
       {!collapsed && <GetStartedCard onNavigate={onNavigate} />}
