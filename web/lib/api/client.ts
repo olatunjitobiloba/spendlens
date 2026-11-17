@@ -107,6 +107,12 @@ export const http = create(`${API_URL}${API_PREFIX}`);
 /** Routes outside the version prefix, such as /health. */
 export const rootHttp = create(API_URL);
 
+/**
+ * For file uploads. The docs declare multipart/form-data with a binary `file`
+ * field; axios adds the boundary itself, so never hand-write one.
+ */
+export const MULTIPART = { "Content-Type": "multipart/form-data" } as const;
+
 /** A fresh key per user action; a retry of the same action reuses it. */
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();

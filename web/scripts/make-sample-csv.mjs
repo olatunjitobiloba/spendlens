@@ -76,8 +76,13 @@ add("2026-09-26", "GADGETBAY 3381", 1_850_000, "debit", KUDA);
 add("2026-09-27", "POS GADGETBAY IKEJA", 1_850_000, "debit", MONIEPOINT);
 
 rows.sort((a, b) => a.date.localeCompare(b.date) || a.description.localeCompare(b.description));
-const csv = ["date,description,amount_kobo,direction,account,bank"]
-  .concat(rows.map((r) => [r.date, r.description, r.amount_kobo, r.direction, r.account, BANK_OF[r.account]].join(",")))
+// The API's canonical columns (api/app/csv_import.py): amount is naira with two decimals.
+const csv = ["date,description,amount,direction,account_alias,bank"]
+  .concat(
+    rows.map((r) =>
+      [r.date, r.description, (r.amount_kobo / 100).toFixed(2), r.direction, r.account, BANK_OF[r.account]].join(","),
+    ),
+  )
   .join("\n");
 
 const out = fileURLToPath(new URL("../public/fixtures/sample-transactions.csv", import.meta.url));

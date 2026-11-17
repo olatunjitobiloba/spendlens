@@ -252,95 +252,13 @@ export function PlanSkeleton() {
   );
 }
 
-export function ProSkeleton({ header = true }: { header?: boolean }) {
+export function HabitsSkeleton() {
   return (
-    <Live label="Checking your plan">
-      {header && <PageHeaderSkeleton />}
-      <div className="grid items-start gap-3 lg:grid-cols-[1.6fr_1fr]">
-        <Panel className="p-0 sm:p-0">
-          <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-4 border-b border-line p-5">
-            <Skeleton className="h-4 w-24" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-12" />
-              <Skeleton className="h-6 w-16" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-12" />
-              <Skeleton className="h-6 w-24" />
-            </div>
-          </div>
-          <div className="divide-y divide-line px-5">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-[1.4fr_1fr_1fr] items-center gap-4 py-3.5">
-                <Skeleton className="h-3.5" style={{ width: `${55 + ((i * 11) % 35)}%` }} />
-                <Skeleton className="size-5 rounded-full" />
-                <Skeleton className="size-5 rounded-full" />
-              </div>
-            ))}
-          </div>
-        </Panel>
-        <Panel>
-          <PanelTitle />
-          <Skeleton className="h-16 rounded-2xl" />
-          <Skeleton className="mt-3 h-11 rounded-full" />
-          <Skeleton className="mt-4 h-3 w-full" />
-          <Skeleton className="mt-1.5 h-3 w-2/3" />
-        </Panel>
-      </div>
-    </Live>
-  );
-}
-
-export function ForecastGridSkeleton() {
-  return (
-    <Panel>
-      <PanelTitle wide />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-line p-4">
-            <div className="flex justify-between">
-              <Skeleton className="h-3.5 w-24" />
-              <Skeleton className="h-5 w-14 rounded-full" />
-            </div>
-            <Skeleton className="mt-4 h-6 w-28" />
-            <Skeleton className="mt-2 h-3 w-40" />
-            <Skeleton className="mt-5 h-3 w-24" />
-          </div>
-        ))}
-      </div>
-    </Panel>
-  );
-}
-
-export function RecurringSkeleton() {
-  return (
-    <div className="divide-y divide-line">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex flex-wrap items-center justify-between gap-3 py-3">
-          <div className="space-y-1.5">
-            <Skeleton className="h-3.5 w-32" />
-            <Skeleton className="h-3 w-64 max-w-full" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-6 w-28 rounded-full" />
-            <Skeleton className="h-3.5 w-20" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export function ForecastSkeleton() {
-  return (
-    <Live label="Loading forecast">
+    <Live label="Loading habits and subscriptions">
       <PageHeaderSkeleton />
       <div className="space-y-3">
-        <ForecastGridSkeleton />
-        <Panel>
-          <PanelTitle />
-          <RecurringSkeleton />
-        </Panel>
+        <SectionSkeleton rows={3} />
+        <SectionSkeleton rows={3} />
       </div>
     </Live>
   );

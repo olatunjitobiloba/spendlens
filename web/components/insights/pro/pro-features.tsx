@@ -40,7 +40,7 @@ const groups: { label: string; rows: Row[] }[] = [
     label: "Keep a plan going",
     rows: [
       { icon: Exchange01Icon, title: "Month comparison", detail: "Which categories went up or down, line by line.", free: false, pro: true },
-      { icon: ChartLineData01Icon, title: "Spending forecast", detail: "A range per category for next month, or an honest “not enough data”.", free: false, pro: true },
+      { icon: ChartLineData01Icon, title: "Habits and subscriptions", detail: "Late-night and weekend spending, small drains and repeat charges.", free: false, pro: true },
     ],
   },
 ];

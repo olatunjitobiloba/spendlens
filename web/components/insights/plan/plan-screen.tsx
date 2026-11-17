@@ -13,8 +13,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TESTED_CUT_KEY } from "@/configs/insights";
 import { setLocalFlag } from "@/hooks/use-local-flag";
-import { asApiError, useResource } from "@/hooks/use-resource";
-import { api, isFixtureMode, type ApiError } from "@/lib/api";
+import { useResource } from "@/hooks/use-resource";
+import { api } from "@/lib/api";
+import { buildScenario, useProtections, withProtections } from "@/lib/plan";
 import type { Scenario } from "@/types/api";
 import { monthToRange } from "@/utils/dates";
 import { formatMonth } from "@/utils/format";
@@ -28,8 +29,8 @@ import { Protections } from "./protections";
 import { SavedScenarios } from "./saved-scenarios";
 import { ScenarioResultDialog } from "./scenario-result";
 
-/** Sample mode answers in a blink; hold the loading state long enough to read. */
-const SAMPLE_MIN_WAIT_MS = 1200;
+/** The maths is instant; a short beat lets the result dialog's loading state read as work done. */
+const MIN_WAIT_MS = 600;
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type Tab = "cut" | "goal";
@@ -43,9 +44,8 @@ export function PlanScreen() {
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [lastCuts, setLastCuts] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
   const [open, setOpen] = useState(false);
-  const [savedVersion, setSavedVersion] = useState(0);
+  const protections = useProtections();
   // Lives here, not in GoalCard, so it survives switching tabs.
   const [target, setTarget] = useState("");
   const tab: Tab = params.get("tab") === "goal" ? "goal" : "cut";
@@ -57,35 +57,23 @@ export function PlanScreen() {
     router.replace(`?${next.toString()}`, { scroll: false });
   }
 
-  const a = analysis.data;
+  const a = analysis.data ? withProtections(analysis.data, protections) : undefined;
   const current = month ?? a?.range.start.slice(0, 7) ?? "";
   // A result only belongs to the month it was calculated for.
   const shown = scenario && scenario.range.start.slice(0, 7) === current ? scenario : null;
-  const stale = Boolean(shown) && JSON.stringify(cuts) !== lastCuts;
+  const stale = Boolean(shown) && JSON.stringify([cuts, protections]) !== lastCuts;
   const invalid = anyInvalidCut(cuts);
 
   async function calculate() {
     if (!a) return;
     setBusy(true);
-    setError(null);
     setOpen(true);
-    const list = a.categories
-      .filter((c) => !c.protected)
-      .map((c) => ({ category: c.category, percent: Number(cuts[c.category] || 0) }))
-      .filter((c) => c.percent > 0);
-    try {
-      const [result] = await Promise.all([
-        api.plan.createScenario({ range: a.range, cuts: list }),
-        isFixtureMode() ? wait(SAMPLE_MIN_WAIT_MS) : null,
-      ]);
-      setScenario(result);
-      setLastCuts(JSON.stringify(cuts));
-      setLocalFlag(TESTED_CUT_KEY, true);
-    } catch (e) {
-      setError(asApiError(e));
-    } finally {
-      setBusy(false);
-    }
+    const percents = Object.fromEntries(Object.entries(cuts).map(([k, v]) => [k, Number(v || 0)]));
+    await wait(MIN_WAIT_MS);
+    setScenario(buildScenario(a, protections, percents));
+    setLastCuts(JSON.stringify([cuts, protections]));
+    setLocalFlag(TESTED_CUT_KEY, true);
+    setBusy(false);
   }
 
   if (analysis.error) return <ErrorNotice error={analysis.error} onRetry={analysis.reload} />;
@@ -112,7 +100,7 @@ export function PlanScreen() {
     <>
       <PageHeader
         title={`Plan a cut for ${formatMonth(current)}`}
-        description="Protect what you can't change, then test a cut on the rest. SpendLens does the maths; nothing is cancelled or moved."
+        description="Protect what you can't change, then test a cut on the rest. The maths runs on this device from your totals; nothing is cancelled or moved."
         aside={<MonthSelect months={a.available_months} month={current} />}
       />
       <Tabs value={tab} onValueChange={(v) => setTab(v === "goal" ? "goal" : null)} className="gap-3">
@@ -129,13 +117,7 @@ export function PlanScreen() {
 
         <TabsContent value="cut">
           <div className="grid items-start gap-3 lg:grid-cols-[1fr_1.4fr]">
-            <Protections
-              analysis={a}
-              onChanged={async () => {
-                await analysis.reload();
-                setScenario(null);
-              }}
-            />
+            <Protections analysis={a} />
             <CutBuilder analysis={a} cuts={cuts} setCuts={setCuts} onCalculate={calculate} />
           </div>
 
@@ -162,7 +144,7 @@ export function PlanScreen() {
           </div>
 
           <div className="mt-5">
-            <SavedScenarios version={savedVersion} />
+            <SavedScenarios />
           </div>
         </TabsContent>
 
@@ -176,10 +158,7 @@ export function PlanScreen() {
         onOpenChange={setOpen}
         scenario={shown}
         busy={busy}
-        error={error}
-        onRetry={calculate}
         month={current}
-        onSaved={() => setSavedVersion((v) => v + 1)}
       />
     </>
   );

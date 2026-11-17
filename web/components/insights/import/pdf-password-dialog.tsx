@@ -46,14 +46,11 @@ export function PdfPasswordDialog({
   const [shake, setShake] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // A new rejection: clear the field and shake it (adjusted during render)...
+  // A new rejection: shake the field (adjusted during render)...
   const [seenAttempt, setSeenAttempt] = useState(attempt);
   if (attempt !== seenAttempt) {
     setSeenAttempt(attempt);
-    if (attempt) {
-      setPassword("");
-      setShake((n) => n + 1);
-    }
+    if (attempt) setShake((n) => n + 1);
   }
   // ...then put the caret back once the field is enabled again.
   useEffect(() => {
@@ -70,7 +67,9 @@ export function PdfPasswordDialog({
       return;
     }
     setLocalError(null);
+    // Hand it over and forget it: the field never keeps a password after a try.
     onSubmit(password);
+    setPassword("");
   }
 
   function close() {

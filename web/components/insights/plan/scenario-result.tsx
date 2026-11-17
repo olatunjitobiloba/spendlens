@@ -18,11 +18,9 @@ import { Money } from "@/components/ui/money";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
-import type { ApiError } from "@/lib/api";
 import type { Scenario } from "@/types/api";
 import { formatDate, formatMonth, formatRange } from "@/utils/format";
 import { reviewHref } from "@/utils/links";
-import { ErrorNotice } from "../shared/error-notice";
 import { ExplanationPanel } from "./explanation-panel";
 import { SaveScenario } from "./save-scenario";
 
@@ -136,7 +134,7 @@ function ResultSheet({ scenario, month }: { scenario: Scenario; month: string })
       )}
 
       <div className="mt-4">
-        <ExplanationPanel scenarioId={scenario.id} />
+        <ExplanationPanel scenario={scenario} />
       </div>
     </>
   );
@@ -201,31 +199,25 @@ async function downloadJpg(node: HTMLElement, filename: string) {
 
 /**
  * The scenario result as a dialog. Opens as soon as Calculate is pressed and
- * shows a loading state until the API answers. The figures can be saved as JPG.
+ * shows a short loading state while the numbers are worked out. The figures can be saved as JPG.
  */
 export function ScenarioResultDialog({
   open,
   onOpenChange,
   scenario,
   busy,
-  error,
-  onRetry,
   month,
-  onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scenario: Scenario | null;
   busy: boolean;
-  error: ApiError | null;
-  onRetry: () => void;
   month: string;
-  onSaved: () => void;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
   const [exportFailed, setExportFailed] = useState(false);
-  const ready = Boolean(scenario) && !busy && !error;
+  const ready = Boolean(scenario) && !busy;
 
   async function exportImage() {
     if (!sheetRef.current || !scenario) return;
@@ -244,13 +236,7 @@ export function ScenarioResultDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="flex max-h-[92dvh] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[1.5rem] border border-line-strong bg-panel p-0 ring-0 data-[size=default]:max-w-[calc(100%-2rem)] data-[size=default]:sm:max-w-2xl">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {error ? (
-            <div className="p-5 sm:p-6">
-              <AlertDialogTitle className="mb-3 text-[16px] font-[650]">The scenario could not be calculated</AlertDialogTitle>
-              <AlertDialogDescription className="sr-only">An error occurred.</AlertDialogDescription>
-              <ErrorNotice error={error} onRetry={onRetry} />
-            </div>
-          ) : busy || !scenario ? (
+          {busy || !scenario ? (
             <div className="p-5 sm:p-6">
               <ResultLoading />
             </div>
@@ -261,7 +247,7 @@ export function ScenarioResultDialog({
                 <ResultSheet scenario={scenario} month={month} />
               </div>
               <div className="px-5 pb-5 sm:px-6">
-                <SaveScenario scenario={scenario} onSaved={onSaved} />
+                <SaveScenario scenario={scenario} />
               </div>
             </div>
           )}

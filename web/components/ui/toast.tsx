@@ -70,7 +70,7 @@ function ToastCard({ id, input, duration }: { id: string | number; input: ToastI
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
-      className="group relative w-[var(--width)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-line-strong bg-panel text-foreground shadow-[0_18px_40px_-18px_rgb(0_0_0/0.35)]"
+      className="group relative w-[var(--width)] font-sans max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-line-strong bg-panel text-foreground shadow-[0_18px_40px_-18px_rgb(0_0_0/0.35)]"
     >
       <div className="flex gap-3 p-3.5 pr-10">
         <span
@@ -97,7 +97,7 @@ function ToastCard({ id, input, duration }: { id: string | number; input: ToastI
                   {a.label}
                 </button>
               ))}
-              {input.code && <span className="ml-auto font-mono text-[11px] text-t4 tabular-nums">{input.code}</span>}
+              {input.code && <span className="ml-auto text-[11.5px] text-t4 tabular-nums">{input.code}</span>}
             </div>
           )}
         </div>
@@ -146,6 +146,8 @@ export function Toaster() {
       visibleToasts={4}
       offset={20}
       mobileOffset={16}
+      // Sonner sets its own font-family on the toaster; use the app's Aspekta instead.
+      style={{ fontFamily: "var(--font-aspekta), ui-sans-serif, system-ui, sans-serif" }}
       toastOptions={{ unstyled: true, className: "!bg-transparent !border-0 !shadow-none !p-0" }}
     />
   );

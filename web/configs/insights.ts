@@ -22,15 +22,13 @@ export const insightsNav: NavGroup[] = [
       { href: "/insights/import", label: "Import", icon: FileImportIcon },
       { href: "/insights/review", label: "Review", icon: Task01Icon },
       { href: "/insights/plan", label: "Plan", icon: Target02Icon },
+      { href: "/insights/habits", label: "Habits", icon: ChartLineData01Icon },
       { href: "/insights/chat", label: "AI chat", icon: AiChat02Icon },
     ],
   },
   {
     label: "Pro",
-    items: [
-      { href: "/insights/forecast", label: "Forecast", icon: ChartLineData01Icon, pro: true },
-      { href: "/insights/pro", label: "Plans and billing", icon: Crown02Icon },
-    ],
+    items: [{ href: "/insights/pro", label: "SpendLens Pro", icon: Crown02Icon }],
   },
   {
     label: "For banks",

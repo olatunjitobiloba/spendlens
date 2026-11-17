@@ -13,20 +13,17 @@ import type {
   ChatReply,
   Comparison,
   DateRange,
-  Explanation,
-  Forecast,
+  HabitAudit,
   ImportPreview,
   ImportRecord,
-  Me,
-  Order,
-  OrderStatus,
+  InvestmentOption,
+  InvestmentProjection,
   Page,
   ReconciliationCandidate,
   RecurringCandidate,
   ReviewState,
   RowError,
-  Scenario,
-  ScenarioRequest,
+  SubscriptionItem,
   Transaction,
   Transcription,
 } from "@/types/api";
@@ -50,27 +47,20 @@ type Db = {
   imports: ImportRecord[];
   txns: Transaction[];
   protections: string[];
-  scenarios: Scenario[];
-  orders: Order[];
   decisions: Record<string, "same" | "different">;
-  idempotency: Record<string, string>; // key -> import or order id
-  plan: { pro_expires_at: string | null };
+  idempotency: Record<string, string>; // key -> import id
   seq: number;
 };
 
 const DB_KEY = "spendlens:fixture-db:v1";
-const PRO_PRICE_KOBO = 250_000;
-const PRO_DAYS = 30;
 
 const emptyDb = (): Db => ({
   imports: [],
   txns: [],
-  protections: ["Rent", "Utilities"],
-  scenarios: [],
-  orders: [],
+  // Protections live in the browser now (lib/plan.ts); the API has no route for them.
+  protections: [],
   decisions: {},
   idempotency: {},
-  plan: { pro_expires_at: null },
   seq: 1,
 });
 
@@ -182,13 +172,16 @@ function parseCsv(text: string): { rows: ParsedRow[]; errors: RowError[]; total:
   const lines = text.replace(/^﻿/, "").split(/\r?\n/);
   const header = splitCsvLine(lines[0] ?? "").map((h) => h.toLowerCase());
   const col = (name: string) => header.indexOf(name);
-  const required = ["date", "description", "amount_kobo"];
+  // The API's columns: amount in naira and account_alias. amount_kobo and account
+  // are still read so older sample files keep working.
+  const inKobo = col("amount") < 0 && col("amount_kobo") >= 0;
+  const required = ["date", "description", inKobo ? "amount_kobo" : "amount"];
   const missing = required.filter((h) => col(h) < 0);
   if (missing.length) {
     return {
       rows: [],
       total: 0,
-      errors: [{ line: 1, message: `Header is missing: ${missing.join(", ")}. Expected date, description, amount_kobo, direction, account.` }],
+      errors: [{ line: 1, message: `Header is missing: ${missing.join(", ")}. Expected date, description, amount, direction, bank.` }],
     };
   }
 
@@ -204,24 +197,25 @@ function parseCsv(text: string): { rows: ParsedRow[]; errors: RowError[]; total:
 
     const date = get("date");
     const description = get("description");
-    const amountRaw = get("amount_kobo");
+    const amountRaw = get(inKobo ? "amount_kobo" : "amount");
     const direction = (get("direction") || "debit").toLowerCase();
-    const account = get("account") || "Imported account";
+    const account = get("account_alias") || get("account") || "Primary";
     const bank = get("bank") || bankFor(account);
     const category = get("category") || null;
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(toDay(date)))
       return void errors.push({ line, message: `Date "${date}" is not in YYYY-MM-DD form.` });
     if (!description) return void errors.push({ line, message: "Description is empty." });
-    if (!/^\d+$/.test(amountRaw))
-      return void errors.push({ line, message: `Amount "${amountRaw}" must be a whole number of kobo, with no sign or decimals.` });
+    const amountOk = inKobo ? /^\d+$/.test(amountRaw) : /^\d+(\.\d{1,2})?$/.test(amountRaw) && Number(amountRaw) > 0;
+    if (!amountOk)
+      return void errors.push({ line, message: `Amount "${amountRaw}" must be a positive number like 1500.00, with no sign.` });
     if (direction !== "debit" && direction !== "credit")
       return void errors.push({ line, message: `Direction "${direction}" must be debit or credit.` });
 
     rows.push({
       date,
       description,
-      amount_kobo: Number(amountRaw),
+      amount_kobo: inKobo ? Number(amountRaw) : Math.round(Number(amountRaw) * 100),
       direction,
       account,
       bank,
@@ -325,10 +319,6 @@ function totalsByCategory(txns: Transaction[], protections: string[]): CategoryT
     .sort((a, b) => b.total_kobo - a.total_kobo);
 }
 
-function isPro(db: Db) {
-  return Boolean(db.plan.pro_expires_at && Date.parse(db.plan.pro_expires_at) > Date.now());
-}
-
 function defaultRange(db: Db): DateRange | null {
   const r = dataRange(db.txns);
   return r ? monthRange(monthOf(r.end)) : null;
@@ -408,7 +398,6 @@ function analysis(db: Db, q: Record<string, unknown>): Analysis {
       comparison: null,
     };
   }
-  if (q.compare === "previous" && !isPro(db)) fail(402, "pro_required");
 
   const inR = active(db).filter((t) => inRange(t, range));
   const debits = inR.filter((t) => t.direction === "debit");
@@ -434,116 +423,8 @@ function analysis(db: Db, q: Record<string, unknown>): Analysis {
   };
 }
 
-function scenario(db: Db, req: ScenarioRequest): Scenario {
-  if (!req?.range?.start || !req?.range?.end) fail(422, "A date range is required.");
-  if (req.save && !isPro(db)) fail(402, "pro_required");
-  const cuts = new Map<string, number>();
-  for (const c of req.cuts ?? []) {
-    if (!Number.isInteger(c.percent) || c.percent < 0 || c.percent > 100)
-      fail(422, `Cut for ${c.category} must be a whole number from 0 to 100.`);
-    if (c.percent > 0 && db.protections.includes(c.category))
-      fail(422, `${c.category} is protected, so it cannot be cut.`);
-    cuts.set(c.category, c.percent);
-  }
-  const debits = spend(db).filter((t) => inRange(t, req.range));
-  const totals = totalsByCategory(debits, db.protections);
-  const categories = totals.map((c) => {
-    const percent = cuts.get(c.category) ?? 0;
-    return {
-      category: c.category,
-      total_kobo: c.total_kobo,
-      percent,
-      reduction_kobo: Math.floor((c.total_kobo * percent) / 100),
-    };
-  });
-  const baseline = totals.reduce((s, c) => s + c.total_kobo, 0);
-  const reduction = categories.reduce((s, c) => s + c.reduction_kobo, 0);
-  const cutNames = new Set(categories.filter((c) => c.percent > 0).map((c) => c.category));
-  const a = analysis(db, req.range);
-  const result: Scenario = {
-    id: nextId(db, "scn"),
-    data_revision: `rev_fixture_${db.txns.length}_${Object.keys(db.decisions).length}`,
-    range: req.range,
-    baseline_kobo: baseline,
-    categories,
-    total_reduction_kobo: reduction,
-    remaining_kobo: baseline - reduction,
-    protected_categories: [...db.protections],
-    coverage_warnings: a.coverage_warnings,
-    evidence_txn_ids: debits.filter((t) => cutNames.has(t.category ?? UNCATEGORISED)).map((t) => t.id),
-    saved: Boolean(req.save),
-    name: req.save ? req.name?.trim() || `Plan for ${req.range.start.slice(0, 7)}` : null,
-    created_at: new Date().toISOString(),
-  };
-  db.scenarios = [result, ...db.scenarios].slice(0, 30);
-  save(db);
-  return result;
-}
-
 const naira = (kobo: number) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(kobo / 100);
-
-/** Same wording as ai/explain.py template_explanation. */
-function explanation(s: Scenario): Explanation {
-  const cuts = s.categories.filter((c) => c.percent > 0);
-  let text: string;
-  if (cuts.length) {
-    const parts = cuts.map((c) => `${c.category} ${c.percent}% (saves ${naira(c.reduction_kobo)})`);
-    text = `Cuts: ${parts.join(", ")}. Total saving: ${naira(s.total_reduction_kobo)}. Remaining: ${naira(s.remaining_kobo)}.`;
-  } else {
-    text = `No cuts are selected, so spending stays at ${naira(s.baseline_kobo)}.`;
-  }
-  if (s.protected_categories.length) text += ` Protected: ${s.protected_categories.join(", ")}.`;
-  if (s.coverage_warnings.length)
-    text += ` Note: ${s.coverage_warnings.map((w) => w.replace(/\.$/, "")).join("; ")}.`;
-  return {
-    text,
-    numbers_used: [s.baseline_kobo, s.total_reduction_kobo, s.remaining_kobo, ...cuts.map((c) => c.reduction_kobo)],
-    source: "template",
-  };
-}
-
-function forecast(db: Db): Forecast {
-  if (!isPro(db)) fail(402, "pro_required");
-  const months = availableMonths(db).slice(0, 3);
-  const latest = months[0];
-  const target = latest ? shiftMonth(latest, 1) : "";
-  const debits = spend(db);
-  const cats = [...new Set(debits.map((t) => t.category ?? UNCATEGORISED))];
-  const rows = cats.map((category) => {
-    const perMonth = months.map((m) =>
-      debits
-        .filter((t) => (t.category ?? UNCATEGORISED) === category && monthOf(t.date) === m)
-        .reduce((s, t) => s + t.amount_kobo, 0),
-    );
-    const withData = perMonth.filter((v) => v > 0).length;
-    if (withData < 3) {
-      return {
-        category,
-        point_kobo: null,
-        low_kobo: null,
-        high_kobo: null,
-        method: "Median of the last 3 months",
-        months_of_data: withData,
-        abstained: true,
-        reason: `Only ${withData} month${withData === 1 ? "" : "s"} with spending here. A forecast needs 3.`,
-      };
-    }
-    const sorted = [...perMonth].sort((a, b) => a - b);
-    return {
-      category,
-      point_kobo: sorted[1],
-      low_kobo: sorted[0],
-      high_kobo: sorted[2],
-      method: "Median of the last 3 months; range is the lowest to highest month",
-      months_of_data: withData,
-      abstained: false,
-      reason: null,
-    };
-  });
-  rows.sort((a, b) => Number(a.abstained) - Number(b.abstained) || (b.point_kobo ?? 0) - (a.point_kobo ?? 0));
-  return { month: target, categories: rows };
-}
 
 /** Port of ai/recurring.py find_recurring. */
 function recurring(db: Db): RecurringCandidate[] {
@@ -585,15 +466,6 @@ function recurring(db: Db): RecurringCandidate[] {
     }
   }
   return found.sort((a, b) => b.confidence - a.confidence || a.merchant_key.localeCompare(b.merchant_key));
-}
-
-function me(db: Db): Me {
-  return {
-    plan: isPro(db) ? "pro" : "free",
-    pro_expires_at: isPro(db) ? db.plan.pro_expires_at : null,
-    pro_price_kobo: PRO_PRICE_KOBO,
-    pro_days: PRO_DAYS,
-  };
 }
 
 // ---------- Transactions ----------
@@ -708,13 +580,174 @@ async function readCsv(form?: FormData): Promise<{ name: string; text: string }>
   if (!(file instanceof Blob)) fail(422, "Attach a CSV file.");
   const f = file as File;
   if (f.name.toLowerCase().endsWith(".pdf")) {
-    // Mirrors the live contract for locked statements, then stops: sample mode reads CSV only.
-    const locked = (await f.text()).includes("/Encrypt");
-    const password = form?.get("password");
-    if (locked && !password) fail(422, { code: "pdf_password_required", message: "This PDF is password protected." });
     fail(415, "Sample mode reads CSV files only. Switch the data source to Live API in the sidebar to import a PDF.");
   }
   return { name: f.name || "upload.csv", text: await f.text() };
+}
+
+// ---------- Habits, subscriptions, investments ----------
+
+/** Port of ai/habits.py analyze_habits. Rows carry no time here, so nothing counts as late-night. */
+function habits(db: Db): HabitAudit {
+  const debits = spend(db).filter((t) => t.amount_kobo > 0);
+  let total = 0;
+  let weekendKobo = 0;
+  let weekendCount = 0;
+  let microCount = 0;
+  let microKobo = 0;
+  for (const t of debits) {
+    total += t.amount_kobo;
+    if (t.amount_kobo <= 250_000) {
+      microCount++;
+      microKobo += t.amount_kobo;
+    }
+    const weekday = new Date(`${t.date}T00:00:00Z`).getUTCDay(); // 0 Sunday … 6 Saturday
+    if (weekday === 5 || weekday === 6 || weekday === 0) {
+      weekendKobo += t.amount_kobo;
+      weekendCount++;
+    }
+  }
+  const surge = total > 0 ? (weekendKobo / total) * 100 : 0;
+  const whole = (kobo: number) => `₦${Math.round(kobo / 100).toLocaleString("en-NG")}`;
+  const warnings: string[] = [];
+  const cuts: string[] = [];
+  if (surge > 60 && total > 1_000_000) {
+    warnings.push(
+      `${surge.toFixed(1)}% of your spending occurs between Friday and Sunday. Weekend outings are your primary financial leak.`,
+    );
+    cuts.push("Set a strict Friday-Sunday cash or debit card allowance to curb weekend surges.");
+  }
+  if (microCount >= 10) {
+    warnings.push(`${microCount} small debits under ₦2,500 leaked ${whole(microKobo)} in micro-transfers and airtime.`);
+    cuts.push("Consolidate airtime and data recharges to once per week instead of frequent micro-topups.");
+  }
+  return {
+    total_analyzed_txns: debits.length,
+    late_night_kobo: 0,
+    late_night_count: 0,
+    weekend_kobo: weekendKobo,
+    weekend_count: weekendCount,
+    weekend_surge_percentage: Math.round(surge * 10) / 10,
+    micro_drain_count: microCount,
+    micro_drain_kobo: microKobo,
+    warnings,
+    actionable_cuts: cuts,
+  };
+}
+
+/** Port of ai/subscriptions.py scan_subscriptions, on top of the recurring finder. */
+function subscriptions(db: Db): SubscriptionItem[] {
+  const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
+  return recurring(db)
+    .map((r) => {
+      const monthly = r.period_days === 7 ? r.amount_kobo * 4 : r.period_days === 14 ? r.amount_kobo * 2 : r.amount_kobo;
+      const amount = (monthly / 100).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return {
+        merchant: titleCase(r.merchant_key),
+        monthly_kobo: monthly,
+        annual_kobo: monthly * 12,
+        frequency_days: r.period_days,
+        cancellation_url: null,
+        cancellation_email_template:
+          `Subject: Notice of Cancellation - Account Recurring Charge (${r.merchant_key})\n\n` +
+          `Dear Support Team,\n\nI am writing to formally request the cancellation of my subscription for ${r.merchant_key} ` +
+          `(recurring billing of ₦${amount}), effective immediately.\n\n` +
+          `Please confirm receipt of this cancellation and ensure no further debits occur.\n\nThank you,\nSpendLens Account Holder`,
+      };
+    })
+    .sort((a, b) => b.annual_kobo - a.annual_kobo);
+}
+
+/** Port of ai/investments.py project_investment_growth. */
+function projectGrowth(monthly: number, months: number, rate: number): InvestmentProjection {
+  if (monthly <= 0 || months <= 0)
+    return { total_principal_kobo: 0, total_future_value_kobo: 0, gain_kobo: 0, annual_rate_pct: rate, months };
+  const r = rate / 100 / 12;
+  let fv = 0;
+  for (let i = 0; i < months; i++) fv = (fv + monthly) * (1 + r);
+  const principal = monthly * months;
+  const value = Math.round(fv);
+  return {
+    total_principal_kobo: principal,
+    total_future_value_kobo: value,
+    gain_kobo: Math.max(0, value - principal),
+    annual_rate_pct: rate,
+    months,
+  };
+}
+
+const INVESTMENT_OPTIONS = [
+  {
+    title: "Money Market Mutual Fund (MMF)",
+    asset_class: "Money Market",
+    rate: 16.5,
+    risk_level: "Low",
+    min: 500_000,
+    horizon_label: "Liquid / Short-term (1 - 6 months)",
+    minHorizon: 0,
+    description:
+      "Invests in short-term bank deposits and government securities. Offers high liquidity (withdraw within 24-48 hours) with yields significantly higher than bank savings.",
+    regulatory_body: "Securities and Exchange Commission (SEC Nigeria)",
+  },
+  {
+    title: "Nigerian Treasury Bills (T-Bills)",
+    asset_class: "Sovereign Debt",
+    rate: 19.0,
+    risk_level: "Very Low",
+    min: 10_000_000,
+    horizon_label: "Fixed Horizon (91, 182, or 364 days)",
+    minHorizon: 0,
+    description:
+      "Direct credit backed by the Federal Government of Nigeria and Central Bank of Nigeria. Zero default risk, interest paid upfront at auction.",
+    regulatory_body: "Debt Management Office (DMO) / CBN",
+  },
+  {
+    title: "FGN Savings Bond (FGNSB)",
+    asset_class: "Retail Sovereign Bond",
+    rate: 17.5,
+    risk_level: "Very Low",
+    min: 1_000_000,
+    horizon_label: "Medium-term (2 - 3 years, quarterly coupon)",
+    minHorizon: 6,
+    description:
+      "Targeted retail bond issued monthly by the Debt Management Office. Pays guaranteed quarterly coupon payments directly into your bank account.",
+    regulatory_body: "Debt Management Office (DMO)",
+  },
+  {
+    title: "US Dollar Fixed Income Mutual Fund",
+    asset_class: "Foreign Currency Hedging",
+    rate: 8.0,
+    risk_level: "Moderate",
+    min: 5_000_000,
+    horizon_label: "Long-term (2+ years)",
+    minHorizon: 24,
+    description:
+      "Invests in US Dollar Eurobonds and foreign sovereign notes. Protects purchasing power against Naira currency depreciation.",
+    regulatory_body: "Securities and Exchange Commission (SEC Nigeria)",
+  },
+];
+
+/** Port of ai/investments.py suggest_investments. */
+function investmentSuggestions(q: Record<string, unknown>): InvestmentOption[] {
+  const spare = Number(q.monthly_spare_kobo) || 0;
+  const horizon = Number(q.horizon_months) || 12;
+  const effective = Math.max(1_000_000, spare);
+  return INVESTMENT_OPTIONS.filter((o) => horizon >= o.minHorizon).map((o) => {
+    const p = projectGrowth(effective, horizon, o.rate);
+    return {
+      title: o.title,
+      asset_class: o.asset_class,
+      benchmark_annual_rate_pct: o.rate,
+      risk_level: o.risk_level,
+      minimum_monthly_kobo: o.min,
+      horizon_label: o.horizon_label,
+      projected_growth_kobo: p.total_future_value_kobo,
+      total_invested_kobo: p.total_principal_kobo,
+      net_gain_kobo: p.gain_kobo,
+      description: o.description,
+      regulatory_body: o.regulatory_body,
+    };
+  });
 }
 
 export async function handle(method: string, path: string, req: Req): Promise<unknown> {
@@ -775,16 +808,6 @@ export async function handle(method: string, path: string, req: Req): Promise<un
     return record;
   }
 
-  if (method === "DELETE" && (m = path.match(/^\/v1\/imports\/([^/]+)$/))) {
-    const id = decodeURIComponent(m[1]);
-    if (!db.imports.some((i) => i.id === id)) fail(404, "Import not found.");
-    db.imports = db.imports.filter((i) => i.id !== id);
-    db.txns = db.txns.filter((t) => t.import_id !== id);
-    db.scenarios = [];
-    save(db);
-    return undefined;
-  }
-
   if (route === "GET /v1/transactions") return listTransactions(db, q);
 
   if (method === "PATCH" && (m = path.match(/^\/v1\/transactions\/([^/]+)$/))) {
@@ -819,28 +842,6 @@ export async function handle(method: string, path: string, req: Req): Promise<un
 
   if (route === "GET /v1/analysis") return analysis(db, q);
 
-  if (route === "PUT /v1/protections") {
-    const cats = Array.isArray(body.categories) ? body.categories.filter((c): c is string => typeof c === "string") : [];
-    db.protections = [...new Set(cats)];
-    save(db);
-    return { categories: db.protections };
-  }
-
-  if (route === "POST /v1/scenarios") return scenario(db, req.body as ScenarioRequest);
-  if (route === "GET /v1/scenarios") {
-    if (!isPro(db)) fail(402, "pro_required");
-    return db.scenarios.filter((s) => s.saved);
-  }
-
-  if (method === "POST" && (m = path.match(/^\/v1\/scenarios\/([^/]+)\/explanation$/))) {
-    const s = db.scenarios.find((x) => x.id === decodeURIComponent(m![1]));
-    if (!s) fail(404, "Scenario not found.");
-    await sleep(900);
-    return explanation(s!);
-  }
-
-  if (route === "GET /v1/me") return me(db);
-
   if (route === "POST /v1/chat") {
     const message = typeof body.message === "string" ? body.message.trim() : "";
     if (!message || message.length > 500) fail(422, "Ask something between 1 and 500 characters.");
@@ -855,37 +856,6 @@ export async function handle(method: string, path: string, req: Req): Promise<un
     const text = SAMPLE_TRANSCRIPTS[Math.floor(Math.random() * SAMPLE_TRANSCRIPTS.length)];
     return { text } satisfies Transcription;
   }
-
-  if (route === "POST /v1/billing/orders") {
-    const key = req.idempotencyKey;
-    if (!key) fail(400, "Idempotency-Key header is required.");
-    const existing = db.orders.find((o) => o.id === db.idempotency[key!]);
-    if (existing) return existing;
-    const id = nextId(db, "ord");
-    const order: Order = {
-      id,
-      reference: `SL-FIXTURE-${id.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
-      amount: PRO_PRICE_KOBO / 100,
-      amount_kobo: PRO_PRICE_KOBO,
-      amount_paid_kobo: null,
-      currency: "NGN",
-      notification_url: "https://fixture.invalid/v1/billing/webhook",
-      status: "pending",
-    };
-    db.orders.push(order);
-    db.idempotency[key!] = id;
-    save(db);
-    return order;
-  }
-
-  if (method === "GET" && (m = path.match(/^\/v1\/billing\/orders\/([^/]+)$/))) {
-    const o = db.orders.find((x) => x.id === decodeURIComponent(m![1]));
-    if (!o) fail(404, "Order not found.");
-    return o;
-  }
-
-  if (route === "GET /v1/forecast") return forecast(db);
-  if (route === "GET /v1/recurring") return recurring(db);
 
   if (route === "POST /v1/goals/project") {
     const p = (body ?? {}) as Record<string, unknown>;
@@ -921,49 +891,16 @@ export async function handle(method: string, path: string, req: Req): Promise<un
     };
   }
 
-  if (route === "DELETE /v1/me/data") {
-    const keep = { plan: db.plan, orders: db.orders };
-    save({ ...emptyDb(), ...keep });
-    return undefined;
+  if (route === "GET /v1/habits") return habits(db);
+  if (route === "GET /v1/subscriptions") return subscriptions(db);
+  if (route === "GET /v1/investments/suggestions") return investmentSuggestions(q);
+  if (route === "POST /v1/investments/project") {
+    const monthly = Number(body.monthly_kobo);
+    const months = body.months === undefined ? 12 : Number(body.months);
+    const rate = body.annual_rate_pct === undefined ? 15 : Number(body.annual_rate_pct);
+    if (!Number.isInteger(monthly) || monthly < 0) fail(422, "monthly_kobo must be a whole number of kobo.");
+    return projectGrowth(monthly, months, rate);
   }
 
   fail(404, `No fixture for ${route}.`);
-}
-
-// ---------- Fixture-only helpers (not API endpoints) ----------
-
-export type SandboxOutcome = Exclude<OrderStatus, "pending" | "expired"> | "no_answer";
-
-/**
- * Stands in for Kora's webhook reaching our backend. Only the order record
- * changes here; the page still learns the result by polling the order.
- */
-export function simulateWebhook(orderId: string, outcome: SandboxOutcome) {
-  const db = load();
-  const o = db.orders.find((x) => x.id === orderId);
-  if (!o || o.status !== "pending" || outcome === "no_answer") return;
-  o.status = outcome;
-  if (outcome === "paid") o.amount_paid_kobo = o.amount_kobo;
-  if (outcome === "underpaid") o.amount_paid_kobo = Math.floor(o.amount_kobo / 2);
-  if (outcome === "overpaid") o.amount_paid_kobo = o.amount_kobo + 50_000;
-  if (outcome === "paid" || outcome === "overpaid") {
-    db.plan.pro_expires_at = new Date(Date.now() + PRO_DAYS * DAY).toISOString();
-  }
-  save(db);
-}
-
-/** Ends Pro in fixture mode so the paywall can be shown again. */
-export function resetFixturePlan() {
-  const db = load();
-  db.plan.pro_expires_at = null;
-  save(db);
-}
-
-export function resetFixtureDb() {
-  memoryDb = null;
-  try {
-    localStorage.removeItem(DB_KEY);
-  } catch {
-    // ignore
-  }
 }

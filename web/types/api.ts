@@ -125,18 +125,7 @@ export type Analysis = {
   comparison: Comparison | null;
 };
 
-// Plan
-
-export type Protections = { categories: string[] };
-
-export type ScenarioCut = { category: string; percent: number };
-
-export type ScenarioRequest = {
-  range: DateRange;
-  cuts: ScenarioCut[];
-  save?: boolean;
-  name?: string;
-};
+// Plan (worked out in the browser, lib/plan.ts)
 
 /** Mirrors ai/schemas.py ScenarioResult, plus id and saved metadata. */
 export type Scenario = {
@@ -155,57 +144,7 @@ export type Scenario = {
   created_at: string;
 };
 
-export type Explanation = {
-  text: string;
-  numbers_used: number[];
-  source: "model" | "template";
-};
-
-// Account and billing
-
-export type Me = {
-  plan: "free" | "pro";
-  pro_expires_at: string | null;
-  pro_price_kobo: number;
-  pro_days: number;
-};
-
-export type OrderStatus =
-  | "pending"
-  | "paid"
-  | "underpaid"
-  | "overpaid"
-  | "failed"
-  | "cancelled"
-  | "expired";
-
-export type Order = {
-  id: string;
-  reference: string;
-  /** As the backend hands it to Kora. The backend owns the unit. */
-  amount: number;
-  /** Always kobo, for display. */
-  amount_kobo: number;
-  amount_paid_kobo: number | null;
-  currency: "NGN";
-  notification_url: string;
-  status: OrderStatus;
-};
-
-// Forecast and recurring (v2)
-
-export type ForecastRow = {
-  category: string;
-  point_kobo: number | null;
-  low_kobo: number | null;
-  high_kobo: number | null;
-  method: string;
-  months_of_data: number;
-  abstained: boolean;
-  reason: string | null;
-};
-
-export type Forecast = { month: string; categories: ForecastRow[] };
+// Recurring payments (used by the fixture mock)
 
 export type RecurringCandidate = {
   merchant_key: string;

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Switch } from "radix-ui";
 import { SquareLock02Icon } from "@hugeicons/core-free-icons";
 
@@ -10,28 +9,16 @@ import { Section } from "@/components/ui/section";
 import { UNCATEGORISED } from "@/configs/categories";
 import { SET_PROTECTIONS_KEY } from "@/configs/insights";
 import { setLocalFlag } from "@/hooks/use-local-flag";
-import { api } from "@/lib/api";
+import { setProtected } from "@/lib/plan";
 import type { Analysis } from "@/types/api";
-import { toastApiError } from "../shared/error-toast";
 
-/** Essentials toggles, saved with PUT /v1/protections (technical doc §8). */
-export function Protections({ analysis, onChanged }: { analysis: Analysis; onChanged: () => Promise<void> }) {
-  const [busy, setBusy] = useState<string | null>(null);
+/** Essentials toggles. Kept in this browser; the API has no protections route. */
+export function Protections({ analysis }: { analysis: Analysis }) {
   const cats = analysis.categories.filter((c) => c.category !== UNCATEGORISED);
 
-  async function toggle(category: string, on: boolean) {
-    const current = cats.filter((c) => c.protected).map((c) => c.category);
-    const next = on ? [...current, category] : current.filter((c) => c !== category);
-    setBusy(category);
-    try {
-      await api.plan.setProtections(next);
-      setLocalFlag(SET_PROTECTIONS_KEY, true);
-      await onChanged();
-    } catch (e) {
-      toastApiError(e, { title: `${category} wasn't ${on ? "protected" : "unprotected"}`, onRetry: () => void toggle(category, on) });
-    } finally {
-      setBusy(null);
-    }
+  function toggle(category: string, on: boolean) {
+    setProtected(category, on);
+    setLocalFlag(SET_PROTECTIONS_KEY, true);
   }
 
   return (
@@ -53,7 +40,6 @@ export function Protections({ analysis, onChanged }: { analysis: Analysis; onCha
                 <Switch.Root
                   id={id}
                   checked={c.protected}
-                  disabled={busy !== null}
                   onCheckedChange={(on) => toggle(c.category, on)}
                   className="relative inline-flex h-6 w-10 shrink-0 items-center rounded-full bg-foreground/15 transition-colors disabled:opacity-50 data-[state=checked]:bg-foreground"
                 >

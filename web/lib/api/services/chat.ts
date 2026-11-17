@@ -1,5 +1,5 @@
 import type { ChatReply, ChatRequest, Transcription } from "@/types/api";
-import { http } from "../client";
+import { MULTIPART, http } from "../client";
 import { TIMEOUTS } from "../config";
 
 function audioExt(type: string) {
@@ -18,7 +18,7 @@ export const chatService = {
     const form = new FormData();
     form.set("file", audio, `voice-note.${audioExt(audio.type)}`);
     return http
-      .post<Transcription>("/chat/transcriptions", form, { timeout: TIMEOUTS.chat, signal })
+      .post<Transcription>("/chat/transcriptions", form, { headers: MULTIPART, timeout: TIMEOUTS.chat, signal })
       .then((r) => r.data);
   },
 };

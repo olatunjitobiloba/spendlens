@@ -8,8 +8,6 @@ export type ApiErrorKind =
   | "unauthorized"
   | "validation"
   | "unsupported_file"
-  | "password_required" // an encrypted PDF arrived without a password
-  | "password_invalid" // the password did not open it
   | "pro_required"
   | "not_found"
   | "conflict"
@@ -54,12 +52,6 @@ function detailMessage(detail: unknown): string | null {
   return issues(detail)[0]?.msg ?? null;
 }
 
-function detailCode(detail: unknown): string | null {
-  if (typeof detail === "string") return detail;
-  if (detail && typeof detail === "object" && "code" in detail && typeof detail.code === "string") return detail.code;
-  return null;
-}
-
 /** Pydantic says "Value error, x"; people only need "x". */
 function cleanMsg(msg: string) {
   return msg.replace(/^Value error, /, "");
@@ -82,22 +74,10 @@ function fieldErrors(detail: unknown): FieldErrors {
   return out;
 }
 
-function passwordKind(status: number, detail: unknown): ApiErrorKind | null {
-  const text = `${detailCode(detail) ?? ""} ${detailMessage(detail) ?? ""}`.toLowerCase();
-  if (!text.includes("password") || status < 400 || status >= 500) return null;
-  return /invalid|incorrect|wrong|could not|failed/.test(text) ? "password_invalid" : "password_required";
-}
-
 /** Map an HTTP status and FastAPI `detail` to an ApiError. */
 export function toApiError(status: number, detail: unknown): ApiError {
   const msg = detailMessage(detail);
   const fields = fieldErrors(detail);
-
-  const pw = passwordKind(status, detail);
-  if (pw === "password_invalid")
-    return new ApiError(pw, "That password did not open the file. Check it and try again.", status, detail);
-  if (pw === "password_required")
-    return new ApiError(pw, "This file is password protected. Enter its password to continue.", status, detail);
 
   if (status === 402 || detail === "pro_required")
     return new ApiError("pro_required", "This needs SpendLens Pro.", status, detail);

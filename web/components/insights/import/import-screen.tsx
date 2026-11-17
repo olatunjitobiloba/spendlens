@@ -8,7 +8,7 @@ import { showToast } from "@/components/ui/toast";
 import { api, asApiError, newIdempotencyKey, type StatementUpload } from "@/lib/api";
 import { loadSampleFile } from "@/lib/sample";
 import type { ImportPreview, ImportRecord } from "@/types/api";
-import { isEncryptedPdf, isPdf } from "@/utils/pdf";
+import { PdfPasswordError, isEncryptedPdf, isPdf, unlockPdf } from "@/utils/pdf";
 import { toastApiError } from "../shared/error-toast";
 import { DoneView } from "./done-view";
 import { FilePicker } from "./file-picker";
@@ -43,30 +43,60 @@ export function ImportScreen() {
   const keyRef = useRef<string | null>(null);
   const autoSample = useRef(false);
 
-  /** Upload for a preview. Password errors reopen the dialog; the rest toast. */
+  /** Upload for a preview. Failures toast with a retry. */
   async function runPreview(next: StatementUpload) {
     setBusy(true);
     keyRef.current = null;
     try {
       setPreview(await api.imports.preview(next));
       setUpload(next);
-      setLocked(null);
       setStep("check");
     } catch (e) {
       const error = asApiError(e);
-      if (error.kind === "password_required" || error.kind === "password_invalid") {
-        setLocked((prev) => ({
-          file: next.file,
-          // The first ask is not an error; a rejected password is.
-          error: next.password ? error.message : null,
-          attempt: next.password ? (prev?.attempt ?? 0) + 1 : 0,
-        }));
-      } else {
-        toastApiError(error, {
-          title: `Couldn't read ${next.file.name}`,
-          onRetry: () => void runPreview(next),
+      if (error.kind === "unsupported_file" && isPdf(next.file)) {
+        // The live API reads CSV only; retrying the same PDF can't help.
+        showToast({
+          tone: "danger",
+          title: `Couldn't import ${next.file.name}`,
+          description: "SpendLens reads CSV files only for now. Download your statement as CSV from your bank app and import that.",
+          code: error.status ? `HTTP ${error.status}` : undefined,
         });
+      } else {
+        toastApiError(error, { title: `Couldn't read ${next.file.name}`, onRetry: () => void runPreview(next) });
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Unlocks a PDF in the browser. Returns the unlocked copy, or null when the
+   * password was wrong. Other failures toast and also return null.
+   */
+  async function tryUnlock(file: File, password: string): Promise<File | null> {
+    try {
+      return await unlockPdf(file, password);
+    } catch (e) {
+      if (e instanceof PdfPasswordError) return null;
+      showToast({ tone: "danger", title: `Couldn't open ${file.name}`, description: (e as Error).message });
+      throw e;
+    }
+  }
+
+  /** The password from the dialog. Used once, here, and never stored or sent. */
+  async function submitPassword(password: string) {
+    if (!locked) return;
+    setBusy(true);
+    try {
+      const unlocked = await tryUnlock(locked.file, password);
+      if (!unlocked) {
+        setLocked({ ...locked, error: new PdfPasswordError().message, attempt: locked.attempt + 1 });
+        return;
+      }
+      setLocked(null);
+      await runPreview({ file: unlocked });
+    } catch {
+      setLocked(null);
     } finally {
       setBusy(false);
     }
@@ -78,8 +108,13 @@ export function ImportScreen() {
       showToast({ tone: "danger", title: "That file can't be used", description: problem });
       return;
     }
-    // Ask for the password up front instead of after a failed upload.
     if (isPdf(f) && (await isEncryptedPdf(f).catch(() => false))) {
+      // Some PDFs are locked against printing only and open with no password.
+      setBusy(true);
+      const open = await tryUnlock(f, "").catch(() => undefined);
+      setBusy(false);
+      if (open === undefined) return; // damaged file; already toasted
+      if (open) return runPreview({ file: open });
       setLocked({ file: f, error: null, attempt: 0 });
       return;
     }
@@ -110,7 +145,6 @@ export function ImportScreen() {
       const saved = await api.imports.commit(upload, keyRef.current);
       setRecord(saved);
       setStep("done");
-      // The password has done its job; drop it from memory.
       setUpload(null);
       if (saved.reused)
         showToast({
@@ -168,7 +202,7 @@ export function ImportScreen() {
         busy={busy}
         error={locked?.error ?? null}
         attempt={locked?.attempt ?? 0}
-        onSubmit={(password) => locked && void runPreview({ file: locked.file, password })}
+        onSubmit={(password) => void submitPassword(password)}
         onCancel={() => setLocked(null)}
       />
     </>
