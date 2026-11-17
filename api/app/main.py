@@ -10,6 +10,7 @@ from .chat import router as chat_router
 from .config import get_settings
 from .imports import router as imports_router
 from .transactions import router as transactions_router
+from .transcriptions import router as transcriptions_router
 
 app = FastAPI(title="SpendLens API", version="0.1.0")
 settings = get_settings()
@@ -29,6 +30,7 @@ app.include_router(imports_router)
 app.include_router(transactions_router)
 app.include_router(analysis_router)
 app.include_router(chat_router)
+app.include_router(transcriptions_router)
 
 
 @app.get("/health")
