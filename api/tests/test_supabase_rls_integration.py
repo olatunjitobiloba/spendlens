@@ -8,10 +8,17 @@ from __future__ import annotations
 
 import os
 import secrets
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from pathlib import Path
 
 import httpx
 import pytest
+from dotenv import load_dotenv
+
+
+# Match the API's local-development convention while allowing deployment and CI
+# to provide the same values as process environment variables.
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
 pytestmark = pytest.mark.skipif(
@@ -26,14 +33,21 @@ class UserSession:
     access_token: str
 
 
+@dataclass(frozen=True)
+class SupabaseConfig:
+    url: str
+    anon_key: str = field(repr=False)
+    service_key: str = field(repr=False)
+
+
 @pytest.fixture(scope="module")
-def supabase_config() -> tuple[str, str, str]:
+def supabase_config() -> SupabaseConfig:
     url = os.getenv("SUPABASE_URL", "").rstrip("/")
     anon_key = os.getenv("SUPABASE_ANON_KEY", "")
     service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     if not all((url, anon_key, service_key)):
         pytest.fail("SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY are required")
-    return url, anon_key, service_key
+    return SupabaseConfig(url=url, anon_key=anon_key, service_key=service_key)
 
 
 def _create_user(client: httpx.Client, url: str, service_key: str) -> UserSession:
@@ -63,8 +77,10 @@ def _headers(anon_key: str, token: str, *, representation: bool = False) -> dict
     return headers
 
 
-def test_users_cannot_read_or_change_each_others_accounts(supabase_config: tuple[str, str, str]) -> None:
-    url, anon_key, service_key = supabase_config
+def test_users_cannot_read_or_change_each_others_accounts(supabase_config: SupabaseConfig) -> None:
+    url = supabase_config.url
+    anon_key = supabase_config.anon_key
+    service_key = supabase_config.service_key
     with httpx.Client(timeout=15) as client:
         owner = _create_user(client, url, service_key)
         other = _create_user(client, url, service_key)
