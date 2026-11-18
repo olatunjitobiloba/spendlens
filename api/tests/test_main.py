@@ -1,12 +1,19 @@
 from fastapi.testclient import TestClient
 
+from api.app.config import Settings, get_settings
 from api.app.main import app
 
 client = TestClient(app)
 
 
 def test_health():
-    assert client.get("/health").json() == {"status": "ok", "database": "not_configured"}
+    app.dependency_overrides[get_settings] = lambda: Settings(None, None, None)
+    try:
+        response = client.get("/health")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.json() == {"status": "ok", "database": "not_configured"}
 
 
 def test_goal_projection_is_non_advisory():

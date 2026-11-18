@@ -21,8 +21,8 @@ const MAX_BYTES = 5 * 1024 * 1024;
 
 /** Client checks only: extension and size. The API validates every row. */
 function clientCheck(f: File): string | null {
-  if (!f.name.toLowerCase().endsWith(".csv"))
-    return `"${f.name}" is not a CSV file. Export your statement as .csv and try again.`;
+  if (!/\.(csv|pdf)$/i.test(f.name))
+    return `"${f.name}" is not a CSV or supported text PDF. Export your statement and try again.`;
   if (f.size > MAX_BYTES) return `"${f.name}" is larger than 5 MB. Split it into smaller date ranges and import each one.`;
   return null;
 }
@@ -106,7 +106,7 @@ export function ImportScreen() {
     <>
       <PageHeader
         title="Import transactions"
-        description="Upload a CSV export. SpendLens checks every row first and shows you what it found before saving anything."
+        description="Upload a CSV export or text-based PDF statement. SpendLens checks every row first and shows you what it found before saving anything."
       />
       <Stepper step={step} />
 

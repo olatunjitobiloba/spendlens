@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from .auth import CurrentUser, get_current_user
 from .config import Settings, get_settings
 from .db import DatabaseError, SupabaseGateway, SupabaseServiceGateway
+from .reliability import order_limit
 
 router = APIRouter(prefix="/v1/billing", tags=["billing"])
 
@@ -78,7 +79,7 @@ async def verify_charge(kora_reference: str, settings: Settings) -> dict:
     return data
 
 
-@router.post("/orders", response_model=BillingOrder)
+@router.post("/orders", response_model=BillingOrder, dependencies=[Depends(order_limit)])
 async def create_order(
     idempotency_key: str = Header(..., alias="Idempotency-Key", min_length=1, max_length=128),
     user: CurrentUser = Depends(get_current_user),

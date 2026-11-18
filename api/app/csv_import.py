@@ -86,6 +86,11 @@ def parse_and_enrich(content: bytes) -> tuple[ImportPreview, list[dict[str, obje
     return preview, transactions
 
 
+def parse_statement_preview(content: bytes, filename: str | None) -> ImportPreview:
+    """Preview a CSV or a supported text-native PDF statement."""
+    return parse_preview(_statement_as_csv(content, filename))
+
+
 def prepare_commit(content: bytes) -> tuple[ImportPreview, list[dict[str, object]], list[dict[str, object]]]:
     """Produce transaction and duplicate-candidate values for one atomic commit."""
     preview = parse_preview(content)
@@ -125,6 +130,20 @@ def prepare_commit(content: bytes) -> tuple[ImportPreview, list[dict[str, object
         for candidate in duplicates
     ]
     return preview, transactions, candidates
+
+
+def prepare_statement_commit(
+    content: bytes, filename: str | None
+) -> tuple[ImportPreview, list[dict[str, object]], list[dict[str, object]]]:
+    return prepare_commit(_statement_as_csv(content, filename))
+
+
+def _statement_as_csv(content: bytes, filename: str | None) -> bytes:
+    if (filename or "").lower().endswith(".pdf"):
+        from .pdf_import import canonical_csv_from_pdf
+
+        return canonical_csv_from_pdf(content)
+    return content
 
 
 def _parse_row(row: dict[str, str | None], line_number: int) -> ImportRow:

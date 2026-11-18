@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .config import Settings, get_settings
 from .db import DatabaseError, SupabaseGateway
+from .reliability import short_hash
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -20,6 +21,7 @@ class CurrentUser:
 
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     settings: Settings = Depends(get_settings),
 ) -> CurrentUser:
@@ -33,4 +35,5 @@ async def get_current_user(
     user_id = payload.get("id")
     if not isinstance(user_id, str):
         raise HTTPException(status_code=401, detail="Invalid authentication")
+    request.state.user_id_hash = short_hash(user_id)
     return CurrentUser(id=user_id, token=credentials.credentials)

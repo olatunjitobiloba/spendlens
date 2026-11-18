@@ -55,7 +55,11 @@ class SupabaseGateway:
         except httpx.HTTPError as exc:
             raise DatabaseError("Supabase request failed") from exc
         if response.status_code >= 400:
-            raise DatabaseError("Supabase rejected the request")
+            try:
+                detail = response.json().get("message") or response.json().get("error")
+            except (ValueError, AttributeError):
+                detail = None
+            raise DatabaseError(str(detail or "Supabase rejected the request"))
         return response.json() if response.content else None
 
 

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ai.goals import GoalInput, GoalProjection, project_goal
 
-from .csv_import import ImportPreview, parse_preview
+from .csv_import import ImportPreview, parse_statement_preview
 from .config import get_settings
 from .imports import router as imports_router
 from .transactions import router as transactions_router
@@ -13,8 +13,10 @@ from .analysis import router as analysis_router
 from .billing import router as billing_router
 from .db import database_health
 from .privacy import router as privacy_router
+from .reliability import RequestContextMiddleware, import_limit
 
 app = FastAPI(title="SpendLens API", version="0.1.0")
+app.add_middleware(RequestContextMiddleware)
 settings = get_settings()
 if settings.allowed_origin:
     app.add_middleware(
@@ -40,13 +42,13 @@ async def health(settings=Depends(get_settings)) -> dict[str, str]:
     return {"status": "ok", "database": "ok"}
 
 
-@app.post("/v1/imports/preview", response_model=ImportPreview)
+@app.post("/v1/imports/preview", response_model=ImportPreview, dependencies=[Depends(import_limit)])
 async def preview_import(file: UploadFile = File(...)) -> ImportPreview:
-    if file.content_type not in {"text/csv", "application/vnd.ms-excel", None}:
-        raise HTTPException(status_code=415, detail="file must be CSV")
+    if file.content_type not in {"text/csv", "application/vnd.ms-excel", "application/pdf", None}:
+        raise HTTPException(status_code=415, detail="file must be CSV or PDF")
     content = await file.read()
     try:
-        return parse_preview(content)
+        return parse_statement_preview(content, file.filename)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 

@@ -76,10 +76,10 @@ export function FilePicker({
       </div>
 
       <p className="text-[17px] font-[650] tracking-[-0.02em]" aria-live="polite">
-        {busy ? "Checking your file…" : drag ? "Drop it here" : "Drop a CSV here, or choose one"}
+        {busy ? "Checking your file…" : drag ? "Drop it here" : "Drop a CSV or PDF here, or choose one"}
       </p>
       <ul className="mt-3 flex flex-wrap justify-center gap-1.5">
-        <Fact icon={Csv02Icon}>CSV only</Fact>
+        <Fact icon={Csv02Icon}>CSV or text PDF</Fact>
         <Fact icon={WeightScale01Icon}>Up to 5 MB</Fact>
         <Fact icon={SquareLock02Icon}>Nothing saved until you confirm</Fact>
       </ul>
@@ -91,10 +91,10 @@ export function FilePicker({
         )}
       >
         <Icon icon={FileImportIcon} />
-        Choose CSV file
+        Choose statement file
         <input
           type="file"
-          accept=".csv,text/csv"
+          accept=".csv,.pdf,text/csv,application/pdf"
           disabled={busy}
           className="sr-only"
           onChange={(e) => {

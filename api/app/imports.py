@@ -8,8 +8,9 @@ from uuid import UUID
 
 from .auth import CurrentUser, get_current_user
 from .config import Settings, get_settings
-from .csv_import import prepare_commit
+from .csv_import import prepare_statement_commit
 from .db import DatabaseError, SupabaseGateway
+from .reliability import import_limit
 
 router = APIRouter(prefix="/v1/imports", tags=["imports"])
 
@@ -19,17 +20,19 @@ class ImportCommit(BaseModel):
     reused: bool
 
 
-@router.post("", response_model=ImportCommit)
+@router.post("", response_model=ImportCommit, dependencies=[Depends(import_limit)])
 async def commit_import(
     file: UploadFile = File(...),
     idempotency_key: str = Header(..., alias="Idempotency-Key", min_length=1, max_length=128),
     user: CurrentUser = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> ImportCommit:
-    if file.content_type not in {"text/csv", "application/vnd.ms-excel", None}:
-        raise HTTPException(status_code=415, detail="file must be CSV")
+    if file.content_type not in {"text/csv", "application/vnd.ms-excel", "application/pdf", None}:
+        raise HTTPException(status_code=415, detail="file must be CSV or PDF")
     try:
-        preview, transactions, duplicate_candidates = prepare_commit(await file.read())
+        preview, transactions, duplicate_candidates = prepare_statement_commit(
+            await file.read(), file.filename
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     if preview.errors:

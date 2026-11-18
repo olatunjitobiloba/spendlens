@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from datetime import date
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from ai.api import explain_scenario
+from ai.schemas import Explanation, ScenarioResult
 from .auth import CurrentUser, get_current_user
 from .config import Settings, get_settings
 from .db import DatabaseError, SupabaseGateway
+from .reliability import explanation_limit
 
 router = APIRouter(prefix="/v1", tags=["analysis"])
 
@@ -36,16 +40,24 @@ class CategoryReduction(BaseModel):
     percent: int = Field(ge=0, le=100)
 
 
-class ScenarioRequest(DateRange):
-    reductions: list[CategoryReduction] = Field(min_length=1, max_length=20)
+class ScenarioRequest(BaseModel):
+    range: DateRange
+    cuts: list[CategoryReduction] = Field(min_length=1, max_length=20)
+    save: bool = False
+    name: str | None = Field(default=None, max_length=60)
 
-    @field_validator("reductions")
+    @field_validator("cuts")
     @classmethod
-    def unique_categories(cls, reductions: list[CategoryReduction]) -> list[CategoryReduction]:
-        categories = [row.category for row in reductions]
+    def unique_categories(cls, cuts: list[CategoryReduction]) -> list[CategoryReduction]:
+        categories = [row.category for row in cuts]
         if len(categories) != len(set(categories)):
             raise ValueError("each category may appear once")
-        return reductions
+        return cuts
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, name: str | None) -> str | None:
+        return name.strip() if name and name.strip() else None
 
 
 async def _rpc(
@@ -54,6 +66,8 @@ async def _rpc(
     try:
         result = await SupabaseGateway(settings, user.token).rpc(function, payload)
     except DatabaseError as exc:
+        if function == "create_scenario" and "pro_required" in str(exc):
+            raise HTTPException(status_code=402, detail="pro_required") from exc
         raise HTTPException(status_code=502, detail="Calculation unavailable") from exc
     if not isinstance(result, dict):
         raise HTTPException(status_code=502, detail="Calculation unavailable")
@@ -89,18 +103,48 @@ async def calculate_scenario(
     user: CurrentUser = Depends(get_current_user),
     settings: Settings = Depends(get_settings),
 ) -> dict:
-    if scenario.start > scenario.end:
+    if scenario.range.start > scenario.range.end:
         raise HTTPException(status_code=422, detail="start must not be after end")
-    result = await _rpc(
-        "calculate_scenario",
-        {
-            "p_start": scenario.start.isoformat(),
-            "p_end": scenario.end.isoformat(),
-            "p_reductions": [reduction.model_dump() for reduction in scenario.reductions],
-        },
-        user,
-        settings,
-    )
+    payload = {
+        "p_start": scenario.range.start.isoformat(),
+        "p_end": scenario.range.end.isoformat(),
+        "p_reductions": [cut.model_dump() for cut in scenario.cuts],
+    }
+    payload["p_save"] = scenario.save
+    payload["p_name"] = scenario.name
+    result = await _rpc("create_scenario", payload, user, settings)
     if result.get("error") == "protected_category":
         raise HTTPException(status_code=422, detail="A protected category cannot be reduced")
     return result
+
+
+@router.get("/scenarios")
+async def list_saved_scenarios(
+    user: CurrentUser = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> list[dict]:
+    try:
+        result = await SupabaseGateway(settings, user.token).rpc("list_saved_scenarios", {})
+    except DatabaseError as exc:
+        raise HTTPException(status_code=502, detail="Could not load saved scenarios") from exc
+    if not isinstance(result, list):
+        raise HTTPException(status_code=502, detail="Could not load saved scenarios")
+    return result
+
+
+@router.post("/scenarios/{scenario_id}/explanation", response_model=Explanation, dependencies=[Depends(explanation_limit)])
+async def explain_saved_scenario(
+    scenario_id: UUID,
+    user: CurrentUser = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+) -> Explanation:
+    """Explain only the stored calculation belonging to the authenticated user."""
+    try:
+        stored = await SupabaseGateway(settings, user.token).rpc(
+            "get_scenario", {"p_scenario_id": str(scenario_id)}
+        )
+    except DatabaseError as exc:
+        raise HTTPException(status_code=502, detail="Could not load scenario") from exc
+    if not isinstance(stored, dict):
+        raise HTTPException(status_code=404, detail="Scenario not found")
+    return Explanation.model_validate(explain_scenario(ScenarioResult.model_validate(stored).model_dump()))
